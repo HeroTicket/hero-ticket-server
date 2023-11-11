@@ -1,1 +1,1 @@
-# hero-ticket-server
+# Hero Ticket Server
