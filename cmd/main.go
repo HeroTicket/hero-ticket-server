@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"syscall"
 
+	"github.com/heroticket/pkg/mongo"
 	"github.com/heroticket/pkg/shutdown"
 )
 
@@ -15,6 +16,13 @@ func main() {
 			log.Printf("recovered from panic: %v", r)
 		}
 	}()
+
+	client, err := mongo.New(context.Background(), "mongodb://root:example@localhost:27017/")
+	if err != nil {
+		panic(err)
+	}
+
+	log.Println("connected to mongo")
 
 	srv := &http.Server{
 		Addr: ":8080",
@@ -39,6 +47,12 @@ func main() {
 		}
 
 		log.Println("server gracefully stopped")
+
+		if err := client.Disconnect(context.Background()); err != nil {
+			panic(err)
+		}
+
+		log.Println("disconnected from mongo")
 	}, syscall.SIGINT, syscall.SIGTERM)
 
 	<-stop
