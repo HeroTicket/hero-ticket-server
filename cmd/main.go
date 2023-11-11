@@ -2,12 +2,15 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net/http"
 	"syscall"
 
 	"github.com/heroticket/pkg/mongo"
 	"github.com/heroticket/pkg/shutdown"
+	"golang.ngrok.com/ngrok"
+	"golang.ngrok.com/ngrok/config"
 )
 
 func main() {
@@ -24,30 +27,20 @@ func main() {
 
 	log.Println("connected to mongo")
 
-	srv := &http.Server{
-		Addr: ":8080",
-		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			w.WriteHeader(http.StatusOK)
-			w.Write([]byte("hello world"))
-		}),
-	}
+	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("hello world"))
+	})
 
 	go func() {
 		log.Println("starting server...")
 
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if err := runNgrok(handler); err != nil && err != http.ErrServerClosed {
 			panic(err)
 		}
 	}()
 
 	stop := shutdown.GracefulShutdown(func() {
-		log.Println("shutting down server...")
-		if err := srv.Shutdown(context.Background()); err != nil {
-			panic(err)
-		}
-
-		log.Println("server gracefully stopped")
-
 		if err := client.Disconnect(context.Background()); err != nil {
 			panic(err)
 		}
@@ -56,4 +49,20 @@ func main() {
 	}, syscall.SIGINT, syscall.SIGTERM)
 
 	<-stop
+}
+
+func runNgrok(h http.Handler) error {
+	tun, err := ngrok.Listen(
+		context.Background(),
+		config.HTTPEndpoint(),
+	)
+	if err != nil {
+		return err
+	}
+
+	url := tun.URL()
+
+	fmt.Println("ngrok url: ", url)
+
+	return http.Serve(tun, h)
 }
