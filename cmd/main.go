@@ -3,20 +3,26 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"net/http"
+	"os"
 	"syscall"
 
 	"github.com/heroticket/pkg/mongo"
 	"github.com/heroticket/pkg/shutdown"
+	"go.uber.org/zap"
 	"golang.ngrok.com/ngrok"
 	"golang.ngrok.com/ngrok/config"
 )
 
 func main() {
+	logger, _ := zap.NewProduction(zap.Fields(zap.String("service", "hero-ticket")))
+	defer logger.Sync()
+
+	zap.ReplaceGlobals(logger)
+
 	defer func() {
 		if r := recover(); r != nil {
-			log.Printf("recovered from panic: %v", r)
+			zap.L().Info("recovered from panic", zap.Any("r", r))
 		}
 	}()
 
@@ -25,7 +31,7 @@ func main() {
 		panic(err)
 	}
 
-	log.Println("connected to mongo")
+	zap.L().Info("connected to mongo")
 
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
@@ -33,7 +39,7 @@ func main() {
 	})
 
 	go func() {
-		log.Println("starting server...")
+		zap.L().Info("starting ngrok server")
 
 		if err := runNgrok(handler); err != nil && err != http.ErrServerClosed {
 			panic(err)
@@ -45,7 +51,7 @@ func main() {
 			panic(err)
 		}
 
-		log.Println("disconnected from mongo")
+		zap.L().Info("disconnected from mongo")
 	}, syscall.SIGINT, syscall.SIGTERM)
 
 	<-stop
@@ -63,6 +69,10 @@ func runNgrok(h http.Handler) error {
 	url := tun.URL()
 
 	fmt.Println("ngrok url: ", url)
+
+	if err := os.Setenv("NGROK_URL", url); err != nil {
+		return err
+	}
 
 	return http.Serve(tun, h)
 }
