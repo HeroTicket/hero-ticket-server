@@ -7,6 +7,9 @@ import (
 	"os"
 	"syscall"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 	"github.com/heroticket/pkg/mongo"
 	"github.com/heroticket/pkg/shutdown"
 	"go.uber.org/zap"
@@ -33,15 +36,12 @@ func main() {
 
 	zap.L().Info("connected to mongo")
 
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("hello world"))
-	})
+	h := newHandler()
 
 	go func() {
 		zap.L().Info("starting ngrok server")
 
-		if err := runNgrok(handler); err != nil && err != http.ErrServerClosed {
+		if err := runNgrok(h); err != nil && err != http.ErrServerClosed {
 			panic(err)
 		}
 	}()
@@ -75,4 +75,43 @@ func runNgrok(h http.Handler) error {
 	}
 
 	return http.Serve(tun, h)
+}
+
+func newHandler() http.Handler {
+	r := chi.NewRouter()
+
+	r.Use(cors.AllowAll().Handler)
+	r.Use(middleware.RequestID)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
+
+	r.Route("/api", func(r chi.Router) {
+		r.Route("/v1", func(r chi.Router) {
+			r.Route("/users", func(r chi.Router) {
+				r.Get("/login-qr", nil)          // get qr code
+				r.Post("/login-callback", nil)   // callback from qr code
+				r.Post("/logout", nil)           // logout user
+				r.Post("/refresh-token", nil)    // refresh token
+				r.Post("/create-tba", nil)       // create token bound account (tba) for user
+				r.Get("/purchased-tickets", nil) // get list of purchased tickets
+				r.Get("/issued-tickets", nil)    // get list of published tickets
+			})
+
+			r.Route("/tickets", func(r chi.Router) {
+				r.Post("/create", nil)                // create ticket
+				r.Get("/create-qr", nil)              // get qr code
+				r.Post("/create-callback", nil)       // callback from qr code
+				r.Get("/list", nil)                   // get list of tickets
+				r.Get("/list/{id}", nil)              // get ticket by id
+				r.Get("{id}/purchase-qr", nil)        // get qr code
+				r.Post("{id}/purchase-callback", nil) // callback from qr code
+				r.Get("/{id}/verify-qr", nil)         // get qr code
+				r.Post("/{id}/verify-callback", nil)  // callback from qr code
+			})
+
+			r.HandleFunc("/ws", nil) //	handle websocket
+		})
+	})
+
+	return r
 }

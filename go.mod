@@ -3,7 +3,10 @@ module github.com/heroticket
 go 1.21.0
 
 require (
+	github.com/go-chi/chi/v5 v5.0.10
+	github.com/go-chi/cors v1.2.1
 	go.mongodb.org/mongo-driver v1.13.0
+	go.uber.org/zap v1.26.0
 	golang.ngrok.com/ngrok v1.5.1
 )
 
@@ -22,7 +25,6 @@ require (
 	github.com/xdg-go/stringprep v1.0.4 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	go.uber.org/zap v1.26.0 // indirect
 	golang.ngrok.com/muxado/v2 v2.0.0 // indirect
 	golang.org/x/crypto v0.13.0 // indirect
 	golang.org/x/net v0.15.0 // indirect
