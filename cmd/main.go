@@ -168,7 +168,7 @@ func loginQR(w http.ResponseWriter, r *http.Request) {
 
 	uri := fmt.Sprintf("%s/api/v1/users/login-callback?sessionId=%s", os.Getenv("NGROK_URL"), sessionId)
 
-	audience := "did:polygonid:polygon:mumbai:2qMqzV5bgMbZPjcjwXApoZT9yJM3i2gW31rnky2G3v"
+	audience := os.Getenv("VERIFIER_DID")
 
 	var request protocol.AuthorizationRequestMessage = auth.CreateAuthorizationRequestWithMessage(
 		"Login to Hero Ticket",
@@ -199,7 +199,11 @@ func loginQR(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write(resp)
+	_, err = w.Write(resp)
+	if err != nil {
+		http.Error(w, "internal server error", http.StatusInternalServerError)
+		return
+	}
 }
 
 func loginCallback(w http.ResponseWriter, r *http.Request) {
