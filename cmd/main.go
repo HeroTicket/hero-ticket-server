@@ -10,6 +10,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/heroticket/internal/ws"
 	"github.com/heroticket/pkg/mongo"
 	"github.com/heroticket/pkg/shutdown"
 	"go.uber.org/zap"
@@ -22,6 +23,8 @@ func main() {
 	defer logger.Sync()
 
 	zap.ReplaceGlobals(logger)
+
+	zap.L().Info("starting server")
 
 	defer func() {
 		if r := recover(); r != nil {
@@ -98,18 +101,18 @@ func newHandler() http.Handler {
 			})
 
 			r.Route("/tickets", func(r chi.Router) {
-				r.Post("/create", nil)                // create ticket
-				r.Get("/create-qr", nil)              // get qr code
-				r.Post("/create-callback", nil)       // callback from qr code
-				r.Get("/list", nil)                   // get list of tickets
-				r.Get("/list/{id}", nil)              // get ticket by id
-				r.Get("{id}/purchase-qr", nil)        // get qr code
-				r.Post("{id}/purchase-callback", nil) // callback from qr code
-				r.Get("/{id}/verify-qr", nil)         // get qr code
-				r.Post("/{id}/verify-callback", nil)  // callback from qr code
+				r.Post("/create", nil)                 // create ticket
+				r.Get("/create-qr", nil)               // get qr code
+				r.Post("/create-callback", nil)        // callback from qr code
+				r.Get("/list", nil)                    // get list of tickets
+				r.Get("/list/{id}", nil)               // get ticket by id
+				r.Get("/{id}/purchase-qr", nil)        // get qr code
+				r.Post("/{id}/purchase-callback", nil) // callback from qr code
+				r.Get("/{id}/verify-qr", nil)          // get qr code
+				r.Post("/{id}/verify-callback", nil)   // callback from qr code
 			})
 
-			r.HandleFunc("/ws", nil) //	handle websocket
+			r.HandleFunc("/ws", ws.Serve()) //	handle websocket
 		})
 	})
 
