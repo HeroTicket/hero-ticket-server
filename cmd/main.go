@@ -23,8 +23,6 @@ import (
 	"github.com/iden3/go-iden3-auth/v2/state"
 	"github.com/iden3/iden3comm/v2/protocol"
 	"go.uber.org/zap"
-	"golang.ngrok.com/ngrok"
-	"golang.ngrok.com/ngrok/config"
 
 	_ "github.com/joho/godotenv/autoload"
 )
@@ -53,12 +51,7 @@ func main() {
 	h := newHandler()
 
 	go func() {
-		zap.L().Info("starting ngrok server")
-
-		// if err := runNgrok(h); err != nil && err != http.ErrServerClosed {
-		// 	panic(err)
-		// }
-
+		zap.L().Info("starting server")
 		if err := runServer(h); err != nil && err != http.ErrServerClosed {
 			panic(err)
 		}
@@ -73,26 +66,6 @@ func main() {
 	}, syscall.SIGINT, syscall.SIGTERM)
 
 	<-stop
-}
-
-func runNgrok(h http.Handler) error {
-	tun, err := ngrok.Listen(
-		context.Background(),
-		config.HTTPEndpoint(),
-	)
-	if err != nil {
-		return err
-	}
-
-	url := tun.URL()
-
-	fmt.Println("ngrok url: ", url)
-
-	if err := os.Setenv("NGROK_URL", url); err != nil {
-		return err
-	}
-
-	return http.Serve(tun, h)
 }
 
 func runServer(h http.Handler) error {
