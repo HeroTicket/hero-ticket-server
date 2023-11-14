@@ -6,6 +6,10 @@ import (
 	"time"
 )
 
+var (
+	ErrServerClosed = http.ErrServerClosed
+)
+
 type Config struct {
 	Version      string
 	Addr         string
@@ -15,6 +19,7 @@ type Config struct {
 
 func DefaultConfig() *Config {
 	return &Config{
+		Version:      "v1",
 		Addr:         ":8080",
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 5 * time.Second,
