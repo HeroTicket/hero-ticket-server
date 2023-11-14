@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/go-redis/cache/v9"
 	auth "github.com/iden3/go-iden3-auth/v2"
 	"github.com/iden3/go-iden3-auth/v2/loaders"
 	"github.com/iden3/go-iden3-auth/v2/pubsignals"
@@ -14,7 +15,7 @@ import (
 )
 
 type Service interface {
-	LoginRequest(id, audience, callbackUrl string) (protocol.AuthorizationRequestMessage, error)
+	LoginRequest(ctx context.Context, id, audience, callbackUrl string) (protocol.AuthorizationRequestMessage, error)
 	LoginCallback(ctx context.Context, id, token string) (*protocol.AuthorizationResponseMessage, error)
 	// TODO: add more methods
 	// CreateCredential()
@@ -26,22 +27,23 @@ type Service interface {
 type didService struct {
 	rpcUrl string
 
-	loginRequestMap map[string]interface{}
+	requestCache *cache.Cache
 
 	mu sync.RWMutex
 }
 
-func New(rpcUrl string) Service {
+func New(requestCache *cache.Cache, rpcUrl string) Service {
 	svc := &didService{
-		rpcUrl:          rpcUrl,
-		loginRequestMap: make(map[string]interface{}),
-		mu:              sync.RWMutex{},
+		requestCache: requestCache,
+		rpcUrl:       rpcUrl,
+
+		mu: sync.RWMutex{},
 	}
 
 	return svc
 }
 
-func (s *didService) LoginRequest(id string, audience string, callbackUrl string) (protocol.AuthorizationRequestMessage, error) {
+func (s *didService) LoginRequest(ctx context.Context, id string, audience string, callbackUrl string) (protocol.AuthorizationRequestMessage, error) {
 	var request protocol.AuthorizationRequestMessage = auth.CreateAuthorizationRequestWithMessage(
 		"Login to Hero Ticket",
 		"Scan the QR code to login to Hero Ticket",
@@ -52,20 +54,25 @@ func (s *didService) LoginRequest(id string, audience string, callbackUrl string
 	request.ID = id
 	request.ThreadID = id
 
-	s.mu.Lock()
-	s.loginRequestMap[id] = request
-	s.mu.Unlock()
+	err := s.requestCache.Set(&cache.Item{
+		Ctx:   ctx,
+		Key:   id,
+		Value: request,
+		TTL:   time.Minute * 10,
+	})
+	if err != nil {
+		return protocol.AuthorizationRequestMessage{}, err
+	}
 
 	return request, nil
 }
 
 func (s *didService) LoginCallback(ctx context.Context, id string, token string) (*protocol.AuthorizationResponseMessage, error) {
-	s.mu.RLock()
-	request, ok := s.loginRequestMap[id]
-	s.mu.RUnlock()
+	var request protocol.AuthorizationRequestMessage
 
-	if !ok {
-		return nil, ErrRequestNotFound
+	err := s.requestCache.Get(ctx, id, &request)
+	if err != nil {
+		return nil, err
 	}
 
 	ipfsUrl := "https://ipfs.io"
@@ -98,16 +105,16 @@ func (s *didService) LoginCallback(ctx context.Context, id string, token string)
 	response, err := verifier.FullVerify(
 		ctx,
 		token,
-		request.(protocol.AuthorizationRequestMessage),
+		request,
 		pubsignals.WithAcceptedProofGenerationDelay(time.Minute*5),
 	)
 	if err != nil {
 		return nil, err
 	}
 
-	s.mu.Lock()
-	delete(s.loginRequestMap, id)
-	s.mu.Unlock()
+	go func() {
+		_ = s.requestCache.Delete(ctx, id)
+	}()
 
 	return response, nil
 }
