@@ -6,7 +6,12 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-type Service struct {
+type Service interface {
+	GenerateTokenPair(u JWTUser) (*TokenPair, error)
+	VerifyToken(token string, role TokenRole) (*JWTUser, error)
+}
+
+type jwtService struct {
 	issuer             string
 	audience           string
 	accessTokenKey     string
@@ -15,8 +20,8 @@ type Service struct {
 	refreshTokenExpiry time.Duration
 }
 
-func New(accessTokenKey, refreshTokenKey string, opts ...Option) (*Service, error) {
-	svc := &Service{
+func New(accessTokenKey, refreshTokenKey string, opts ...Option) (Service, error) {
+	svc := &jwtService{
 		accessTokenKey:  accessTokenKey,
 		refreshTokenKey: refreshTokenKey,
 	}
@@ -31,7 +36,7 @@ func New(accessTokenKey, refreshTokenKey string, opts ...Option) (*Service, erro
 }
 
 // GenerateTokenPair generates a pair of access and refresh tokens
-func (s *Service) GenerateTokenPair(u JWTUser) (*TokenPair, error) {
+func (s *jwtService) GenerateTokenPair(u JWTUser) (*TokenPair, error) {
 	// generate access token
 	accessToken, err := s.generateToken(s.getAccessTokenClaims(u), s.accessTokenKey)
 	if err != nil {
@@ -54,7 +59,7 @@ func (s *Service) GenerateTokenPair(u JWTUser) (*TokenPair, error) {
 }
 
 // VerifyToken verifies a token and returns the user info if the token is valid
-func (s *Service) VerifyToken(tokenString string, role TokenRole) (*JWTUser, error) {
+func (s *jwtService) VerifyToken(tokenString string, role TokenRole) (*JWTUser, error) {
 	// get key function based on token role
 	fn, err := s.getKeyfunc(role)
 	if err != nil {
@@ -99,7 +104,7 @@ func (s *Service) VerifyToken(tokenString string, role TokenRole) (*JWTUser, err
 }
 
 // generateToken generates a token
-func (s *Service) generateToken(claims jwt.MapClaims, key string) (string, error) {
+func (s *jwtService) generateToken(claims jwt.MapClaims, key string) (string, error) {
 	// create token
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
@@ -114,7 +119,7 @@ func (s *Service) generateToken(claims jwt.MapClaims, key string) (string, error
 }
 
 // getKeyfunc returns a key function based on token role
-func (s *Service) getKeyfunc(role TokenRole) (jwt.Keyfunc, error) {
+func (s *jwtService) getKeyfunc(role TokenRole) (jwt.Keyfunc, error) {
 	var key string
 
 	// get key based on token role
@@ -139,7 +144,7 @@ func (s *Service) getKeyfunc(role TokenRole) (jwt.Keyfunc, error) {
 }
 
 // getAccessTokenClaims returns the claims for access token
-func (s *Service) getAccessTokenClaims(u JWTUser) jwt.MapClaims {
+func (s *jwtService) getAccessTokenClaims(u JWTUser) jwt.MapClaims {
 	// access token contains email claim
 	return jwt.MapClaims{
 		"address": u.Address,
@@ -153,7 +158,7 @@ func (s *Service) getAccessTokenClaims(u JWTUser) jwt.MapClaims {
 }
 
 // getRefreshTokenClaims returns the claims for refresh token
-func (s *Service) getRefreshTokenClaims(u JWTUser) jwt.MapClaims {
+func (s *jwtService) getRefreshTokenClaims(u JWTUser) jwt.MapClaims {
 	// refresh token does not contain email claim
 	return jwt.MapClaims{
 		"iss": s.issuer,
@@ -164,8 +169,8 @@ func (s *Service) getRefreshTokenClaims(u JWTUser) jwt.MapClaims {
 	}
 }
 
-// validate validates the service configuration
-func (s *Service) validate() (*Service, error) {
+// validate validates the jwtService configuration
+func (s *jwtService) validate() (*jwtService, error) {
 	if s.accessTokenKey == "" {
 		return nil, ErrAccessTokenKeyRequired
 	}
