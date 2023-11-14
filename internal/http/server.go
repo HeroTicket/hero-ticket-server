@@ -7,6 +7,7 @@ import (
 )
 
 type Config struct {
+	Version      string
 	Addr         string
 	ReadTimeout  time.Duration
 	WriteTimeout time.Duration
@@ -24,11 +25,11 @@ type Server struct {
 	*http.Server
 }
 
-func NewServer(cfg *Config) *Server {
+func NewServer(cfg *Config, ctrls ...Controller) *Server {
 	return &Server{
 		Server: &http.Server{
 			Addr:         cfg.Addr,
-			Handler:      newRouter(),
+			Handler:      newRouter(cfg.Version, ctrls...),
 			ReadTimeout:  cfg.ReadTimeout,
 			WriteTimeout: cfg.WriteTimeout,
 		},
