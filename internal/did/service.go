@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/go-redis/cache/v9"
 	auth "github.com/iden3/go-iden3-auth/v2"
 	"github.com/iden3/go-iden3-auth/v2/loaders"
 	"github.com/iden3/go-iden3-auth/v2/pubsignals"
@@ -27,12 +26,12 @@ type Service interface {
 type didService struct {
 	rpcUrl string
 
-	requestCache *cache.Cache
+	requestCache Cache
 
 	mu sync.RWMutex
 }
 
-func New(requestCache *cache.Cache, rpcUrl string) Service {
+func New(requestCache Cache, rpcUrl string) Service {
 	svc := &didService{
 		requestCache: requestCache,
 		rpcUrl:       rpcUrl,
@@ -54,12 +53,7 @@ func (s *didService) LoginRequest(ctx context.Context, id string, audience strin
 	request.ID = id
 	request.ThreadID = id
 
-	err := s.requestCache.Set(&cache.Item{
-		Ctx:   ctx,
-		Key:   id,
-		Value: request,
-		TTL:   time.Minute * 10,
-	})
+	err := s.requestCache.Set(ctx, id, request, DefaultCacheExpiry)
 	if err != nil {
 		return protocol.AuthorizationRequestMessage{}, err
 	}
