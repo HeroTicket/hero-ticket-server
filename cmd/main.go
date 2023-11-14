@@ -8,24 +8,22 @@ import (
 	"net/http"
 	"os"
 	"syscall"
-	"time"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/heroticket/internal/did"
+	dredis "github.com/heroticket/internal/did/cache/redis"
 	"github.com/heroticket/internal/infra/mongo"
+	"github.com/heroticket/internal/infra/redis"
 	"github.com/heroticket/internal/ws"
 	"github.com/heroticket/pkg/shutdown"
-	auth "github.com/iden3/go-iden3-auth/v2"
-	"github.com/iden3/go-iden3-auth/v2/loaders"
-	"github.com/iden3/go-iden3-auth/v2/pubsignals"
-	"github.com/iden3/go-iden3-auth/v2/state"
-	"github.com/iden3/iden3comm/v2/protocol"
 	"go.uber.org/zap"
 
 	_ "github.com/joho/godotenv/autoload"
 )
+
+var didService did.Service
 
 func main() {
 	logger, _ := zap.NewProduction(zap.Fields(zap.String("service", "hero-ticket")))
@@ -45,6 +43,15 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+
+	cache, err := redis.NewCache(context.Background(), "localhost:6379")
+	if err != nil {
+		panic(err)
+	}
+
+	zap.L().Info("connected to redis")
+
+	didService = did.New(dredis.New(cache), os.Getenv("RPC_URL_MUMBAI"))
 
 	zap.L().Info("connected to mongo")
 
@@ -116,8 +123,6 @@ func newHandler() http.Handler {
 	return r
 }
 
-var requestMap = make(map[string]interface{})
-
 func loginQR(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
@@ -143,17 +148,11 @@ func loginQR(w http.ResponseWriter, r *http.Request) {
 
 	audience := os.Getenv("VERIFIER_DID")
 
-	var request protocol.AuthorizationRequestMessage = auth.CreateAuthorizationRequestWithMessage(
-		"Login to Hero Ticket",
-		"Scan the QR code to login to Hero Ticket",
-		audience,
-		uri,
-	)
-
-	request.ID = sessionId
-	request.ThreadID = sessionId
-
-	requestMap[sessionId] = request
+	request, err := didService.LoginRequest(r.Context(), sessionId, audience, uri)
+	if err != nil {
+		http.Error(w, "failed to create login request", http.StatusInternalServerError)
+		return
+	}
 
 	go ws.Send(ws.Message{
 		ID:   id,
@@ -196,12 +195,6 @@ func loginCallback(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	authRequest, ok := requestMap[sessionId]
-	if !ok {
-		http.Error(w, "request not found", http.StatusNotFound)
-		return
-	}
-
 	go ws.Send(ws.Message{
 		ID:   id,
 		Type: ws.EventMessage,
@@ -211,42 +204,9 @@ func loginCallback(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 
-	ipfsUrl := "https://ipfs.io"
-	contractAddress := "134B1BE34911E39A8397ec6289782989729807a4"
-	resolverPrefix := "polygon:mumbai"
-	ketDir := "./keys"
-
-	var verificationKeyLoader = &loaders.FSKeyLoader{
-		Dir: ketDir,
-	}
-
-	resolver := state.ETHResolver{
-		RPCUrl:          os.Getenv("RPC_URL_MUMBAI"),
-		ContractAddress: common.HexToAddress(contractAddress),
-	}
-
-	resolvers := map[string]pubsignals.StateResolver{
-		resolverPrefix: &resolver,
-	}
-
-	verifier, err := auth.NewVerifier(
-		verificationKeyLoader,
-		resolvers,
-		auth.WithIPFSGateway(ipfsUrl),
-	)
+	authResponse, err := didService.LoginCallback(r.Context(), sessionId, string(tokenBytes))
 	if err != nil {
-		http.Error(w, "could not create verifier", http.StatusInternalServerError)
-		return
-	}
-
-	authResponse, err := verifier.FullVerify(
-		r.Context(),
-		string(tokenBytes),
-		authRequest.(protocol.AuthorizationRequestMessage),
-		pubsignals.WithAcceptedProofGenerationDelay(time.Minute*5),
-	)
-	if err != nil {
-		http.Error(w, "could not verify", http.StatusInternalServerError)
+		http.Error(w, "failed to login", http.StatusInternalServerError)
 		return
 	}
 
