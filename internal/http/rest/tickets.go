@@ -13,11 +13,11 @@ func NewTicketCtrl() *TicketCtrl {
 	return &TicketCtrl{}
 }
 
-func (ctrl *TicketCtrl) Pattern() string {
+func (c *TicketCtrl) Pattern() string {
 	return "/tickets"
 }
 
-func (ctrl *TicketCtrl) Handler() http.Handler {
+func (c *TicketCtrl) Handler() http.Handler {
 	r := chi.NewRouter()
 
 	r.Post("/create", nil)
