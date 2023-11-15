@@ -9,13 +9,12 @@ type Query interface {
 }
 
 type Command interface {
-	CreateUser(ctx context.Context, user *User) (*User, error)
-	UpdateUser(ctx context.Context, user *User) (*User, error)
+	CreateUser(ctx context.Context, u *User) (*User, error)
+	UpdateUser(ctx context.Context, u *User) (*User, error)
 	DeleteUser(ctx context.Context, did string) error
 }
 
 type Repository interface {
 	Query
 	Command
-	Exec(ctx context.Context, fn func(ctx context.Context) (interface{}, error)) (interface{}, error)
 }

@@ -8,16 +8,18 @@ import (
 	"os"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/heroticket/internal/db"
 	"github.com/heroticket/internal/did"
 	"github.com/heroticket/internal/jwt"
+	"github.com/heroticket/internal/user"
 	"github.com/heroticket/internal/ws"
 )
 
 type UserCtrl struct {
-	did did.Service
-	jwt jwt.Service
-
-	// user user.Service
+	did  did.Service
+	jwt  jwt.Service
+	user user.Service
+	tx   db.Tx
 }
 
 func NewUserCtrl(did did.Service, jwt jwt.Service) *UserCtrl {
