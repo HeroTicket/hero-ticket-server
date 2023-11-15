@@ -1,16 +1,100 @@
-basePath: /v2
-host: petstore.swagger.io
+basePath: /api/v1
+definitions:
+  protocol.AuthorizationRequestMessage:
+    properties:
+      body:
+        $ref: '#/definitions/protocol.AuthorizationRequestMessageBody'
+      from:
+        type: string
+      id:
+        type: string
+      thid:
+        type: string
+      to:
+        type: string
+      typ:
+        type: string
+      type:
+        type: string
+    type: object
+  protocol.AuthorizationRequestMessageBody:
+    properties:
+      callbackUrl:
+        type: string
+      did_doc:
+        items:
+          type: integer
+        type: array
+      message:
+        type: string
+      reason:
+        type: string
+      scope:
+        items:
+          $ref: '#/definitions/protocol.ZeroKnowledgeProofRequest'
+        type: array
+    type: object
+  protocol.ZeroKnowledgeProofRequest:
+    properties:
+      circuitId:
+        type: string
+      id:
+        description: unique request id
+        type: integer
+      optional:
+        type: boolean
+      query:
+        additionalProperties: true
+        type: object
+    type: object
+  rest.CommonResponse:
+    properties:
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
+host: localhost:8080
 info:
   contact:
     email: support@swagger.io
     name: API Support
     url: http://www.swagger.io/support
-  description: This is a sample server.
+  description: This is Hero Ticket API server.
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
   termsOfService: http://swagger.io/terms/
-  title: Swagger Example API
+  title: Hero Ticket API
   version: "1.0"
-paths: {}
+paths:
+  /users/login-qr:
+    post:
+      consumes:
+      - application/json
+      description: returns login qr code
+      parameters:
+      - description: session id
+        in: query
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/protocol.AuthorizationRequestMessage'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+      summary: returns login qr code
+      tags:
+      - users
 swagger: "2.0"

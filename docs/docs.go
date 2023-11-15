@@ -23,17 +23,146 @@ const docTemplate = `{
     },
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
-    "paths": {}
+    "paths": {
+        "/users/login-qr": {
+            "post": {
+                "description": "returns login qr code",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "returns login qr code",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "session id",
+                        "name": "sessionId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/protocol.AuthorizationRequestMessage"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/rest.CommonResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rest.CommonResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "protocol.AuthorizationRequestMessage": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "$ref": "#/definitions/protocol.AuthorizationRequestMessageBody"
+                },
+                "from": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "thid": {
+                    "type": "string"
+                },
+                "to": {
+                    "type": "string"
+                },
+                "typ": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "protocol.AuthorizationRequestMessageBody": {
+            "type": "object",
+            "properties": {
+                "callbackUrl": {
+                    "type": "string"
+                },
+                "did_doc": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "scope": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/protocol.ZeroKnowledgeProofRequest"
+                    }
+                }
+            }
+        },
+        "protocol.ZeroKnowledgeProofRequest": {
+            "type": "object",
+            "properties": {
+                "circuitId": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "unique request id",
+                    "type": "integer"
+                },
+                "optional": {
+                    "type": "boolean"
+                },
+                "query": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            }
+        },
+        "rest.CommonResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        }
+    }
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "petstore.swagger.io",
-	BasePath:         "/v2",
+	Host:             "localhost:8080",
+	BasePath:         "/api/v1",
 	Schemes:          []string{},
-	Title:            "Swagger Example API",
-	Description:      "This is a sample server.",
+	Title:            "Hero Ticket API",
+	Description:      "This is Hero Ticket API server.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

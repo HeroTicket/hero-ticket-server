@@ -56,6 +56,18 @@ func (c *UserCtrl) Handler() http.Handler {
 	return r
 }
 
+// LoginQR godoc
+//
+//	@Tags			users
+//	@Summary		returns login qr code
+//	@Description	returns login qr code
+//	@Accept			json
+//	@Produce		json
+//	@Param			sessionId	query		string	true	"session id"
+//	@Success		200			{object}	protocol.AuthorizationRequestMessage
+//	@Failure		400			{object}	CommonResponse
+//	@Failure		500			{object}	CommonResponse
+//	@Router			/users/login-qr [post]
 func (c *UserCtrl) loginQR(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 

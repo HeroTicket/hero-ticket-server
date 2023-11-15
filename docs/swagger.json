@@ -1,8 +1,8 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "This is a sample server.",
-        "title": "Swagger Example API",
+        "description": "This is Hero Ticket API server.",
+        "title": "Hero Ticket API",
         "termsOfService": "http://swagger.io/terms/",
         "contact": {
             "name": "API Support",
@@ -15,7 +15,136 @@
         },
         "version": "1.0"
     },
-    "host": "petstore.swagger.io",
-    "basePath": "/v2",
-    "paths": {}
+    "host": "localhost:8080",
+    "basePath": "/api/v1",
+    "paths": {
+        "/users/login-qr": {
+            "post": {
+                "description": "returns login qr code",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "returns login qr code",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "session id",
+                        "name": "sessionId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/protocol.AuthorizationRequestMessage"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/rest.CommonResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rest.CommonResponse"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "protocol.AuthorizationRequestMessage": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "$ref": "#/definitions/protocol.AuthorizationRequestMessageBody"
+                },
+                "from": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "thid": {
+                    "type": "string"
+                },
+                "to": {
+                    "type": "string"
+                },
+                "typ": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "protocol.AuthorizationRequestMessageBody": {
+            "type": "object",
+            "properties": {
+                "callbackUrl": {
+                    "type": "string"
+                },
+                "did_doc": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "scope": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/protocol.ZeroKnowledgeProofRequest"
+                    }
+                }
+            }
+        },
+        "protocol.ZeroKnowledgeProofRequest": {
+            "type": "object",
+            "properties": {
+                "circuitId": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "unique request id",
+                    "type": "integer"
+                },
+                "optional": {
+                    "type": "boolean"
+                },
+                "query": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            }
+        },
+        "rest.CommonResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "integer"
+                }
+            }
+        }
+    }
 }
