@@ -30,6 +30,9 @@ func (q *mongoQuery) FindUserByDID(ctx context.Context, did string) (*user.User,
 	var u user.User
 
 	if err := coll.FindOne(ctx, filter).Decode(&u); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, user.ErrUserNotFound
+		}
 		return nil, err
 	}
 
@@ -44,6 +47,9 @@ func (q *mongoQuery) FindUserByWalletAddress(ctx context.Context, walletAddress 
 	var u user.User
 
 	if err := coll.FindOne(ctx, filter).Decode(&u); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, user.ErrUserNotFound
+		}
 		return nil, err
 	}
 

@@ -9,8 +9,8 @@ type Query interface {
 }
 
 type Command interface {
-	CreateUser(ctx context.Context, user *User) (*User, error)
-	UpdateUser(ctx context.Context, user *User) (*User, error)
+	CreateUser(ctx context.Context, u *User) (*User, error)
+	UpdateUser(ctx context.Context, u *User) (*User, error)
 	DeleteUser(ctx context.Context, did string) error
 }
 
