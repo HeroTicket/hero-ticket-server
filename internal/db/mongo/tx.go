@@ -3,7 +3,7 @@ package mongo
 import (
 	"context"
 
-	"github.com/heroticket/internal/tx"
+	"github.com/heroticket/internal/db"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -11,13 +11,13 @@ type mongoTx struct {
 	client *mongo.Client
 }
 
-func NewMongoTx(client *mongo.Client) tx.Tx {
+func NewMongoTx(client *mongo.Client) db.Tx {
 	return &mongoTx{
 		client: client,
 	}
 }
 
-func (tx *mongoTx) Exec(ctx context.Context, fn func(ctx context.Context) (interface{}, error)) (interface{}, error) {
+func (tx *mongoTx) Exec(ctx context.Context, fn db.TxFn) (interface{}, error) {
 	var s mongo.Session
 
 	if ctx == nil { // If context is nil, create a new one
