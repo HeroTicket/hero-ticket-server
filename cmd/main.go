@@ -6,11 +6,11 @@ import (
 	"os"
 	"syscall"
 
+	"github.com/heroticket/internal/db/mongo"
 	"github.com/heroticket/internal/did"
 	dredis "github.com/heroticket/internal/did/cache/redis"
 	"github.com/heroticket/internal/http"
 	"github.com/heroticket/internal/http/rest"
-	"github.com/heroticket/internal/infra/mongo"
 	"github.com/heroticket/internal/infra/redis"
 	"github.com/heroticket/internal/jwt"
 	"github.com/heroticket/internal/shutdown"

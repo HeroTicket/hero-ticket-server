@@ -11,7 +11,7 @@ type mongoTx struct {
 	client *mongo.Client
 }
 
-func NewMongoTx(client *mongo.Client) db.Tx {
+func NewTx(client *mongo.Client) db.Tx {
 	return &mongoTx{
 		client: client,
 	}
