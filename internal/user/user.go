@@ -1,5 +1,11 @@
 package user
 
+import "errors"
+
+var (
+	ErrUserNotFound = errors.New("user not found")
+)
+
 type User struct {
 	DID           string `json:"did" bson:"_id"`
 	WalletAddress string `json:"wallet_address" bson:"wallet_address"`

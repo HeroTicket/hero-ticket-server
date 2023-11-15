@@ -9,12 +9,14 @@ type mongoRepository struct {
 	user.Query
 	user.Command
 	client *mongo.Client
-	name   string
+	dbname string
 }
 
-func NewMongoRepository(client *mongo.Client, name string) user.Repository {
+func NewMongoRepository(client *mongo.Client, dbname, collname string) user.Repository {
 	return &mongoRepository{
-		client: client,
-		name:   name,
+		Query:   NewMongoQuery(client, dbname, collname),
+		Command: NewMongoCommand(client, dbname, collname),
+		client:  client,
+		dbname:  dbname,
 	}
 }
