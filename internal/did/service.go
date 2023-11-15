@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/heroticket/internal/cache"
 	auth "github.com/iden3/go-iden3-auth/v2"
 	"github.com/iden3/go-iden3-auth/v2/loaders"
 	"github.com/iden3/go-iden3-auth/v2/pubsignals"
@@ -26,12 +27,12 @@ type Service interface {
 type didService struct {
 	rpcUrl string
 
-	requestCache Cache
+	requestCache cache.Cache
 
 	mu sync.RWMutex
 }
 
-func New(requestCache Cache, rpcUrl string) Service {
+func New(requestCache cache.Cache, rpcUrl string) Service {
 	svc := &didService{
 		requestCache: requestCache,
 		rpcUrl:       rpcUrl,

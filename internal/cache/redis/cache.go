@@ -4,15 +4,15 @@ import (
 	"context"
 	"time"
 
-	"github.com/go-redis/cache/v9"
-	"github.com/heroticket/internal/did"
+	redis "github.com/go-redis/cache/v9"
+	"github.com/heroticket/internal/cache"
 )
 
 type redisCache struct {
-	c *cache.Cache
+	c *redis.Cache
 }
 
-func New(c *cache.Cache) did.Cache {
+func NewCache(c *redis.Cache) cache.Cache {
 	return &redisCache{c: c}
 }
 
@@ -25,7 +25,7 @@ func (r *redisCache) Get(ctx context.Context, key string, value interface{}) err
 }
 
 func (r *redisCache) Set(ctx context.Context, key string, value interface{}, ttls ...time.Duration) error {
-	item := &cache.Item{
+	item := &redis.Item{
 		Ctx:   ctx,
 		Key:   key,
 		Value: value,
