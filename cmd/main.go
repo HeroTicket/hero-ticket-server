@@ -33,14 +33,14 @@ func main() {
 		}
 	}()
 
-	client, err := mongo.New(context.Background(), "mongodb://root:example@localhost:27017/")
+	client, err := mongo.New(context.Background(), os.Getenv("MONGO_URL"))
 	if err != nil {
 		panic(err)
 	}
 
 	zap.L().Info("connected to mongo")
 
-	cache, err := redis.NewCache(context.Background(), "localhost:6379")
+	cache, err := redis.NewCache(context.Background(), os.Getenv("REDIS_URL"))
 	if err != nil {
 		panic(err)
 	}

@@ -1,5 +1,22 @@
 version: '3.9'
 services:
+  server:
+    container_name: server
+    build:
+      context: .
+      dockerfile: ./build/Dockerfile
+    restart: always
+    ports:
+      - 8080:8080
+    env_file:
+      - .env
+    environment:
+      MONGO_URL: mongodb://root:example@mongo:27017/
+      REDIS_URL: redis:6379
+    depends_on:
+      - mongo
+      - redis
+
   mongo:
     container_name: mongo
     image: mongo:5.0.22
