@@ -2,6 +2,7 @@ package mongo
 
 import (
 	"context"
+	"time"
 
 	"github.com/heroticket/internal/user"
 	"go.mongodb.org/mongo-driver/bson"
@@ -51,12 +52,28 @@ func (c *mongoCommand) UpdateUser(ctx context.Context, u *user.User) (*user.User
 
 	filter := bson.M{"_id": u.DID}
 
+	value := bson.D{}
+
+	if u.Name == "" && u.WalletAddress == "" {
+		return nil, user.ErrNothingToUpdate
+	}
+
+	if u.Name != "" {
+		value = append(value, bson.E{Key: "name", Value: u.Name})
+	}
+
+	if u.WalletAddress != "" {
+		value = append(value, bson.E{Key: "wallet_address", Value: u.WalletAddress})
+	}
+
+	updatedAt := time.Now()
+
+	value = append(value, bson.E{Key: "updated_at", Value: updatedAt})
+
 	update := bson.D{
 		{
-			Key: "$set",
-			Value: bson.D{
-				{Key: "", Value: ""},
-			},
+			Key:   "$set",
+			Value: value,
 		},
 	}
 
@@ -68,6 +85,8 @@ func (c *mongoCommand) UpdateUser(ctx context.Context, u *user.User) (*user.User
 	if res.ModifiedCount == 0 {
 		return nil, user.ErrUserNotFound
 	}
+
+	u.UpdatedAt = updatedAt
 
 	return u, nil
 }

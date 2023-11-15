@@ -1,16 +1,20 @@
 package user
 
-import "errors"
+import (
+	"errors"
+	"time"
+)
 
 var (
-	ErrUserNotFound = errors.New("user not found")
+	ErrNothingToUpdate = errors.New("nothing to update")
+	ErrUserNotFound    = errors.New("user not found")
 )
 
 type User struct {
-	DID           string `json:"did" bson:"_id"`
-	WalletAddress string `json:"wallet_address" bson:"wallet_address"`
-	Name          string `json:"name" bson:"name"`
-	IsAdmin       bool   `json:"is_admin" bson:"is_admin"`
-	CreatedAt     int64  `json:"created_at" bson:"created_at"`
-	UpdatedAt     int64  `json:"updated_at" bson:"updated_at"`
+	DID           string    `json:"did" bson:"_id"`
+	WalletAddress string    `json:"wallet_address" bson:"wallet_address"`
+	Name          string    `json:"name" bson:"name"`
+	IsAdmin       bool      `json:"is_admin" bson:"is_admin"`
+	CreatedAt     time.Time `json:"created_at" bson:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at" bson:"updated_at"`
 }
