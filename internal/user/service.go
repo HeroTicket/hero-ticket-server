@@ -4,7 +4,7 @@ import "context"
 
 type Service interface {
 	CreateUser(ctx context.Context, u *User) (*User, error)
-	UpdateUser(ctx context.Context, u *User) (*User, error)
+	UpdateUser(ctx context.Context, params *UserUpdateParams) error
 	DeleteUser(ctx context.Context, did string) error
 	FindUsers(ctx context.Context) ([]*User, error)
 	FindUserByDID(ctx context.Context, did string) (*User, error)
@@ -23,8 +23,8 @@ func (s *userService) CreateUser(ctx context.Context, u *User) (*User, error) {
 	return s.repo.CreateUser(ctx, u)
 }
 
-func (s *userService) UpdateUser(ctx context.Context, u *User) (*User, error) {
-	return s.repo.UpdateUser(ctx, u)
+func (s *userService) UpdateUser(ctx context.Context, params *UserUpdateParams) error {
+	return s.repo.UpdateUser(ctx, params)
 }
 
 func (s *userService) DeleteUser(ctx context.Context, did string) error {
