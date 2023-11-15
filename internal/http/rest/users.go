@@ -42,8 +42,8 @@ func (c *UserCtrl) Handler() http.Handler {
 
 	r.Get("/login-qr", c.loginQR)
 	r.Post("/login-callback", c.loginCallback)
-	r.Post("/logout", nil)
-	r.Post("/refresh-token", nil)
+	r.Post("/logout", c.logout)
+	r.Post("/refresh-token", c.refreshToken)
 	r.Post("/create-tba", nil)
 	r.Get("/purchased-tickets", nil)
 	r.Get("/issued-tickets", nil)
@@ -192,6 +192,80 @@ func (c *UserCtrl) loginCallback(w http.ResponseWriter, r *http.Request) {
 	response := CommonResponse{
 		Status:  http.StatusOK,
 		Message: fmt.Sprintf("User with ID %s Successfully authenticated", userDID),
+	}
+
+	_ = WriteJSON(w, http.StatusOK, response)
+}
+
+func (c *UserCtrl) logout(w http.ResponseWriter, r *http.Request) {
+	// 1. generate expired cookies
+	accessCookie := c.newCookie("access_token", "", "", -time.Hour)
+	refreshCookie := c.newCookie("refresh_token", "", "", -time.Hour)
+
+	http.SetCookie(w, accessCookie)
+	http.SetCookie(w, refreshCookie)
+
+	// 2. return success response
+	response := CommonResponse{
+		Status:  http.StatusOK,
+		Message: "Successfully logged out",
+	}
+
+	_ = WriteJSON(w, http.StatusOK, response)
+}
+
+func (c *UserCtrl) refreshToken(w http.ResponseWriter, r *http.Request) {
+	// 1. get refresh token from cookie
+	refreshCookie, err := r.Cookie("refresh_token")
+	if err != nil {
+		zap.L().Error("refresh token not found in cookie", zap.Error(err))
+		ErrorJSON(w, "refresh token not found in cookie")
+		return
+	}
+
+	// 2. validate refresh token
+	refreshToken := refreshCookie.Value
+
+	// 3. validate refresh token
+	jwtUser, err := c.jwt.VerifyToken(refreshToken, jwt.TokenRoleRefresh)
+	if err != nil {
+		zap.L().Error("failed to validate refresh token", zap.Error(err))
+		ErrorJSON(w, "failed to validate refresh token")
+		return
+	}
+
+	// 4. get user from db
+	u, err := c.user.FindUserByDID(r.Context(), jwtUser.DID)
+	if err != nil {
+		zap.L().Error("failed to find user", zap.Error(err))
+		ErrorJSON(w, "failed to find user")
+		return
+	}
+
+	newJwtUser := jwt.JWTUser{
+		DID:     u.DID,
+		Address: u.WalletAddress,
+	}
+
+	// 5. generate new token pair
+	tokenPair, err := c.jwt.GenerateTokenPair(newJwtUser)
+	if err != nil {
+		zap.L().Error("failed to generate token pair", zap.Error(err))
+		ErrorJSON(w, "failed to generate token pair")
+		return
+	}
+
+	// 6. set token pair as cookie
+	accessCookie := c.newCookie("access_token", tokenPair.AccessToken, "localhost", tokenPair.AccessTokenExpiry)
+	refreshCookie = c.newCookie("refresh_token", tokenPair.RefreshToken, "localhost", tokenPair.RefreshTokenExpiry)
+
+	http.SetCookie(w, accessCookie)
+	http.SetCookie(w, refreshCookie)
+
+	// 7. return success response
+	response := CommonResponse{
+		Status:  http.StatusOK,
+		Message: "Successfully refreshed token pair",
 	}
 
 	_ = WriteJSON(w, http.StatusOK, response)
