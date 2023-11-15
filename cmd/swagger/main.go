@@ -33,7 +33,6 @@ func main() {
 		}
 	}()
 
-	// http://localhost:1323/swagger/index.html
 	logger.Info("Browse to http://localhost:1323/swagger/index.html")
 
 	<-shutdown.GracefulShutdown(func() {

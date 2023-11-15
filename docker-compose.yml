@@ -4,7 +4,7 @@ services:
     container_name: server
     build:
       context: .
-      dockerfile: ./build/Dockerfile
+      dockerfile: ./build/server/Dockerfile
     restart: always
     ports:
       - 8080:8080
@@ -16,6 +16,15 @@ services:
     depends_on:
       - mongo
       - redis
+
+  swagger:
+    container_name: swagger
+    build:
+      context: .
+      dockerfile: ./build/swagger/Dockerfile
+    restart: always
+    ports:
+      - 1323:1323
 
   mongo:
     container_name: mongo

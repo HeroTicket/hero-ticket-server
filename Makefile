@@ -17,3 +17,8 @@ down:
 swag_gen:
 	@echo "Generating swagger docs..."
 	swag init -d cmd/server -o docs
+
+.PHONY: swagger
+swagger:
+	@echo "Starting swagger docs..."
+	docker compose up -d swagger
