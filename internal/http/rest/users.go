@@ -22,10 +22,12 @@ type UserCtrl struct {
 	tx   db.Tx
 }
 
-func NewUserCtrl(did did.Service, jwt jwt.Service) *UserCtrl {
+func NewUserCtrl(did did.Service, jwt jwt.Service, user user.Service, tx db.Tx) *UserCtrl {
 	return &UserCtrl{
-		did: did,
-		jwt: jwt,
+		did:  did,
+		jwt:  jwt,
+		user: user,
+		tx:   tx,
 	}
 }
 

@@ -6,14 +6,16 @@ import (
 	"os"
 	"syscall"
 
+	"github.com/heroticket/internal/cache/redis"
+	"github.com/heroticket/internal/db"
 	"github.com/heroticket/internal/db/mongo"
 	"github.com/heroticket/internal/did"
-	dredis "github.com/heroticket/internal/did/cache/redis"
 	"github.com/heroticket/internal/http"
 	"github.com/heroticket/internal/http/rest"
-	"github.com/heroticket/internal/infra/redis"
 	"github.com/heroticket/internal/jwt"
 	"github.com/heroticket/internal/shutdown"
+	"github.com/heroticket/internal/user"
+	userrepo "github.com/heroticket/internal/user/repository/mongo"
 	"go.uber.org/zap"
 
 	_ "github.com/joho/godotenv/autoload"
@@ -40,18 +42,22 @@ func main() {
 
 	zap.L().Info("connected to mongo")
 
-	cache, err := redis.NewCache(context.Background(), os.Getenv("REDIS_URL"))
+	cache, err := redis.New(context.Background(), os.Getenv("REDIS_URL"))
 	if err != nil {
 		panic(err)
 	}
 
 	zap.L().Info("connected to redis")
 
-	didSvc := did.New(dredis.New(cache), os.Getenv("RPC_URL_MUMBAI"))
+	userRepo := userrepo.NewMongoRepository(client, "hero-ticket", "users")
+
+	didSvc := did.New(redis.NewCache(cache), os.Getenv("RPC_URL_MUMBAI"))
 	jwtSvc, _ := jwt.New("secret1", "secret2")
+	userSvc := user.New(userRepo)
+	tx := mongo.NewTx(client)
 
 	server := newServer(
-		initUserController(didSvc, jwtSvc),
+		initUserController(didSvc, jwtSvc, userSvc, tx),
 		initTicketController(),
 	)
 
@@ -78,8 +84,8 @@ func main() {
 	<-stop
 }
 
-func initUserController(didSvc did.Service, jwtSvc jwt.Service) *rest.UserCtrl {
-	return rest.NewUserCtrl(didSvc, jwtSvc)
+func initUserController(didSvc did.Service, jwtSvc jwt.Service, userSvc user.Service, tx db.Tx) *rest.UserCtrl {
+	return rest.NewUserCtrl(didSvc, jwtSvc, userSvc, tx)
 }
 
 func initTicketController() *rest.TicketCtrl {
