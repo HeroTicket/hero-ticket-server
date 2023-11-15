@@ -8,11 +8,7 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-func New(ctx context.Context, addr string) (*redis.Client, error) {
-	return new(ctx, addr)
-}
-
-func NewCache(ctx context.Context, addr string) (*cache.Cache, error) {
+func New(ctx context.Context, addr string) (*cache.Cache, error) {
 	client, err := new(ctx, addr)
 	if err != nil {
 		return nil, err
