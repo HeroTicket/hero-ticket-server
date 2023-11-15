@@ -50,28 +50,34 @@ func (c *mongoCommand) DeleteUser(ctx context.Context, did string) error {
 	return nil
 }
 
-func (c *mongoCommand) UpdateUser(ctx context.Context, u *user.User) (*user.User, error) {
+func (c *mongoCommand) UpdateUser(ctx context.Context, params *user.UserUpdateParams) error {
 	coll := c.collection()
 
-	filter := bson.M{"_id": u.DID}
+	if params.DID == "" {
+		return user.ErrInvalidID
+	}
+
+	filter := bson.M{"_id": params.DID}
 
 	value := bson.D{}
 
-	if u.Name == "" && u.WalletAddress == "" {
-		return nil, user.ErrNothingToUpdate
+	if params.Name == "" && params.WalletAddress == "" && params.TBAAddress == "" {
+		return user.ErrNothingToUpdate
 	}
 
-	if u.Name != "" {
-		value = append(value, bson.E{Key: "name", Value: u.Name})
+	if params.Name != "" {
+		value = append(value, bson.E{Key: "name", Value: params.Name})
 	}
 
-	if u.WalletAddress != "" {
-		value = append(value, bson.E{Key: "wallet_address", Value: u.WalletAddress})
+	if params.WalletAddress != "" {
+		value = append(value, bson.E{Key: "wallet_address", Value: params.WalletAddress})
 	}
 
-	updatedAt := time.Now()
+	if params.TBAAddress != "" {
+		value = append(value, bson.E{Key: "tba_address", Value: params.TBAAddress})
+	}
 
-	value = append(value, bson.E{Key: "updated_at", Value: updatedAt})
+	value = append(value, bson.E{Key: "updated_at", Value: time.Now()})
 
 	update := bson.D{
 		{
@@ -82,16 +88,14 @@ func (c *mongoCommand) UpdateUser(ctx context.Context, u *user.User) (*user.User
 
 	res, err := coll.UpdateOne(ctx, filter, update)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	if res.ModifiedCount == 0 {
-		return nil, user.ErrUserNotFound
+		return user.ErrUserNotFound
 	}
 
-	u.UpdatedAt = updatedAt
-
-	return u, nil
+	return nil
 }
 
 func (c *mongoCommand) collection() *mongo.Collection {
