@@ -6,7 +6,7 @@ WORKDIR /app
 
 COPY . .
 
-RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -a -o ./server ./cmd
+RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -a -o ./server ./cmd/server
 
 FROM debian:stable
 

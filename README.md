@@ -5,5 +5,5 @@
 ### Generate Swagger API Documentation
 
 ```bash
-$ swag init -d cmd -o docs
+$ swag init -d cmd/server -o docs
 ```

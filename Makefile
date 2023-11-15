@@ -12,3 +12,8 @@ up_build:
 down:
 	@echo "Stopping containers..."
 	docker compose down
+
+.PHONY: swag_gen
+swag_gen:
+	@echo "Generating swagger docs..."
+	swag init -d cmd/server -o docs
