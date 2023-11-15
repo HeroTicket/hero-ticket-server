@@ -44,9 +44,14 @@ func (c *UserCtrl) Handler() http.Handler {
 	r.Post("/login-callback", c.loginCallback)
 	r.Post("/logout", c.logout)
 	r.Post("/refresh-token", c.refreshToken)
-	r.Post("/create-tba", nil)
-	r.Get("/purchased-tickets", nil)
-	r.Get("/issued-tickets", nil)
+
+	r.Group(func(r chi.Router) {
+		r.Use(AccessTokenRequired(c.jwt))
+
+		r.Post("/create-tba", nil)
+		r.Get("/purchased-tickets", nil)
+		r.Get("/issued-tickets", nil)
+	})
 
 	return r
 }

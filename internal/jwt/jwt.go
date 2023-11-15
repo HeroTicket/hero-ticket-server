@@ -6,6 +6,7 @@ import (
 )
 
 var (
+	ErrInvalidContext          = errors.New("invalid context")
 	ErrInvalidToken            = errors.New("invalid token")
 	ErrInvalidTokenRole        = errors.New("invalid token role")
 	ErrInvalidSigningMethod    = errors.New("invalid token signing method")
@@ -31,3 +32,5 @@ type JWTUser struct {
 	DID     string `json:"did"`
 	Address string `json:"address"`
 }
+
+type JWTUserKey struct{}
