@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/anandvarma/namegen"
 	"github.com/go-chi/chi/v5"
 	"github.com/heroticket/internal/db"
 	"github.com/heroticket/internal/did"
@@ -152,7 +153,8 @@ func (c *UserCtrl) loginCallback(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if err == user.ErrUserNotFound {
 			u, err = c.user.CreateUser(r.Context(), &user.User{
-				DID: userDID,
+				DID:  userDID,
+				Name: namegen.New().Get(),
 			})
 			if err != nil {
 				zap.L().Error("failed to create user", zap.Error(err))
@@ -180,8 +182,8 @@ func (c *UserCtrl) loginCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 7. set token pair as cookie
-	accessCookie := c.newCookie("access_token", "localhost", tokenPair.AccessToken, tokenPair.AccessTokenExpiry)
-	refreshCookie := c.newCookie("refresh_token", "localhost", tokenPair.RefreshToken, tokenPair.RefreshTokenExpiry)
+	accessCookie := c.newCookie("access_token", tokenPair.AccessToken, "localhost", tokenPair.AccessTokenExpiry)
+	refreshCookie := c.newCookie("refresh_token", tokenPair.RefreshToken, "localhost", tokenPair.RefreshTokenExpiry)
 
 	http.SetCookie(w, accessCookie)
 	http.SetCookie(w, refreshCookie)

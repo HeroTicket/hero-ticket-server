@@ -19,6 +19,7 @@ require (
 )
 
 require (
+	github.com/anandvarma/namegen v0.0.0-20230727084436-5197c6ea3255 // indirect
 	github.com/benbjohnson/clock v1.3.5 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect

@@ -26,6 +26,9 @@ func NewMongoCommand(client *mongo.Client, dbname, collname string) user.Command
 func (c *mongoCommand) CreateUser(ctx context.Context, u *user.User) (*user.User, error) {
 	coll := c.collection()
 
+	u.CreatedAt = time.Now()
+	u.UpdatedAt = time.Now()
+
 	_, err := coll.InsertOne(ctx, u)
 	if err != nil {
 		return nil, err
