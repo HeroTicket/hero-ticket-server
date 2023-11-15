@@ -1,6 +1,7 @@
 package jwt
 
 import (
+	"context"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -9,6 +10,8 @@ import (
 type Service interface {
 	GenerateTokenPair(u JWTUser) (*TokenPair, error)
 	VerifyToken(token string, role TokenRole) (*JWTUser, error)
+	NewContext(ctx context.Context, u JWTUser) context.Context
+	FromContext(ctx context.Context) (*JWTUser, error)
 }
 
 type jwtService struct {
@@ -101,6 +104,21 @@ func (s *jwtService) VerifyToken(tokenString string, role TokenRole) (*JWTUser, 
 
 	// invalid token
 	return nil, ErrInvalidToken
+}
+
+// NewContext returns a new context with the user info
+func (s *jwtService) NewContext(ctx context.Context, u JWTUser) context.Context {
+	return context.WithValue(ctx, JWTUserKey{}, u)
+}
+
+// FromContext returns the user info from the context
+func (s *jwtService) FromContext(ctx context.Context) (*JWTUser, error) {
+	u, ok := ctx.Value(JWTUserKey{}).(JWTUser)
+	if !ok {
+		return nil, ErrInvalidContext
+	}
+
+	return &u, nil
 }
 
 // generateToken generates a token
