@@ -61,13 +61,12 @@ func (c *UserCtrl) Handler() http.Handler {
 //	@Tags			users
 //	@Summary		returns login qr code
 //	@Description	returns login qr code
-//	@Accept			json
 //	@Produce		json
 //	@Param			sessionId	query		string	true	"session id"
 //	@Success		200			{object}	protocol.AuthorizationRequestMessage
 //	@Failure		400			{object}	CommonResponse
 //	@Failure		500			{object}	CommonResponse
-//	@Router			/users/login-qr [post]
+//	@Router			/users/login-qr [get]
 func (c *UserCtrl) loginQR(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
@@ -116,6 +115,18 @@ func (c *UserCtrl) loginQR(w http.ResponseWriter, r *http.Request) {
 	_ = WriteJSON(w, http.StatusOK, request)
 }
 
+// LoginCallback godoc
+//
+//	@Tags			users
+//	@Summary		processes login callback
+//	@Description	processes login callback
+//	@Accept 		plain
+//	@Produce		json
+//	@Param			sessionId	query		string	true	"session id"
+//	@Success		200			{object}	CommonResponse
+//	@Failure		400			{object}	CommonResponse
+//	@Failure		500			{object}	CommonResponse
+//	@Router			/users/login-callback [post]
 func (c *UserCtrl) loginCallback(w http.ResponseWriter, r *http.Request) {
 	// 1. get session id from query params
 	sessionId := r.URL.Query().Get("sessionId")
@@ -214,6 +225,14 @@ func (c *UserCtrl) loginCallback(w http.ResponseWriter, r *http.Request) {
 	_ = WriteJSON(w, http.StatusOK, response)
 }
 
+// Logout godoc
+//
+//	@Tags			users
+//	@Summary		logs out user
+//	@Description	logs out user
+//	@Produce		json
+//	@Success		200			{object}	CommonResponse
+//	@Router			/users/logout [post]
 func (c *UserCtrl) logout(w http.ResponseWriter, r *http.Request) {
 	// 1. generate expired cookies
 	accessCookie := c.newCookie("access_token", "", "", -time.Hour)
@@ -231,6 +250,15 @@ func (c *UserCtrl) logout(w http.ResponseWriter, r *http.Request) {
 	_ = WriteJSON(w, http.StatusOK, response)
 }
 
+// RefreshToken godoc
+//
+//	@Tags			users
+//	@Summary		refreshes token pair
+//	@Description	refreshes token pair
+//	@Produce		json
+//	@Success		200			{object}	CommonResponse
+//	@Failure		400			{object}	CommonResponse
+//	@Router			/users/refresh-token [post]
 func (c *UserCtrl) refreshToken(w http.ResponseWriter, r *http.Request) {
 	// 1. get refresh token from cookie
 	refreshCookie, err := r.Cookie("refresh_token")

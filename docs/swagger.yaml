@@ -68,10 +68,37 @@ info:
   title: Hero Ticket API
   version: "1.0"
 paths:
-  /users/login-qr:
+  /users/login-callback:
     post:
       consumes:
+      - text/plain
+      description: processes login callback
+      parameters:
+      - description: session id
+        in: query
+        name: sessionId
+        required: true
+        type: string
+      produces:
       - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+      summary: processes login callback
+      tags:
+      - users
+  /users/login-qr:
+    get:
       description: returns login qr code
       parameters:
       - description: session id
@@ -95,6 +122,36 @@ paths:
           schema:
             $ref: '#/definitions/rest.CommonResponse'
       summary: returns login qr code
+      tags:
+      - users
+  /users/logout:
+    post:
+      description: logs out user
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+      summary: logs out user
+      tags:
+      - users
+  /users/refresh-token:
+    post:
+      description: refreshes token pair
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+      summary: refreshes token pair
       tags:
       - users
 swagger: "2.0"
