@@ -6,9 +6,10 @@ import (
 )
 
 var (
-	ErrInvalidID       = errors.New("invalid id")
-	ErrNothingToUpdate = errors.New("nothing to update")
-	ErrUserNotFound    = errors.New("user not found")
+	ErrInvalidID        = errors.New("invalid id")
+	ErrNothingToUpdate  = errors.New("nothing to update")
+	ErrUserNotFound     = errors.New("user not found")
+	ErrTBAAlreadyExists = errors.New("tba address already exists")
 )
 
 type User struct {
