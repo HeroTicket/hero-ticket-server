@@ -24,6 +24,16 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/users/create-tba": {
+            "post": {
+                "responses": {}
+            }
+        },
+        "/users/issued-tickets": {
+            "get": {
+                "responses": {}
+            }
+        },
         "/users/login-callback": {
             "post": {
                 "description": "processes login callback",
@@ -129,6 +139,37 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/profile": {
+            "get": {
+                "description": "returns user profile",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "returns user profile",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/github_com_heroticket_internal_user.User"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/rest.CommonResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/purchased-tickets": {
+            "get": {
+                "responses": {}
+            }
+        },
         "/users/refresh-token": {
             "post": {
                 "description": "refreshes token pair",
@@ -157,6 +198,32 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "github_com_heroticket_internal_user.User": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "did": {
+                    "type": "string"
+                },
+                "is_admin": {
+                    "type": "boolean"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "tba_address": {
+                    "type": "string"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "wallet_address": {
+                    "type": "string"
+                }
+            }
+        },
         "protocol.AuthorizationRequestMessage": {
             "type": "object",
             "properties": {

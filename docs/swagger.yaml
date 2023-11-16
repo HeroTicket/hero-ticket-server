@@ -1,5 +1,22 @@
 basePath: /api/v1
 definitions:
+  github_com_heroticket_internal_user.User:
+    properties:
+      created_at:
+        type: string
+      did:
+        type: string
+      is_admin:
+        type: boolean
+      name:
+        type: string
+      tba_address:
+        type: string
+      updated_at:
+        type: string
+      wallet_address:
+        type: string
+    type: object
   protocol.AuthorizationRequestMessage:
     properties:
       body:
@@ -68,6 +85,12 @@ info:
   title: Hero Ticket API
   version: "1.0"
 paths:
+  /users/create-tba:
+    post:
+      responses: {}
+  /users/issued-tickets:
+    get:
+      responses: {}
   /users/login-callback:
     post:
       consumes:
@@ -137,6 +160,26 @@ paths:
       summary: logs out user
       tags:
       - users
+  /users/profile:
+    get:
+      description: returns user profile
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_heroticket_internal_user.User'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+      summary: returns user profile
+      tags:
+      - users
+  /users/purchased-tickets:
+    get:
+      responses: {}
   /users/refresh-token:
     post:
       description: refreshes token pair

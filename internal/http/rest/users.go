@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -48,9 +49,10 @@ func (c *UserCtrl) Handler() http.Handler {
 	r.Group(func(r chi.Router) {
 		r.Use(AccessTokenRequired(c.jwt))
 
-		r.Post("/create-tba", nil)
-		r.Get("/purchased-tickets", nil)
-		r.Get("/issued-tickets", nil)
+		r.Post("/create-tba", c.createTBA)
+		r.Get("/profile", c.profile)
+		r.Get("/purchased-tickets", c.purchasedTickets)
+		r.Get("/issued-tickets", c.issuedTickets)
 	})
 
 	return r
@@ -316,16 +318,134 @@ func (c *UserCtrl) refreshToken(w http.ResponseWriter, r *http.Request) {
 	_ = WriteJSON(w, http.StatusOK, response)
 }
 
-func (c *UserCtrl) newCookie(name, value, domain string, expiry time.Duration) *http.Cookie {
-	return &http.Cookie{
-		Name:     name,
-		Value:    value,
-		Domain:   domain,
-		Path:     "/",
-		Expires:  time.Now().Add(expiry),
-		MaxAge:   int(expiry.Seconds()),
-		SameSite: http.SameSiteStrictMode,
-		HttpOnly: true,
-		Secure:   true,
+// CreateTBA godoc
+//
+//	@Tags			users
+//	@Summary		creates DID bounded TBA for user
+//	@Description	creates DID bounded TBA for user
+
+// @Router			/users/create-tba [post]
+func (c *UserCtrl) createTBA(w http.ResponseWriter, r *http.Request) {
+	// 1. get user from context
+	jwtUser, err := c.jwt.FromContext(r.Context())
+	if err != nil {
+		zap.L().Error("failed to get user from context", zap.Error(err))
+		ErrorJSON(w, "user not found")
+		return
 	}
+
+	fn := func(ctx context.Context) (interface{}, error) {
+		// 2. check if user already has TBA
+		u, err := c.user.FindUserByDID(ctx, jwtUser.DID)
+		if err != nil {
+			return nil, err
+		}
+
+		if u.TBAAddress != "" {
+			return nil, user.ErrTBAAlreadyExists
+		}
+
+		// TODO
+
+		// 3. create TBA
+
+		// 4. update user with TBA
+
+		// 5. return success response
+
+		return nil, nil
+	}
+
+	_, err = c.tx.Exec(r.Context(), fn)
+	if err != nil {
+		if err == user.ErrTBAAlreadyExists {
+			ErrorJSON(w, "TBA already exists")
+			return
+		}
+
+		zap.L().Error("failed to create TBA", zap.Error(err))
+		ErrorJSON(w, "failed to create TBA")
+		return
+	}
+
+	response := CommonResponse{
+		Status:  http.StatusCreated,
+		Message: "Successfully created TBA",
+	}
+
+	_ = WriteJSON(w, http.StatusCreated, response)
+}
+
+// Profile godoc
+//
+//	@Tags			users
+//	@Summary		returns user profile
+//	@Description	returns user profile
+//	@Produce		json
+//	@Success		200			{object}	user.User
+//	@Failure		400			{object}	CommonResponse
+//	@Router			/users/profile [get]
+func (c *UserCtrl) profile(w http.ResponseWriter, r *http.Request) {
+	// 1. get user from context
+	jwtUser, err := c.jwt.FromContext(r.Context())
+	if err != nil {
+		zap.L().Error("failed to get user from context", zap.Error(err))
+		ErrorJSON(w, "user not found")
+		return
+	}
+
+	// 2. get user from db
+	u, err := c.user.FindUserByDID(r.Context(), jwtUser.DID)
+	if err != nil {
+		zap.L().Error("failed to find user", zap.Error(err))
+		ErrorJSON(w, "failed to find user")
+		return
+	}
+
+	// 3. return user as json response
+	_ = WriteJSON(w, http.StatusOK, u)
+}
+
+// PurchasedTickets godoc
+//
+//	@Tags			users
+//	@Summary		returns purchased tickets
+//	@Description	returns purchased tickets
+//	@Produce		json
+
+// @Router			/users/purchased-tickets [get]
+func (c *UserCtrl) purchasedTickets(w http.ResponseWriter, r *http.Request) {
+	// 1. get user from context
+	_, err := c.jwt.FromContext(r.Context())
+	if err != nil {
+		zap.L().Error("failed to get user from context", zap.Error(err))
+		ErrorJSON(w, "user not found")
+		return
+	}
+
+	// 2. get purchased tickets from db
+
+	// 3. return purchased tickets as json response
+}
+
+// IssuedTickets godoc
+//
+//	@Tags			users
+//	@Summary		returns issued tickets
+//	@Description	returns issued tickets
+//	@Produce		json
+
+// @Router			/users/issued-tickets [get]
+func (c *UserCtrl) issuedTickets(w http.ResponseWriter, r *http.Request) {
+	// 1. get user from context
+	_, err := c.jwt.FromContext(r.Context())
+	if err != nil {
+		zap.L().Error("failed to get user from context", zap.Error(err))
+		ErrorJSON(w, "user not found")
+		return
+	}
+
+	// 2. get issued tickets from db
+
+	// 3. return issued tickets as json response
 }
