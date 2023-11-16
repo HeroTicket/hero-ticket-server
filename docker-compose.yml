@@ -51,6 +51,14 @@ services:
     volumes:
       - ./configs/redis/redis.conf:/usr/local/etc/redis/redis.conf
 
+  anvil:
+    container_name: anvil
+    image: ghcr.io/foundry-rs/foundry:latest
+    command: anvil
+    restart: always
+    ports:
+      - 8545:8545
+
 volumes:
   mongo-data:
     driver: local
