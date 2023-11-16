@@ -32,6 +32,7 @@ jobs:
           SERVER_REPOSITORY: ${{ secrets.SERVER_REPOSITORY }}
           SERVER_IMAGE_TAG: ${{ secrets.SERVER_IMAGE_TAG }}
         run: |
+          echo $ECR_REGISTRY/$SERVER_REPOSITORY:$SERVER_IMAGE_TAG
           docker build -t $ECR_REGISTRY/$SERVER_REPOSITORY:$SERVER_IMAGE_TAG . -f ./build/server/Dockerfile
           docker push $ECR_REGISTRY/$SERVER_REPOSITORY:$SERVER_IMAGE_TAG
 
@@ -42,5 +43,6 @@ jobs:
           SWAGGER_REPOSITORY: ${{ secrets.SWAGGER_REPOSITORY }}
           SWAGGER_IMAGE_TAG: ${{ secrets.SWAGGER_IMAGE_TAG }}
         run: |
+          echo $ECR_REGISTRY/$SWAGGER_REPOSITORY:$SWAGGER_IMAGE_TAG
           docker build -t $ECR_REGISTRY/$SWAGGER_REPOSITORY:$SWAGGER_IMAGE_TAG . -f ./build/swagger/Dockerfile
           docker push $ECR_REGISTRY/$SWAGGER_REPOSITORY:$SWAGGER_IMAGE_TAG
