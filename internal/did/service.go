@@ -2,7 +2,6 @@ package did
 
 import (
 	"context"
-	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -27,17 +26,15 @@ type Service interface {
 type didService struct {
 	rpcUrl string
 
+	repo         Repository
 	requestCache cache.Cache
-
-	mu sync.RWMutex
 }
 
-func New(requestCache cache.Cache, rpcUrl string) Service {
+func New(repo Repository, requestCache cache.Cache, rpcUrl string) Service {
 	svc := &didService{
+		repo:         repo,
 		requestCache: requestCache,
 		rpcUrl:       rpcUrl,
-
-		mu: sync.RWMutex{},
 	}
 
 	return svc
