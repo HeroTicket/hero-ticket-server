@@ -10,6 +10,7 @@ import (
 	"github.com/heroticket/internal/db"
 	"github.com/heroticket/internal/db/mongo"
 	"github.com/heroticket/internal/did"
+	didrepo "github.com/heroticket/internal/did/repository/mongo"
 	"github.com/heroticket/internal/http"
 	"github.com/heroticket/internal/http/rest"
 	"github.com/heroticket/internal/jwt"
@@ -63,9 +64,10 @@ func main() {
 
 	zap.L().Info("connected to redis")
 
+	didRepo := didrepo.NewRepository(client, "hero-ticket", "dids")
 	userRepo := userrepo.NewMongoRepository(client, "hero-ticket", "users")
 
-	didSvc := did.New(redis.NewCache(cache), os.Getenv("RPC_URL_MUMBAI"))
+	didSvc := did.New(didRepo, redis.NewCache(cache), os.Getenv("RPC_URL_MUMBAI"))
 	jwtSvc, _ := jwt.New("secret1", "secret2")
 	userSvc := user.New(userRepo)
 	tx := mongo.NewTx(client)
