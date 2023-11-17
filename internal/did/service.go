@@ -2,7 +2,6 @@ package did
 
 import (
 	"context"
-	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -22,22 +21,25 @@ type Service interface {
 	// VerifyCredential()
 	// VerifyCredentialCallback()
 	// RevokeCredential()
+
+	CreateVerifier(ctx context.Context, v *Verifier) (*Verifier, error)
+	DeleteVerifier(ctx context.Context, id string) error
+	FindVerifierByID(ctx context.Context, id string) (*Verifier, error)
+	FindMatchedVerifier(ctx context.Context, didStr, walletAddress, contractAddress string) (*Verifier, error)
 }
 
 type didService struct {
 	rpcUrl string
 
+	repo         Repository
 	requestCache cache.Cache
-
-	mu sync.RWMutex
 }
 
-func New(requestCache cache.Cache, rpcUrl string) Service {
+func New(repo Repository, requestCache cache.Cache, rpcUrl string) Service {
 	svc := &didService{
+		repo:         repo,
 		requestCache: requestCache,
 		rpcUrl:       rpcUrl,
-
-		mu: sync.RWMutex{},
 	}
 
 	return svc
@@ -112,4 +114,20 @@ func (s *didService) LoginCallback(ctx context.Context, id string, token string)
 	}()
 
 	return response, nil
+}
+
+func (s *didService) CreateVerifier(ctx context.Context, v *Verifier) (*Verifier, error) {
+	return s.repo.CreateVerifier(ctx, v)
+}
+
+func (s *didService) DeleteVerifier(ctx context.Context, id string) error {
+	return s.repo.DeleteVerifier(ctx, id)
+}
+
+func (s *didService) FindVerifierByID(ctx context.Context, id string) (*Verifier, error) {
+	return s.repo.FindVerifierByID(ctx, id)
+}
+
+func (s *didService) FindMatchedVerifier(ctx context.Context, didStr, walletAddress, contractAddress string) (*Verifier, error) {
+	return s.repo.FindMatchedVerifier(ctx, didStr, walletAddress, contractAddress)
 }
