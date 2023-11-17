@@ -12,7 +12,7 @@ var (
 var DefaultCacheExpiry = 10 * time.Minute
 
 type Verifier struct {
-	ID              string    `json:"id" bson:"_id"`
+	ID              string    `json:"id" bson:"_id,omitempty"`
 	DID             string    `json:"did" bson:"did"`
 	WalletAddress   string    `json:"wallet_address" bson:"wallet_address"`
 	ContractAddress string    `json:"contract_address" bson:"contract_address"`
