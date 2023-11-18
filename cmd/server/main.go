@@ -14,6 +14,8 @@ import (
 	"github.com/heroticket/internal/http"
 	"github.com/heroticket/internal/http/rest"
 	"github.com/heroticket/internal/jwt"
+	"github.com/heroticket/internal/notice"
+	noticerepo "github.com/heroticket/internal/notice/repository/mongo"
 	"github.com/heroticket/internal/shutdown"
 	"github.com/heroticket/internal/user"
 	userrepo "github.com/heroticket/internal/user/repository/mongo"
@@ -65,15 +67,18 @@ func main() {
 	zap.L().Info("connected to redis")
 
 	didRepo := didrepo.NewRepository(client, "hero-ticket", "dids")
+	noticeRepo := noticerepo.New(client, "hero-ticket", "notices")
 	userRepo := userrepo.NewMongoRepository(client, "hero-ticket", "users")
 
 	didSvc := did.New(didRepo, redis.NewCache(cache), os.Getenv("RPC_URL_MUMBAI"))
 	jwtSvc, _ := jwt.New("secret1", "secret2")
+	noticeSvc := notice.New(noticeRepo)
 	userSvc := user.New(userRepo)
 	tx := mongo.NewTx(client)
 
 	server := newServer(
 		initUserController(didSvc, jwtSvc, userSvc, tx),
+		initNoticeController(jwtSvc, noticeSvc, userSvc),
 		initTicketController(),
 	)
 
@@ -102,6 +107,10 @@ func main() {
 
 func initUserController(didSvc did.Service, jwtSvc jwt.Service, userSvc user.Service, tx db.Tx) *rest.UserCtrl {
 	return rest.NewUserCtrl(didSvc, jwtSvc, userSvc, tx)
+}
+
+func initNoticeController(jwtSvc jwt.Service, noticeSvc notice.Service, userSvc user.Service) *rest.NoticeCtrl {
+	return rest.NewNoticeCtrl(jwtSvc, noticeSvc, userSvc)
 }
 
 func initTicketController() *rest.TicketCtrl {

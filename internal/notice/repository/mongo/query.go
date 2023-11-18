@@ -113,6 +113,10 @@ func (q *mongoQuery) pagination(total, page, limit int64) *notice.Pagination {
 	start := max(1, page-2)
 	end := min(pages, page+2)
 
+	if end < start {
+		end = start
+	}
+
 	hasNext := page < pages
 	hasPrev := page > 1
 

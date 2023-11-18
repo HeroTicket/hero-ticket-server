@@ -5,34 +5,31 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/heroticket/internal/db"
 	"github.com/heroticket/internal/jwt"
 	"github.com/heroticket/internal/notice"
 	"github.com/heroticket/internal/user"
 	"go.uber.org/zap"
 )
 
-type noticeCtrl struct {
+type NoticeCtrl struct {
 	jwt    jwt.Service
 	notice notice.Service
 	user   user.Service
-	tx     db.Tx
 }
 
-func NewNoticeCtrl(jwt jwt.Service, notice notice.Service, user user.Service, tx db.Tx) *noticeCtrl {
-	return &noticeCtrl{
+func NewNoticeCtrl(jwt jwt.Service, notice notice.Service, user user.Service) *NoticeCtrl {
+	return &NoticeCtrl{
 		jwt:    jwt,
 		notice: notice,
 		user:   user,
-		tx:     tx,
 	}
 }
 
-func (c *noticeCtrl) Pattern() string {
+func (c *NoticeCtrl) Pattern() string {
 	return "/notices"
 }
 
-func (c *noticeCtrl) Handler() http.Handler {
+func (c *NoticeCtrl) Handler() http.Handler {
 	r := chi.NewRouter()
 
 	r.Get("/", c.Notices)
@@ -60,7 +57,7 @@ func (c *noticeCtrl) Handler() http.Handler {
 // @Failure 400 {object} CommonResponse
 // @Failure 500 {object} CommonResponse
 // @Router /notices [get]
-func (c *noticeCtrl) Notices(w http.ResponseWriter, r *http.Request) {
+func (c *NoticeCtrl) Notices(w http.ResponseWriter, r *http.Request) {
 	pageStr := r.URL.Query().Get("page")
 	limitStr := r.URL.Query().Get("limit")
 
@@ -118,7 +115,7 @@ func (c *noticeCtrl) Notices(w http.ResponseWriter, r *http.Request) {
 // @Failure 400 {object} CommonResponse
 // @Failure 500 {object} CommonResponse
 // @Router /notices/{id} [get]
-func (c *noticeCtrl) Notice(w http.ResponseWriter, r *http.Request) {
+func (c *NoticeCtrl) Notice(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	n, err := c.notice.GetNotice(r.Context(), id)
@@ -148,7 +145,7 @@ func (c *noticeCtrl) Notice(w http.ResponseWriter, r *http.Request) {
 // @Failure 401 {object} CommonResponse
 // @Failure 500 {object} CommonResponse
 // @Router /notices [post]
-func (c *noticeCtrl) CreateNotice(w http.ResponseWriter, r *http.Request) {
+func (c *NoticeCtrl) CreateNotice(w http.ResponseWriter, r *http.Request) {
 	jwtUser, err := c.jwt.FromContext(r.Context())
 	if err != nil {
 		zap.L().Error("user not found", zap.Error(err))
@@ -215,7 +212,7 @@ func (c *noticeCtrl) CreateNotice(w http.ResponseWriter, r *http.Request) {
 // @Failure 401 {object} CommonResponse
 // @Failure 500 {object} CommonResponse
 // @Router /notices/{id} [put]
-func (c *noticeCtrl) UpdateNotice(w http.ResponseWriter, r *http.Request) {
+func (c *NoticeCtrl) UpdateNotice(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
 	jwtUser, err := c.jwt.FromContext(r.Context())
