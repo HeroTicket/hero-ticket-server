@@ -17,6 +17,38 @@ definitions:
       wallet_address:
         type: string
     type: object
+  notice.Notice:
+    properties:
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  notice.Pagination:
+    properties:
+      current_page:
+        type: integer
+      end:
+        type: integer
+      has_next:
+        type: boolean
+      has_prev:
+        type: boolean
+      limit:
+        type: integer
+      pages:
+        type: integer
+      start:
+        type: integer
+      total:
+        type: integer
+    type: object
   protocol.AuthorizationRequestMessage:
     properties:
       body:
@@ -71,6 +103,15 @@ definitions:
       status:
         type: integer
     type: object
+  rest.NoticesResponse:
+    properties:
+      notices:
+        items:
+          $ref: '#/definitions/notice.Notice'
+        type: array
+      pagination:
+        $ref: '#/definitions/notice.Pagination'
+    type: object
 host: localhost:8080
 info:
   contact:
@@ -85,6 +126,138 @@ info:
   title: Hero Ticket API
   version: "1.0"
 paths:
+  /notices:
+    get:
+      description: Get notices
+      parameters:
+      - description: page
+        in: query
+        name: page
+        type: integer
+      - description: limit
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rest.NoticesResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+      summary: Get notices
+      tags:
+      - notices
+    post:
+      description: Create notice
+      parameters:
+      - description: title
+        in: formData
+        name: title
+        required: true
+        type: string
+      - description: content
+        in: formData
+        name: content
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+      summary: Create notice
+      tags:
+      - notices
+  /notices/{id}:
+    get:
+      description: Get notice
+      parameters:
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/notice.Notice'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+      summary: Get notice
+      tags:
+      - notices
+    put:
+      description: Update notice
+      parameters:
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: title
+        in: formData
+        name: title
+        required: true
+        type: string
+      - description: content
+        in: formData
+        name: content
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+      summary: Update notice
+      tags:
+      - notices
   /users/create-tba:
     post:
       responses: {}

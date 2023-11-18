@@ -114,7 +114,7 @@ func (c *noticeCtrl) Notices(w http.ResponseWriter, r *http.Request) {
 // @Tags notices
 // @Produce json
 // @Param id path string true "id"
-// @Success 200 {object} NoticeResponse
+// @Success 200 {object} notice.Notice
 // @Failure 400 {object} CommonResponse
 // @Failure 500 {object} CommonResponse
 // @Router /notices/{id} [get]
