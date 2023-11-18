@@ -23,3 +23,14 @@ type NoticeUpdateParams struct {
 	Title   string
 	Content string
 }
+
+type Pagination struct {
+	Total       int64 `json:"total"`
+	Pages       int64 `json:"pages"`
+	CurrentPage int64 `json:"current_page"`
+	Limit       int64 `json:"limit"`
+	Start       int64 `json:"start"`
+	End         int64 `json:"end"`
+	HasNext     bool  `json:"has_next"`
+	HasPrev     bool  `json:"has_prev"`
+}
