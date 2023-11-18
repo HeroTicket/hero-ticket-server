@@ -21,16 +21,6 @@ func NewQuery(client *mongo.Client, dbname, collname string) notice.Query {
 	}
 }
 
-// GetMedium implements notice.Query.
-func (*mongoQuery) GetMedium(ctx context.Context, id string) (*notice.Medium, error) {
-	panic("unimplemented")
-}
-
-// GetMediumsByNoticeID implements notice.Query.
-func (*mongoQuery) GetMediumsByNoticeID(ctx context.Context, noticeID string) ([]*notice.Medium, error) {
-	panic("unimplemented")
-}
-
 // GetNotice implements notice.Query.
 func (*mongoQuery) GetNotice(ctx context.Context, id string) (*notice.Notice, error) {
 	panic("unimplemented")
