@@ -22,3 +22,4 @@ swag_gen:
 swagger:
 	@echo "Starting swagger docs..."
 	docker compose up -d swagger --build
+	@echo "Swagger docs available at http://localhost:1323/swagger/index.html"
