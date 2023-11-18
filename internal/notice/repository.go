@@ -4,7 +4,7 @@ import "context"
 
 type Command interface {
 	CreateNotice(ctx context.Context, n *Notice) (*Notice, error)
-	UpdateNotice(ctx context.Context, id string, n *Notice) (*Notice, error)
+	UpdateNotice(ctx context.Context, params *NoticeUpdateParams) error
 	DeleteNotice(ctx context.Context, id string) error
 }
 
