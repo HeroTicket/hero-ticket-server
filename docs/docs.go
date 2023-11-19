@@ -52,7 +52,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/rest.NoticesResponse"
+                            "$ref": "#/definitions/rest.CommonResponse"
                         }
                     },
                     "400": {
@@ -145,7 +145,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/notice.Notice"
+                            "$ref": "#/definitions/rest.CommonResponse"
                         }
                     },
                     "400": {
@@ -299,7 +299,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/protocol.AuthorizationRequestMessage"
+                            "$ref": "#/definitions/rest.CommonResponse"
                         }
                     },
                     "400": {
@@ -310,26 +310,6 @@ const docTemplate = `{
                     },
                     "500": {
                         "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/rest.CommonResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/users/logout": {
-            "post": {
-                "description": "logs out user",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "logs out user",
-                "responses": {
-                    "200": {
-                        "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/rest.CommonResponse"
                         }
@@ -351,7 +331,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/github_com_heroticket_internal_user.User"
+                            "$ref": "#/definitions/rest.CommonResponse"
                         }
                     },
                     "400": {
@@ -371,6 +351,9 @@ const docTemplate = `{
         "/users/refresh-token": {
             "post": {
                 "description": "refreshes token pair",
+                "consumes": [
+                    "text/plain"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -396,174 +379,15 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "github_com_heroticket_internal_user.User": {
-            "type": "object",
-            "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "did": {
-                    "type": "string"
-                },
-                "is_admin": {
-                    "type": "boolean"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "tba_address": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "wallet_address": {
-                    "type": "string"
-                }
-            }
-        },
-        "notice.Notice": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "title": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                }
-            }
-        },
-        "notice.Pagination": {
-            "type": "object",
-            "properties": {
-                "current_page": {
-                    "type": "integer"
-                },
-                "end": {
-                    "type": "integer"
-                },
-                "has_next": {
-                    "type": "boolean"
-                },
-                "has_prev": {
-                    "type": "boolean"
-                },
-                "limit": {
-                    "type": "integer"
-                },
-                "pages": {
-                    "type": "integer"
-                },
-                "start": {
-                    "type": "integer"
-                },
-                "total": {
-                    "type": "integer"
-                }
-            }
-        },
-        "protocol.AuthorizationRequestMessage": {
-            "type": "object",
-            "properties": {
-                "body": {
-                    "$ref": "#/definitions/protocol.AuthorizationRequestMessageBody"
-                },
-                "from": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "thid": {
-                    "type": "string"
-                },
-                "to": {
-                    "type": "string"
-                },
-                "typ": {
-                    "type": "string"
-                },
-                "type": {
-                    "type": "string"
-                }
-            }
-        },
-        "protocol.AuthorizationRequestMessageBody": {
-            "type": "object",
-            "properties": {
-                "callbackUrl": {
-                    "type": "string"
-                },
-                "did_doc": {
-                    "type": "array",
-                    "items": {
-                        "type": "integer"
-                    }
-                },
-                "message": {
-                    "type": "string"
-                },
-                "reason": {
-                    "type": "string"
-                },
-                "scope": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/protocol.ZeroKnowledgeProofRequest"
-                    }
-                }
-            }
-        },
-        "protocol.ZeroKnowledgeProofRequest": {
-            "type": "object",
-            "properties": {
-                "circuitId": {
-                    "type": "string"
-                },
-                "id": {
-                    "description": "unique request id",
-                    "type": "integer"
-                },
-                "optional": {
-                    "type": "boolean"
-                },
-                "query": {
-                    "type": "object",
-                    "additionalProperties": true
-                }
-            }
-        },
         "rest.CommonResponse": {
             "type": "object",
             "properties": {
+                "data": {},
                 "message": {
                     "type": "string"
                 },
                 "status": {
                     "type": "integer"
-                }
-            }
-        },
-        "rest.NoticesResponse": {
-            "type": "object",
-            "properties": {
-                "notices": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/notice.Notice"
-                    }
-                },
-                "pagination": {
-                    "$ref": "#/definitions/notice.Pagination"
                 }
             }
         }

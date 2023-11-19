@@ -53,7 +53,7 @@ func (c *NoticeCtrl) Handler() http.Handler {
 // @Produce json
 // @Param page query int false "page"
 // @Param limit query int false "limit"
-// @Success 200 {object} NoticesResponse
+// @Success 200 {object} CommonResponse
 // @Failure 400 {object} CommonResponse
 // @Failure 500 {object} CommonResponse
 // @Router /notices [get]
@@ -96,10 +96,16 @@ func (c *NoticeCtrl) Notices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var resp NoticesResponse
+	var nresp NoticesResponse
 
-	resp.Notices = notices
-	resp.Pagination = pagination
+	nresp.Notices = notices
+	nresp.Pagination = pagination
+
+	resp := CommonResponse{
+		Status:  http.StatusOK,
+		Message: "notices retrieved",
+		Data:    nresp,
+	}
 
 	_ = WriteJSON(w, http.StatusOK, resp)
 }
@@ -111,7 +117,7 @@ func (c *NoticeCtrl) Notices(w http.ResponseWriter, r *http.Request) {
 // @Tags notices
 // @Produce json
 // @Param id path string true "id"
-// @Success 200 {object} notice.Notice
+// @Success 200 {object} CommonResponse
 // @Failure 400 {object} CommonResponse
 // @Failure 500 {object} CommonResponse
 // @Router /notices/{id} [get]
@@ -129,7 +135,13 @@ func (c *NoticeCtrl) Notice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_ = WriteJSON(w, http.StatusOK, n)
+	resp := CommonResponse{
+		Status:  http.StatusOK,
+		Message: "notice retrieved",
+		Data:    n,
+	}
+
+	_ = WriteJSON(w, http.StatusOK, resp)
 }
 
 // CreateNotice godoc
