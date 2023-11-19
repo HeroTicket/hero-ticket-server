@@ -29,8 +29,7 @@ type TokenPair struct {
 }
 
 type JWTUser struct {
-	DID     string `json:"did"`
-	Address string `json:"address"`
+	DID string `json:"did"`
 }
 
 type JWTUserKey struct{}

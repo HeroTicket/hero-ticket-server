@@ -23,7 +23,7 @@ type jwtService struct {
 	refreshTokenExpiry time.Duration
 }
 
-func New(accessTokenKey, refreshTokenKey string, opts ...Option) (Service, error) {
+func New(accessTokenKey, refreshTokenKey string, opts ...Option) Service {
 	svc := &jwtService{
 		accessTokenKey:  accessTokenKey,
 		refreshTokenKey: refreshTokenKey,
@@ -35,7 +35,7 @@ func New(accessTokenKey, refreshTokenKey string, opts ...Option) (Service, error
 		opt(svc)
 	}
 
-	return svc.validate()
+	return svc
 }
 
 // GenerateTokenPair generates a pair of access and refresh tokens
@@ -91,11 +91,6 @@ func (s *jwtService) VerifyToken(tokenString string, role TokenRole) (*JWTUser, 
 		// check subject
 		if sub, ok := claims["sub"].(string); ok {
 			u.DID = sub
-		}
-
-		// only access token has address claim
-		if address, ok := claims["address"].(string); ok {
-			u.Address = address
 		}
 
 		// return jwt user
@@ -165,13 +160,12 @@ func (s *jwtService) getKeyfunc(role TokenRole) (jwt.Keyfunc, error) {
 func (s *jwtService) getAccessTokenClaims(u JWTUser) jwt.MapClaims {
 	// access token contains email claim
 	return jwt.MapClaims{
-		"address": u.Address,
-		"iss":     s.issuer,
-		"aud":     s.audience,
-		"sub":     u.DID,
-		"exp":     time.Now().Add(s.accessTokenExpiry).UTC().Unix(),
-		"iat":     time.Now().UTC().Unix(),
-		"typ":     "JWT",
+		"iss": s.issuer,
+		"aud": s.audience,
+		"sub": u.DID,
+		"exp": time.Now().Add(s.accessTokenExpiry).UTC().Unix(),
+		"iat": time.Now().UTC().Unix(),
+		"typ": "JWT",
 	}
 }
 
@@ -185,33 +179,4 @@ func (s *jwtService) getRefreshTokenClaims(u JWTUser) jwt.MapClaims {
 		"exp": time.Now().Add(s.refreshTokenExpiry).UTC().Unix(),
 		"iat": time.Now().UTC().Unix(),
 	}
-}
-
-// validate validates the jwtService configuration
-func (s *jwtService) validate() (*jwtService, error) {
-	if s.accessTokenKey == "" {
-		return nil, ErrAccessTokenKeyRequired
-	}
-
-	if s.refreshTokenKey == "" {
-		return nil, ErrRefreshTokenKeyRequired
-	}
-
-	if s.issuer == "" {
-		s.issuer = defaultIssuer
-	}
-
-	if s.audience == "" {
-		s.audience = defaultAudience
-	}
-
-	if s.accessTokenExpiry == 0 {
-		s.accessTokenExpiry = defaultAccessTokenExpiry
-	}
-
-	if s.refreshTokenExpiry == 0 {
-		s.refreshTokenExpiry = defaultRefreshTokenExpiry
-	}
-
-	return s, nil
 }

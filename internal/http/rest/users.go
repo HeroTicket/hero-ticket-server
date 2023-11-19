@@ -200,8 +200,7 @@ func (c *UserCtrl) loginCallback(w http.ResponseWriter, r *http.Request) {
 
 	// 6. generate token pair
 	jwtUser := jwt.JWTUser{
-		DID:     u.DID,
-		Address: u.WalletAddress,
+		DID: u.DID,
 	}
 
 	tokenPair, err := c.jwt.GenerateTokenPair(jwtUser)
@@ -290,8 +289,7 @@ func (c *UserCtrl) refreshToken(w http.ResponseWriter, r *http.Request) {
 	}
 
 	newJwtUser := jwt.JWTUser{
-		DID:     u.DID,
-		Address: u.WalletAddress,
+		DID: u.DID,
 	}
 
 	// 5. generate new token pair
