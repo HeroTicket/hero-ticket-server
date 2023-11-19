@@ -2,24 +2,41 @@ package rest
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/heroticket/internal/jwt"
+	"go.uber.org/zap"
 )
 
 func AccessTokenRequired(jwtSvc jwt.Service) func(next http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			cookie, err := r.Cookie("access_token")
-			if err != nil {
-				ErrorJSON(w, "access token not found in cookie", http.StatusUnauthorized)
+			w.Header().Add("Vary", "Authorization")
+
+			authHeader := r.Header.Get("Authorization")
+
+			if authHeader == "" {
+				ErrorJSON(w, "authorization header not found", http.StatusUnauthorized)
 				return
 			}
 
-			accessToken := cookie.Value
+			headerParts := strings.Split(authHeader, " ")
+			if len(headerParts) != 2 {
+				ErrorJSON(w, "invalid authorization header", http.StatusUnauthorized)
+				return
+			}
+
+			if headerParts[0] != "Bearer" {
+				ErrorJSON(w, "invalid authorization header", http.StatusUnauthorized)
+				return
+			}
+
+			accessToken := headerParts[1]
 
 			jwtUser, err := jwtSvc.VerifyToken(accessToken, jwt.TokenRoleAccess)
 			if err != nil {
-				ErrorJSON(w, "failed to validate access token", http.StatusUnauthorized)
+				zap.L().Error("failed to validate access token", zap.Error(err))
+				ErrorJSON(w, "unauthorized", http.StatusUnauthorized)
 				return
 			}
 
