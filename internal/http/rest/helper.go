@@ -5,7 +5,6 @@ import (
 	"errors"
 	"io"
 	"net/http"
-	"time"
 )
 
 var (
@@ -81,18 +80,4 @@ func ErrorJSON(w http.ResponseWriter, errMsg string, status ...int) {
 	}
 
 	_ = WriteJSON(w, statusCode, resp, "error")
-}
-
-func (c *UserCtrl) newCookie(name, value, domain string, expiry time.Duration) *http.Cookie {
-	return &http.Cookie{
-		Name:     name,
-		Value:    value,
-		Domain:   domain,
-		Path:     "/",
-		Expires:  time.Now().Add(expiry),
-		MaxAge:   int(expiry.Seconds()),
-		SameSite: http.SameSiteStrictMode,
-		HttpOnly: true,
-		Secure:   true,
-	}
 }

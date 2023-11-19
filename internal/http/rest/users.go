@@ -6,7 +6,6 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/anandvarma/namegen"
 	"github.com/go-chi/chi/v5"
@@ -43,7 +42,6 @@ func (c *UserCtrl) Handler() http.Handler {
 
 	r.Get("/login-qr", c.loginQR)
 	r.Post("/login-callback", c.loginCallback)
-	r.Post("/logout", c.logout)
 	r.Post("/refresh-token", c.refreshToken)
 
 	r.Group(func(r chi.Router) {
@@ -65,7 +63,7 @@ func (c *UserCtrl) Handler() http.Handler {
 //	@Description	returns login qr code
 //	@Produce		json
 //	@Param			sessionId	query		string	true	"session id"
-//	@Success		200			{object}	protocol.AuthorizationRequestMessage
+//	@Success		200			{object}	CommonResponse
 //	@Failure		400			{object}	CommonResponse
 //	@Failure		500			{object}	CommonResponse
 //	@Router			/users/login-qr [get]
@@ -113,8 +111,14 @@ func (c *UserCtrl) loginQR(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 
+	resp := CommonResponse{
+		Status:  http.StatusOK,
+		Message: "Successfully created login request",
+		Data:    request,
+	}
+
 	// 4. return login request as json response
-	_ = WriteJSON(w, http.StatusOK, request)
+	_ = WriteJSON(w, http.StatusOK, resp)
 }
 
 // LoginCallback godoc
@@ -167,15 +171,6 @@ func (c *UserCtrl) loginCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go ws.Send(ws.Message{
-		ID:   id,
-		Type: ws.EventMessage,
-		Event: ws.Event{
-			Name:   "login-callback",
-			Status: ws.Done,
-		},
-	})
-
 	userDID := authResponse.From
 
 	// 5. find or create user
@@ -210,42 +205,20 @@ func (c *UserCtrl) loginCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 7. set token pair as cookie
-	accessCookie := c.newCookie("access_token", tokenPair.AccessToken, "localhost", tokenPair.AccessTokenExpiry)
-	refreshCookie := c.newCookie("refresh_token", tokenPair.RefreshToken, "localhost", tokenPair.RefreshTokenExpiry)
+	go ws.Send(ws.Message{
+		ID:   id,
+		Type: ws.EventMessage,
+		Event: ws.Event{
+			Name:   "login-callback",
+			Status: ws.Done,
+			Data:   tokenPair,
+		},
+	})
 
-	http.SetCookie(w, accessCookie)
-	http.SetCookie(w, refreshCookie)
-
-	// 8. return success response
+	// 7. return success response
 	response := CommonResponse{
 		Status:  http.StatusOK,
 		Message: fmt.Sprintf("User with ID %s Successfully authenticated", userDID),
-	}
-
-	_ = WriteJSON(w, http.StatusOK, response)
-}
-
-// Logout godoc
-//
-//	@Tags			users
-//	@Summary		logs out user
-//	@Description	logs out user
-//	@Produce		json
-//	@Success		200			{object}	CommonResponse
-//	@Router			/users/logout [post]
-func (c *UserCtrl) logout(w http.ResponseWriter, r *http.Request) {
-	// 1. generate expired cookies
-	accessCookie := c.newCookie("access_token", "", "", -time.Hour)
-	refreshCookie := c.newCookie("refresh_token", "", "", -time.Hour)
-
-	http.SetCookie(w, accessCookie)
-	http.SetCookie(w, refreshCookie)
-
-	// 2. return success response
-	response := CommonResponse{
-		Status:  http.StatusOK,
-		Message: "Successfully logged out",
 	}
 
 	_ = WriteJSON(w, http.StatusOK, response)
@@ -256,31 +229,30 @@ func (c *UserCtrl) logout(w http.ResponseWriter, r *http.Request) {
 //	@Tags			users
 //	@Summary		refreshes token pair
 //	@Description	refreshes token pair
+//	@Accept 		plain
 //	@Produce		json
 //	@Success		200			{object}	CommonResponse
 //	@Failure		400			{object}	CommonResponse
 //	@Router			/users/refresh-token [post]
 func (c *UserCtrl) refreshToken(w http.ResponseWriter, r *http.Request) {
-	// 1. get refresh token from cookie
-	refreshCookie, err := r.Cookie("refresh_token")
+	// 1. get refresh token from request body
+	refreshToken, err := io.ReadAll(r.Body)
 	if err != nil {
-		zap.L().Error("refresh token not found in cookie", zap.Error(err))
-		ErrorJSON(w, "refresh token not found in cookie")
+		zap.L().Error("failed to read refresh token", zap.Error(err))
+		ErrorJSON(w, "failed to read refresh token")
 		return
 	}
+	defer r.Body.Close()
 
 	// 2. validate refresh token
-	refreshToken := refreshCookie.Value
-
-	// 3. validate refresh token
-	jwtUser, err := c.jwt.VerifyToken(refreshToken, jwt.TokenRoleRefresh)
+	jwtUser, err := c.jwt.VerifyToken(string(refreshToken), jwt.TokenRoleRefresh)
 	if err != nil {
 		zap.L().Error("failed to validate refresh token", zap.Error(err))
 		ErrorJSON(w, "failed to validate refresh token")
 		return
 	}
 
-	// 4. get user from db
+	// 3. get user from db
 	u, err := c.user.FindUserByDID(r.Context(), jwtUser.DID)
 	if err != nil {
 		zap.L().Error("failed to find user", zap.Error(err))
@@ -292,7 +264,7 @@ func (c *UserCtrl) refreshToken(w http.ResponseWriter, r *http.Request) {
 		DID: u.DID,
 	}
 
-	// 5. generate new token pair
+	// 4. generate new token pair
 	tokenPair, err := c.jwt.GenerateTokenPair(newJwtUser)
 	if err != nil {
 		zap.L().Error("failed to generate token pair", zap.Error(err))
@@ -300,17 +272,11 @@ func (c *UserCtrl) refreshToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 6. set token pair as cookie
-	accessCookie := c.newCookie("access_token", tokenPair.AccessToken, "localhost", tokenPair.AccessTokenExpiry)
-	refreshCookie = c.newCookie("refresh_token", tokenPair.RefreshToken, "localhost", tokenPair.RefreshTokenExpiry)
-
-	http.SetCookie(w, accessCookie)
-	http.SetCookie(w, refreshCookie)
-
-	// 7. return success response
+	// 5. return success response
 	response := CommonResponse{
 		Status:  http.StatusOK,
 		Message: "Successfully refreshed token pair",
+		Data:    tokenPair,
 	}
 
 	_ = WriteJSON(w, http.StatusOK, response)
@@ -380,7 +346,7 @@ func (c *UserCtrl) createTBA(w http.ResponseWriter, r *http.Request) {
 //	@Summary		returns user profile
 //	@Description	returns user profile
 //	@Produce		json
-//	@Success		200			{object}	user.User
+//	@Success		200			{object}	CommonResponse
 //	@Failure		400			{object}	CommonResponse
 //	@Router			/users/profile [get]
 func (c *UserCtrl) profile(w http.ResponseWriter, r *http.Request) {
@@ -400,8 +366,14 @@ func (c *UserCtrl) profile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	resp := CommonResponse{
+		Status:  http.StatusOK,
+		Message: "Successfully fetched user profile",
+		Data:    u,
+	}
+
 	// 3. return user as json response
-	_ = WriteJSON(w, http.StatusOK, u)
+	_ = WriteJSON(w, http.StatusOK, resp)
 }
 
 // PurchasedTickets godoc
