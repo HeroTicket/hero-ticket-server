@@ -71,7 +71,7 @@ func main() {
 	userRepo := userrepo.NewMongoRepository(client, "hero-ticket", "users")
 
 	didSvc := did.New(didRepo, redis.NewCache(cache), os.Getenv("RPC_URL_MUMBAI"))
-	jwtSvc, _ := jwt.New("secret1", "secret2")
+	jwtSvc := jwt.New("secret1", "secret2")
 	noticeSvc := notice.New(noticeRepo)
 	userSvc := user.New(userRepo)
 	tx := mongo.NewTx(client)
