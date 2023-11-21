@@ -22,6 +22,12 @@ variable "ecr_repos" {
       scan_on_push         = true
       name_tag             = "hero-ticket-server"
     }
+    "hero-ticket-issuer-node" = {
+      name                 = "hero-ticket-issuer-node"
+      image_tag_mutability = "MUTABLE"
+      scan_on_push         = true
+      name_tag             = "hero-ticket-issuer-node"
+    }
     "hero-ticket-swagger" = {
       name                 = "hero-ticket-swagger"
       image_tag_mutability = "MUTABLE"
