@@ -49,11 +49,11 @@ resource "aws_security_group" "hero_ticket_issuer_node_sg" {
   }
 
   ingress {
-    description = "Allow 3001 inbound traffic from ALB"
-    from_port   = 3001
-    to_port     = 3001
-    protocol    = "tcp"
-    cidr_blocks = [aws_security_group.hero_ticket_alb_sg.id]
+    description     = "Allow 3001 inbound traffic from ALB"
+    from_port       = 3001
+    to_port         = 3001
+    protocol        = "tcp"
+    security_groups = [aws_security_group.hero_ticket_alb_sg.id]
   }
 
   egress {
@@ -79,19 +79,19 @@ resource "aws_security_group" "hero_ticket_server_sg" {
   }
 
   ingress {
-    description = "Allow 8080 inbound traffic from ALB"
-    from_port   = 8080
-    to_port     = 8080
-    protocol    = "tcp"
-    cidr_blocks = [aws_security_group.hero_ticket_alb_sg.id]
+    description     = "Allow 8080 inbound traffic from ALB"
+    from_port       = 8080
+    to_port         = 8080
+    protocol        = "tcp"
+    security_groups = [aws_security_group.hero_ticket_alb_sg.id]
   }
 
   ingress {
-    description = "Allow 1323 inbound traffic from Issuer Node"
-    from_port   = 1323
-    to_port     = 1323
-    protocol    = "tcp"
-    cidr_blocks = [aws_security_group.hero_ticket_issuer_node_sg.id]
+    description     = "Allow 1323 inbound traffic from Issuer Node"
+    from_port       = 1323
+    to_port         = 1323
+    protocol        = "tcp"
+    security_groups = [aws_security_group.hero_ticket_issuer_node_sg.id]
   }
 
   egress {

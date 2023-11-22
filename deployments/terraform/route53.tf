@@ -9,7 +9,7 @@ resource "aws_route53_zone" "hero_ticket_zone" {
 }
 
 resource "aws_acm_certificate" "hero_ticket_cert" {
-  domain_name       = "*${aws_route53_zone.hero_ticket_zone.name}"
+  domain_name       = "*.${aws_route53_zone.hero_ticket_zone.name}"
   validation_method = "DNS"
 
   lifecycle {
