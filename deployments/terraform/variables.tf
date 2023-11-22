@@ -60,3 +60,9 @@ variable "availability_zones" {
   description = "Availability zones to use for the subnets"
   default     = ["ap-northeast-2c"]
 }
+
+variable "s3_bucket_name" {
+  type        = string
+  description = "Name of the S3 bucket to create"
+  default     = "hero-ticket-bucket"
+}
