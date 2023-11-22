@@ -66,3 +66,8 @@ variable "s3_bucket_name" {
   description = "Name of the S3 bucket to create"
   default     = "hero-ticket-bucket"
 }
+
+variable "manager_ip" {
+  type        = string
+  description = "IP address of the manager"
+}

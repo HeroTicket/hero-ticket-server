@@ -15,7 +15,7 @@ resource "aws_launch_template" "hero_ticket_issuer_node_template" {
 
   network_interfaces {
     associate_public_ip_address = true
-    security_groups             = []
+    security_groups             = [aws_security_group.hero_ticket_issuer_node_sg.id]
   }
 
   user_data = filebase64("./scripts/setup_issuer_node.sh")
@@ -45,7 +45,7 @@ resource "aws_launch_template" "hero_ticket_server_template" {
 
   network_interfaces {
     associate_public_ip_address = true
-    security_groups             = []
+    security_groups             = [aws_security_group.hero_ticket_server_sg.id]
   }
 
   iam_instance_profile {
