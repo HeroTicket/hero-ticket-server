@@ -31,7 +31,7 @@ variable "ecr_repos" {
   }
 }
 
-variable "key_pair_name" {
+variable "keypair_name" {
   type        = string
   description = "Name of the key pair to use for EC2 instances"
   default     = "hero-ticket-key-pair"
