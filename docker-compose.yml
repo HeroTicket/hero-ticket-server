@@ -12,10 +12,12 @@ services:
       - .env
     environment:
       MONGO_URL: mongodb://root:example@mongo:27017/
-      REDIS_URL: redis:6379
+      AUTH_REDIS_URL: auth-redis:6379
+      DID_REDIS_URL: did-redis:6379
     depends_on:
       - mongo
-      - redis
+      - auth-redis
+      - did-redis
 
   swagger:
     container_name: swagger
@@ -38,8 +40,8 @@ services:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: example
 
-  redis:
-    container_name: redis
+  auth-redis:
+    container_name: auth-redis
     image: redis:7.2.3-alpine
     command: redis-server /usr/local/etc/redis/redis.conf
     labels:
@@ -51,13 +53,18 @@ services:
     volumes:
       - ./configs/redis/redis.conf:/usr/local/etc/redis/redis.conf
 
-  anvil:
-    container_name: anvil
-    image: ghcr.io/foundry-rs/foundry:latest
-    command: anvil
+  did-redis:
+    container_name: did-redis
+    image: redis:7.2.3-alpine
+    command: redis-server /usr/local/etc/redis/redis.conf
+    labels:
+      - "name=redis"
+      - "mode=standalone"
     restart: always
     ports:
-      - 8545:8545
+      - 6380:6379
+    volumes:
+      - ./configs/redis/redis.conf:/usr/local/etc/redis/redis.conf
 
 volumes:
   mongo-data:
