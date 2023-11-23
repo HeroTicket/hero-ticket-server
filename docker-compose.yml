@@ -1,5 +1,31 @@
 version: '3.9'
 services:
+  server:
+    container_name: server
+    build:
+      context: .
+      dockerfile: ./build/server/Dockerfile
+    restart: always
+    ports:
+      - 8080:8080
+    env_file:
+      - .env
+    environment:
+      MONGO_URL: mongodb://root:example@mongo:27017/
+      REDIS_URL: redis:6379
+    depends_on:
+      - mongo
+      - redis
+
+  swagger:
+    container_name: swagger
+    build:
+      context: .
+      dockerfile: ./build/swagger/Dockerfile
+    restart: always
+    ports:
+      - 1323:1323
+
   mongo:
     container_name: mongo
     image: mongo:5.0.22
@@ -11,6 +37,27 @@ services:
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: example
+
+  redis:
+    container_name: redis
+    image: redis:7.2.3-alpine
+    command: redis-server /usr/local/etc/redis/redis.conf
+    labels:
+      - "name=redis"
+      - "mode=standalone"
+    restart: always
+    ports:
+      - 6379:6379
+    volumes:
+      - ./configs/redis/redis.conf:/usr/local/etc/redis/redis.conf
+
+  anvil:
+    container_name: anvil
+    image: ghcr.io/foundry-rs/foundry:latest
+    command: anvil
+    restart: always
+    ports:
+      - 8545:8545
 
 volumes:
   mongo-data:

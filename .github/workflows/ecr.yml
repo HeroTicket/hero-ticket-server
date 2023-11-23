@@ -1,0 +1,46 @@
+name: Dockerize and Push to ECR
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push server image to Amazon ECR
+        id: build-server-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          SERVER_REPOSITORY: ${{ secrets.SERVER_REPOSITORY }}
+          SERVER_IMAGE_TAG: ${{ secrets.SERVER_IMAGE_TAG }}
+        run: |
+          docker build -t $ECR_REGISTRY/$SERVER_REPOSITORY:$SERVER_IMAGE_TAG . -f ./build/server/Dockerfile
+          docker push $ECR_REGISTRY/$SERVER_REPOSITORY:$SERVER_IMAGE_TAG
+
+      - name: Build, tag, and push swagger image to Amazon ECR
+        id: build-swagger-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          SWAGGER_REPOSITORY: ${{ secrets.SWAGGER_REPOSITORY }}
+          SWAGGER_IMAGE_TAG: ${{ secrets.SWAGGER_IMAGE_TAG }}
+        run: |
+          docker build -t $ECR_REGISTRY/$SWAGGER_REPOSITORY:$SWAGGER_IMAGE_TAG . -f ./build/swagger/Dockerfile
+          docker push $ECR_REGISTRY/$SWAGGER_REPOSITORY:$SWAGGER_IMAGE_TAG

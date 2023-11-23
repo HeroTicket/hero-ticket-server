@@ -1,0 +1,258 @@
+basePath: /api/v1
+definitions:
+  rest.CommonResponse:
+    properties:
+      data: {}
+      message:
+        type: string
+      status:
+        type: integer
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: This is Hero Ticket API server.
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Hero Ticket API
+  version: "1.0"
+paths:
+  /notices:
+    get:
+      description: Get notices
+      parameters:
+      - description: page
+        in: query
+        name: page
+        type: integer
+      - description: limit
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+      summary: Get notices
+      tags:
+      - notices
+    post:
+      description: Create notice
+      parameters:
+      - description: title
+        in: formData
+        name: title
+        required: true
+        type: string
+      - description: content
+        in: formData
+        name: content
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+      summary: Create notice
+      tags:
+      - notices
+  /notices/{id}:
+    get:
+      description: Get notice
+      parameters:
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+      summary: Get notice
+      tags:
+      - notices
+    put:
+      description: Update notice
+      parameters:
+      - description: id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: title
+        in: formData
+        name: title
+        required: true
+        type: string
+      - description: content
+        in: formData
+        name: content
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+      summary: Update notice
+      tags:
+      - notices
+  /users/create-tba:
+    post:
+      responses: {}
+  /users/issued-tickets:
+    get:
+      responses: {}
+  /users/login-callback:
+    post:
+      consumes:
+      - text/plain
+      description: processes login callback
+      parameters:
+      - description: session id
+        in: query
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+      summary: processes login callback
+      tags:
+      - users
+  /users/login-qr:
+    get:
+      description: returns login qr code
+      parameters:
+      - description: session id
+        in: query
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+      summary: returns login qr code
+      tags:
+      - users
+  /users/profile:
+    get:
+      description: returns user profile
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+      summary: returns user profile
+      tags:
+      - users
+  /users/purchased-tickets:
+    get:
+      responses: {}
+  /users/refresh-token:
+    post:
+      consumes:
+      - text/plain
+      description: refreshes token pair
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+      summary: refreshes token pair
+      tags:
+      - users
+swagger: "2.0"
