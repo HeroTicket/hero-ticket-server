@@ -6,9 +6,9 @@ resource "aws_launch_template" "hero_ticket_issuer_node_template" {
   key_name      = aws_key_pair.hero_ticket_keypair.key_name
 
   block_device_mappings {
-    device_name = "/dev/xvda"
+    device_name = "/dev/sda1"
     ebs {
-      volume_size = 15
+      volume_size = 30
       volume_type = "gp2"
     }
   }
@@ -36,7 +36,7 @@ resource "aws_launch_template" "hero_ticket_server_template" {
   key_name      = aws_key_pair.hero_ticket_keypair.key_name
 
   block_device_mappings {
-    device_name = "/dev/xvda"
+    device_name = "/dev/sda1"
     ebs {
       volume_size = 15
       volume_type = "gp2"

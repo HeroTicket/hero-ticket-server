@@ -16,6 +16,6 @@ resource "aws_route53_record" "hero_ticket_issuer_node_record" {
   alias {
     name                   = aws_alb.hero_ticket_alb.dns_name
     zone_id                = aws_alb.hero_ticket_alb.zone_id
-    evaluate_target_health = true
+    evaluate_target_health = false
   }
 }
