@@ -9,10 +9,8 @@ import (
 	"github.com/heroticket/internal/db"
 	"github.com/heroticket/internal/db/mongo"
 	"github.com/heroticket/internal/did"
-	didrepo "github.com/heroticket/internal/did/repository/mongo"
 	"github.com/heroticket/internal/http"
 	"github.com/heroticket/internal/http/rest"
-	"github.com/heroticket/internal/jwt"
 	"github.com/heroticket/internal/notice"
 	noticerepo "github.com/heroticket/internal/notice/repository/mongo"
 	"github.com/heroticket/internal/user"
@@ -64,29 +62,26 @@ func main() {
 
 	zap.L().Info("connected to redis")
 
-	didRepo := didrepo.NewRepository(client, "hero-ticket", "dids")
 	noticeRepo := noticerepo.New(client, "hero-ticket", "notices")
 	userRepo := userrepo.NewMongoRepository(client, "hero-ticket", "users")
 
-	// didSvc := did.New(config.DIDServiceConfig{
-	// 	RPCUrl:    os.Getenv("RPC_URL"),
-	// 	IssuerUrl: "https://issuer.heroticket.xyz",
-	// 	Username:  "user-issuer",
-	// 	Password:  "password-issuer",
+	didSvc := did.New(did.DidServiceConfig{
+		RPCUrl:    os.Getenv("RPC_URL"),
+		IssuerUrl: "https://issuer.heroticket.xyz",
+		Username:  "user-issuer",
+		Password:  "password-issuer",
 
-	// 	Repo:         didRepo,
-	// 	RequestCache: redis.NewCache(cache),
-	// 	Client:       ohttp.DefaultClient,
-	// })
+		RequestCache: redis.NewCache(cache),
+		Client:       did.DefaultClient,
+	})
 
-	jwtSvc := jwt.New("secret1", "secret2")
 	noticeSvc := notice.New(noticeRepo)
 	userSvc := user.New(userRepo)
 	tx := mongo.NewTx(client)
 
 	_ = newServer(
-		initUserController(didSvc, jwtSvc, userSvc, tx),
-		initNoticeController(jwtSvc, noticeSvc, userSvc),
+		initUserController(didSvc, userSvc, tx),
+		initNoticeController(noticeSvc, userSvc),
 		initTicketController(),
 	)
 
@@ -113,12 +108,12 @@ func main() {
 	// <-stop
 }
 
-func initUserController(didSvc did.Service, jwtSvc jwt.Service, userSvc user.Service, tx db.Tx) *rest.UserCtrl {
-	return rest.NewUserCtrl(didSvc, jwtSvc, userSvc, tx)
+func initUserController(didSvc did.Service, userSvc user.Service, tx db.Tx) *rest.UserCtrl {
+	return rest.NewUserCtrl(didSvc, userSvc, tx)
 }
 
-func initNoticeController(jwtSvc jwt.Service, noticeSvc notice.Service, userSvc user.Service) *rest.NoticeCtrl {
-	return rest.NewNoticeCtrl(jwtSvc, noticeSvc, userSvc)
+func initNoticeController(noticeSvc notice.Service, userSvc user.Service) *rest.NoticeCtrl {
+	return rest.NewNoticeCtrl(noticeSvc, userSvc)
 }
 
 func initTicketController() *rest.TicketCtrl {
