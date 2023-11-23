@@ -18,7 +18,7 @@ RUN mkdir /app
 
 COPY --from=builder /app/server /app
 
-COPY --from=builder /app/keys /app/keys
+COPY --from=builder /app/pkg/keys /app/keys
 
 WORKDIR /app
 

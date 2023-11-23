@@ -16,12 +16,24 @@ func NewCache(c *redis.Cache) cache.Cache {
 	return &redisCache{c: c}
 }
 
+func (r *redisCache) Exists(ctx context.Context, key string) bool {
+	return r.c.Exists(ctx, key)
+}
+
 func (r *redisCache) Delete(ctx context.Context, key string) error {
-	return r.c.Delete(ctx, key)
+	err := r.c.Delete(ctx, key)
+	if err == redis.ErrCacheMiss {
+		return nil
+	}
+	return err
 }
 
 func (r *redisCache) Get(ctx context.Context, key string, value interface{}) error {
-	return r.c.Get(ctx, key, value)
+	err := r.c.Get(ctx, key, value)
+	if err == redis.ErrCacheMiss {
+		return cache.ErrCacheMiss
+	}
+	return err
 }
 
 func (r *redisCache) Set(ctx context.Context, key string, value interface{}, ttls ...time.Duration) error {

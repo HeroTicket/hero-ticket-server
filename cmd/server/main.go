@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"syscall"
 
 	"os"
 
+	"github.com/heroticket/internal/auth"
 	"github.com/heroticket/internal/cache/redis"
 	"github.com/heroticket/internal/db"
 	"github.com/heroticket/internal/db/mongo"
@@ -13,6 +15,7 @@ import (
 	"github.com/heroticket/internal/http/rest"
 	"github.com/heroticket/internal/notice"
 	noticerepo "github.com/heroticket/internal/notice/repository/mongo"
+	"github.com/heroticket/internal/shutdown"
 	"github.com/heroticket/internal/user"
 	userrepo "github.com/heroticket/internal/user/repository/mongo"
 	"go.uber.org/zap"
@@ -55,15 +58,26 @@ func main() {
 
 	zap.L().Info("connected to mongo")
 
-	cache, err := redis.New(context.Background(), os.Getenv("REDIS_URL"))
+	authRedis, err := redis.New(context.Background(), os.Getenv("AUTH_REDIS_URL"))
 	if err != nil {
 		panic(err)
 	}
 
-	zap.L().Info("connected to redis")
+	zap.L().Info("connected to auth redis")
+
+	didRedis, err := redis.New(context.Background(), os.Getenv("DID_REDIS_URL"))
+	if err != nil {
+		panic(err)
+	}
+
+	zap.L().Info("connected to did redis")
 
 	noticeRepo := noticerepo.New(client, "hero-ticket", "notices")
 	userRepo := userrepo.NewMongoRepository(client, "hero-ticket", "users")
+
+	_ = auth.New(auth.AuthServiceConfig{
+		ReqCache: redis.NewCache(authRedis),
+	})
 
 	didSvc := did.New(did.DidServiceConfig{
 		RPCUrl:    os.Getenv("RPC_URL"),
@@ -71,7 +85,7 @@ func main() {
 		Username:  "user-issuer",
 		Password:  "password-issuer",
 
-		QrCache: redis.NewCache(cache),
+		QrCache: redis.NewCache(didRedis),
 		Client:  did.DefaultClient,
 	})
 
@@ -79,33 +93,33 @@ func main() {
 	userSvc := user.New(userRepo)
 	tx := mongo.NewTx(client)
 
-	_ = newServer(
+	server := newServer(
 		initUserController(didSvc, userSvc, tx),
 		initNoticeController(noticeSvc, userSvc),
 		initTicketController(),
 	)
 
-	// go func() {
-	// 	if err := server.Run(); err != nil && err != http.ErrServerClosed {
-	// 		panic(err)
-	// 	}
-	// }()
+	go func() {
+		if err := server.Run(); err != nil && err != http.ErrServerClosed {
+			panic(err)
+		}
+	}()
 
-	// stop := shutdown.GracefulShutdown(func() {
-	// 	if err := server.Shutdown(context.Background()); err != nil {
-	// 		panic(err)
-	// 	}
+	stop := shutdown.GracefulShutdown(func() {
+		if err := server.Shutdown(context.Background()); err != nil {
+			panic(err)
+		}
 
-	// 	zap.L().Info("server stopped")
+		zap.L().Info("server stopped")
 
-	// 	if err := client.Disconnect(context.Background()); err != nil {
-	// 		panic(err)
-	// 	}
+		if err := client.Disconnect(context.Background()); err != nil {
+			panic(err)
+		}
 
-	// 	zap.L().Info("disconnected from mongo")
-	// }, syscall.SIGINT, syscall.SIGTERM)
+		zap.L().Info("disconnected from mongo")
+	}, syscall.SIGINT, syscall.SIGTERM)
 
-	// <-stop
+	<-stop
 }
 
 func initUserController(didSvc did.Service, userSvc user.Service, tx db.Tx) *rest.UserCtrl {
