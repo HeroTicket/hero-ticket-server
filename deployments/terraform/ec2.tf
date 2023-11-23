@@ -61,3 +61,25 @@ resource "aws_launch_template" "hero_ticket_server_template" {
     }
   )
 }
+
+data "aws_instances" "hero_ticket_issuer_node_instances" {
+  instance_tags = {
+    Name = "Hero Ticket Issuer Node ASG"
+  }
+  instance_state_names = ["running"]
+}
+
+data "aws_instances" "hero_ticket_server_instances" {
+  instance_tags = {
+    Name = "Hero Ticket Server ASG"
+  }
+  instance_state_names = ["running"]
+}
+
+output "hero_ticket_issuer_node_public_ips" {
+  value = data.aws_instances.hero_ticket_issuer_node_instances.public_ips
+}
+
+output "hero_ticket_server_public_ips" {
+  value = data.aws_instances.hero_ticket_server_instances.public_ips
+}

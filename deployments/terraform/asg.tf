@@ -12,7 +12,7 @@ resource "aws_autoscaling_group" "hero_ticket_issuer_node_asg" {
   health_check_type         = "ELB"
   health_check_grace_period = 300
 
-  vpc_zone_identifier = aws_subnet.hero_ticket_public_subnet[*].id
+  vpc_zone_identifier = aws_subnet.hero_ticket_public_subnets[*].id
 
   target_group_arns = [aws_alb_target_group.hero_ticket_issuer_node_target_group.arn]
 

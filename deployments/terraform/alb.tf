@@ -5,7 +5,7 @@ resource "aws_alb" "hero_ticket_alb" {
   security_groups = [
     aws_security_group.hero_ticket_alb_sg.id,
   ]
-  subnets                          = aws_subnet.hero_ticket_public_subnet[*].id
+  subnets                          = aws_subnet.hero_ticket_public_subnets[*].id
   enable_cross_zone_load_balancing = true
 
   tags = merge(
