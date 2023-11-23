@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/heroticket/internal/jwt"
+	"github.com/heroticket/internal/service/jwt"
 	"go.uber.org/zap"
 )
 

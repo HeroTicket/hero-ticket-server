@@ -5,8 +5,8 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/heroticket/internal/notice"
-	"github.com/heroticket/internal/user"
+	"github.com/heroticket/internal/service/notice"
+	"github.com/heroticket/internal/service/user"
 	"go.uber.org/zap"
 )
 

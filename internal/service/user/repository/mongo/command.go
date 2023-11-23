@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/heroticket/internal/user"
+	"github.com/heroticket/internal/service/user"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )

@@ -5,14 +5,14 @@ import (
 	"io"
 	"net/http"
 	"os"
-	"regexp"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/heroticket/internal/auth"
 	"github.com/heroticket/internal/db"
-	"github.com/heroticket/internal/did"
-	"github.com/heroticket/internal/jwt"
-	"github.com/heroticket/internal/user"
+	"github.com/heroticket/internal/service/auth"
+	"github.com/heroticket/internal/service/did"
+	"github.com/heroticket/internal/service/jwt"
+	"github.com/heroticket/internal/service/user"
+	"github.com/heroticket/internal/web3"
 	"github.com/heroticket/internal/ws"
 	"go.uber.org/zap"
 )
@@ -251,8 +251,7 @@ func (c *UserCtrl) register(w http.ResponseWriter, r *http.Request) {
 	walletAddress := r.URL.Query().Get("walletAddress")
 
 	// 5. validate wallet address
-	re := regexp.MustCompile("^0x[0-9a-fA-F]{40}$")
-	if !re.MatchString(walletAddress) {
+	if !web3.IsAddressValid(walletAddress) {
 		ErrorJSON(w, "invalid wallet address", http.StatusInternalServerError)
 		return
 	}

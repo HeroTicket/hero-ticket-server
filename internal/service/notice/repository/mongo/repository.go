@@ -1,7 +1,7 @@
 package mongo
 
 import (
-	"github.com/heroticket/internal/notice"
+	"github.com/heroticket/internal/service/notice"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"math"
 
-	"github.com/heroticket/internal/notice"
+	"github.com/heroticket/internal/service/notice"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
