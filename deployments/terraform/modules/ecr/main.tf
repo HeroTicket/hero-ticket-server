@@ -6,12 +6,7 @@ resource "aws_ecr_repository" "ecr_repo" {
     scan_on_push = var.scan_on_push
   }
 
-  tags = merge(
-    var.common_tags,
-    {
-      ManagedBy = "Terraform"
-    }
-  )
+  tags = var.common_tags
 }
 
 resource "aws_ecr_lifecycle_policy" "ecr_repo_policy" {
