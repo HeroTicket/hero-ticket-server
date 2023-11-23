@@ -71,8 +71,8 @@ func main() {
 		Username:  "user-issuer",
 		Password:  "password-issuer",
 
-		RequestCache: redis.NewCache(cache),
-		Client:       did.DefaultClient,
+		QrCache: redis.NewCache(cache),
+		Client:  did.DefaultClient,
 	})
 
 	noticeSvc := notice.New(noticeRepo)

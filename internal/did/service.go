@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/heroticket/internal/cache"
 )
@@ -18,12 +19,12 @@ type Service interface {
 }
 
 type DidServiceConfig struct {
-	RPCUrl       string
-	IssuerUrl    string
-	Username     string
-	Password     string
-	RequestCache cache.Cache
-	Client       *http.Client
+	RPCUrl    string
+	IssuerUrl string
+	Username  string
+	Password  string
+	QrCache   cache.Cache
+	Client    *http.Client
 }
 
 type DidService struct {
@@ -32,18 +33,18 @@ type DidService struct {
 	username  string
 	password  string
 
-	requestCache cache.Cache
-	client       *http.Client
+	qrCache cache.Cache
+	client  *http.Client
 }
 
 func New(cfg DidServiceConfig) Service {
 	svc := &DidService{
-		rpcUrl:       cfg.RPCUrl,
-		issuerUrl:    cfg.IssuerUrl,
-		username:     cfg.Username,
-		password:     cfg.Password,
-		requestCache: cfg.RequestCache,
-		client:       cfg.Client,
+		rpcUrl:    cfg.RPCUrl,
+		issuerUrl: cfg.IssuerUrl,
+		username:  cfg.Username,
+		password:  cfg.Password,
+		qrCache:   cfg.QrCache,
+		client:    cfg.Client,
 	}
 
 	return svc
@@ -127,7 +128,7 @@ func (s *DidService) GetClaimQrCode(ctx context.Context, identifier string, clai
 	// check if qrcode exists in cache
 	var qrcode GetClaimQrCodeResponse
 
-	err := s.requestCache.Get(ctx, claimId, &qrcode)
+	err := s.qrCache.Get(ctx, claimId, &qrcode)
 	if err == nil {
 		return &qrcode, nil
 	}
@@ -154,6 +155,12 @@ func (s *DidService) GetClaimQrCode(ctx context.Context, identifier string, clai
 	var getClaimQrCodeResponse GetClaimQrCodeResponse
 
 	err = json.NewDecoder(res.Body).Decode(&getClaimQrCodeResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	// save qrcode to cache
+	err = s.qrCache.Set(ctx, claimId, getClaimQrCodeResponse, time.Hour)
 	if err != nil {
 		return nil, err
 	}
