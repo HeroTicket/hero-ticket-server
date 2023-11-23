@@ -1,26 +1,40 @@
 package rest
 
 import (
+	"fmt"
+	"io"
 	"net/http"
+	"os"
+	"regexp"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/heroticket/internal/auth"
 	"github.com/heroticket/internal/db"
 	"github.com/heroticket/internal/did"
+	"github.com/heroticket/internal/jwt"
 	"github.com/heroticket/internal/user"
+	"github.com/heroticket/internal/ws"
+	"go.uber.org/zap"
 )
 
 type UserCtrl struct {
-	did did.Service
+	baseUrl string
 
+	auth auth.Service
+	did  did.Service
+	jwt  jwt.Service
 	user user.Service
 	tx   db.Tx
 }
 
-func NewUserCtrl(did did.Service, user user.Service, tx db.Tx) *UserCtrl {
+func NewUserCtrl(auth auth.Service, did did.Service, jwt jwt.Service, user user.Service, tx db.Tx, baseUrl string) *UserCtrl {
 	return &UserCtrl{
-		did:  did,
-		user: user,
-		tx:   tx,
+		baseUrl: baseUrl,
+		auth:    auth,
+		did:     did,
+		jwt:     jwt,
+		user:    user,
+		tx:      tx,
 	}
 }
 
@@ -31,12 +45,15 @@ func (c *UserCtrl) Pattern() string {
 func (c *UserCtrl) Handler() http.Handler {
 	r := chi.NewRouter()
 
-	// r.Get("/login-qr", c.loginQR)
-	// r.Post("/login-callback", c.loginCallback)
-	// r.Post("/refresh-token", c.refreshToken)
+	r.Get("/login-qr", c.loginQR)
+	r.Post("/login-callback", c.loginCallback)
+
+	r.Group(func(r chi.Router) {
+		r.Use(TokenRequired(c.jwt))
+		r.Post("/register", c.register)
+	})
 
 	// r.Group(func(r chi.Router) {
-	// 	r.Post("/create-tba", c.createTBA)
 	// 	r.Get("/profile", c.profile)
 	// 	r.Get("/purchased-tickets", c.purchasedTickets)
 	// 	r.Get("/issued-tickets", c.issuedTickets)
@@ -56,59 +73,66 @@ func (c *UserCtrl) Handler() http.Handler {
 //	@Failure		400			{object}	CommonResponse
 //	@Failure		500			{object}	CommonResponse
 //	@Router			/users/login-qr [get]
-// func (c *UserCtrl) loginQR(w http.ResponseWriter, r *http.Request) {
-// 	defer r.Body.Close()
+func (c *UserCtrl) loginQR(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
 
-// 	// 1. get session id from query params
-// 	sessionId := r.URL.Query().Get("sessionId")
+	// 1. get session id from query params
+	sessionId := r.URL.Query().Get("sessionId")
 
-// 	// 2. validate session id
-// 	id := ws.ID(sessionId)
+	// 2. validate session id
+	id := ws.ID(sessionId)
 
-// 	if !id.Valid() {
-// 		ErrorJSON(w, "invalid session id")
-// 		return
-// 	}
+	if !id.Valid() {
+		ErrorJSON(w, "invalid session id")
+		return
+	}
 
-// 	go ws.Send(ws.Message{
-// 		ID:   id,
-// 		Type: ws.EventMessage,
-// 		Event: ws.Event{
-// 			Name:   "login-qr",
-// 			Status: ws.InProgress,
-// 		},
-// 	})
+	go ws.Send(ws.Message{
+		ID:   id,
+		Type: ws.EventMessage,
+		Event: ws.Event{
+			Name:   "login-qr",
+			Status: ws.InProgress,
+		},
+	})
 
-// 	callbackUrl := fmt.Sprintf("%s/api/v1/users/login-callback?sessionId=%s", os.Getenv("NGROK_URL"), sessionId)
+	callbackUrl := fmt.Sprintf("%s/v1/users/login-callback?sessionId=%s", c.baseUrl, sessionId)
 
-// 	audience := os.Getenv("VERIFIER_DID")
+	// TODO: fetch audience from db
+	audience := os.Getenv("VERIFIER_DID")
 
-// 	// 3. create login request
-// 	request, err := c.did.LoginRequest(r.Context(), sessionId, audience, callbackUrl)
-// 	if err != nil {
-// 		zap.L().Error("failed to create login request", zap.Error(err))
-// 		ErrorJSON(w, "failed to create login request", http.StatusInternalServerError)
-// 		return
-// 	}
+	// 3. create login request
+	req, err := c.auth.AuthorizationRequest(r.Context(), auth.AuthorizationRequestParams{
+		ID:          sessionId,
+		Reason:      "Login to Hero Ticket",
+		Message:     "Scan the QR code to login to Hero Ticket",
+		CallbackUrl: callbackUrl,
+		Sender:      audience,
+	})
+	if err != nil {
+		zap.L().Error("failed to create login request", zap.Error(err))
+		ErrorJSON(w, "failed to create login request", http.StatusInternalServerError)
+		return
+	}
 
-// 	go ws.Send(ws.Message{
-// 		ID:   id,
-// 		Type: ws.EventMessage,
-// 		Event: ws.Event{
-// 			Name:   "login-qr",
-// 			Status: ws.Done,
-// 		},
-// 	})
+	go ws.Send(ws.Message{
+		ID:   id,
+		Type: ws.EventMessage,
+		Event: ws.Event{
+			Name:   "login-qr",
+			Status: ws.Done,
+		},
+	})
 
-// 	resp := CommonResponse{
-// 		Status:  http.StatusOK,
-// 		Message: "Successfully created login request",
-// 		Data:    request,
-// 	}
+	resp := CommonResponse{
+		Status:  http.StatusOK,
+		Message: "Successfully created login request",
+		Data:    req,
+	}
 
-// 	// 4. return login request as json response
-// 	_ = WriteJSON(w, http.StatusOK, resp)
-// }
+	// 4. return login request as json response
+	_ = WriteJSON(w, http.StatusOK, resp)
+}
 
 // LoginCallback godoc
 //
@@ -122,96 +146,138 @@ func (c *UserCtrl) Handler() http.Handler {
 //	@Failure		400			{object}	CommonResponse
 //	@Failure		500			{object}	CommonResponse
 //	@Router			/users/login-callback [post]
-// func (c *UserCtrl) loginCallback(w http.ResponseWriter, r *http.Request) {
-// 	// 1. get session id from query params
-// 	sessionId := r.URL.Query().Get("sessionId")
+func (c *UserCtrl) loginCallback(w http.ResponseWriter, r *http.Request) {
+	// 1. get session id from query params
+	sessionId := r.URL.Query().Get("sessionId")
 
-// 	// 2. validate session id
-// 	id := ws.ID(sessionId)
+	// 2. validate session id
+	id := ws.ID(sessionId)
 
-// 	if !id.Valid() {
-// 		ErrorJSON(w, "invalid session id")
-// 		return
-// 	}
+	if !id.Valid() {
+		ErrorJSON(w, "invalid session id")
+		return
+	}
 
-// 	// 3. read token from request body
-// 	tokenBytes, err := io.ReadAll(r.Body)
-// 	if err != nil {
-// 		zap.L().Error("failed to read token", zap.Error(err))
-// 		ErrorJSON(w, "failed to read token", http.StatusInternalServerError)
-// 		return
-// 	}
-// 	defer r.Body.Close()
+	// 3. read token from request body
+	tokenBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		zap.L().Error("failed to read token", zap.Error(err))
+		ErrorJSON(w, "failed to read token", http.StatusInternalServerError)
+		return
+	}
+	defer r.Body.Close()
 
-// 	go ws.Send(ws.Message{
-// 		ID:   id,
-// 		Type: ws.EventMessage,
-// 		Event: ws.Event{
-// 			Name:   "login-callback",
-// 			Status: ws.InProgress,
-// 		},
-// 	})
+	go ws.Send(ws.Message{
+		ID:   id,
+		Type: ws.EventMessage,
+		Event: ws.Event{
+			Name:   "login-callback",
+			Status: ws.InProgress,
+		},
+	})
 
-// 	// 4. handle login callback
-// 	authResponse, err := c.did.LoginCallback(r.Context(), sessionId, string(tokenBytes))
-// 	if err != nil {
-// 		zap.L().Error("failed to handle login callback", zap.Error(err))
-// 		ErrorJSON(w, "failed to handle login callback", http.StatusInternalServerError)
-// 		return
-// 	}
+	// 4. handle login callback
+	resp, err := c.auth.AuthorizationCallback(r.Context(), sessionId, string(tokenBytes))
+	if err != nil {
+		zap.L().Error("failed to handle login callback", zap.Error(err))
+		ErrorJSON(w, "failed to handle login callback", http.StatusInternalServerError)
+		return
+	}
 
-// 	userDID := authResponse.From
+	userIdentifier := resp.From
 
-// 	// 5. find or create user
-// 	u, err := c.user.FindUserByDID(r.Context(), userDID)
-// 	if err != nil {
-// 		if err == user.ErrUserNotFound {
-// 			u, err = c.user.CreateUser(r.Context(), &user.User{
-// 				DID:  userDID,
-// 				Name: namegen.New().Get(),
-// 			})
-// 			if err != nil {
-// 				zap.L().Error("failed to create user", zap.Error(err))
-// 				ErrorJSON(w, "failed to create user", http.StatusInternalServerError)
-// 				return
-// 			}
-// 		} else {
-// 			zap.L().Error("failed to find user", zap.Error(err))
-// 			ErrorJSON(w, "failed to find user", http.StatusInternalServerError)
-// 			return
-// 		}
-// 	}
+	// 5. generate jwt token
+	token, err := c.jwt.GenerateToken(jwt.JWTUser{
+		Identifier: userIdentifier,
+	})
+	if err != nil {
+		zap.L().Error("failed to generate jwt token", zap.Error(err))
+		ErrorJSON(w, "failed to generate jwt token", http.StatusInternalServerError)
+		return
+	}
 
-// 	// 6. generate token pair
-// 	jwtUser := jwt.JWTUser{
-// 		DID: u.DID,
-// 	}
+	go ws.Send(ws.Message{
+		ID:   id,
+		Type: ws.EventMessage,
+		Event: ws.Event{
+			Name:   "login-callback",
+			Status: ws.Done,
+			Data:   token,
+		},
+	})
 
-// 	tokenPair, err := c.jwt.GenerateTokenPair(jwtUser)
-// 	if err != nil {
-// 		zap.L().Error("failed to generate token pair", zap.Error(err))
-// 		ErrorJSON(w, "failed to generate token pair", http.StatusInternalServerError)
-// 		return
-// 	}
+	// 6. return success response
+	response := CommonResponse{
+		Status:  http.StatusOK,
+		Message: fmt.Sprintf("User with ID %s Successfully authenticated", userIdentifier),
+	}
 
-// 	go ws.Send(ws.Message{
-// 		ID:   id,
-// 		Type: ws.EventMessage,
-// 		Event: ws.Event{
-// 			Name:   "login-callback",
-// 			Status: ws.Done,
-// 			Data:   tokenPair,
-// 		},
-// 	})
+	_ = WriteJSON(w, http.StatusOK, response)
+}
 
-// 	// 7. return success response
-// 	response := CommonResponse{
-// 		Status:  http.StatusOK,
-// 		Message: fmt.Sprintf("User with ID %s Successfully authenticated", userDID),
-// 	}
+// Register godoc
+//
+//	@Tags			users
+//	@Summary		registers user
+//	@Description	registers user
+//	@Produce		json
+//	@Param			sessionId		query		string	true	"session id"
+//	@Param			walletAddress	query		string	true	"wallet address"
+//	@Success		201		{object}	CommonResponse
+//	@Failure		400		{object}	CommonResponse
+//	@Failure		500		{object}	CommonResponse
+//	@Router			/users/register [post]
+func (c *UserCtrl) register(w http.ResponseWriter, r *http.Request) {
+	// 1. get user from context
+	jwtUser, err := c.jwt.FromContext(r.Context())
+	if err != nil {
+		zap.L().Error("failed to get user from context", zap.Error(err))
+		ErrorJSON(w, "user not found")
+		return
+	}
 
-// 	_ = WriteJSON(w, http.StatusOK, response)
-// }
+	// 2. get session id from query params
+	sessionId := r.URL.Query().Get("sessionId")
+
+	// 3. validate session id
+	id := ws.ID(sessionId)
+
+	if !id.Valid() {
+		ErrorJSON(w, "invalid session id")
+		return
+	}
+
+	// 4. get wallet address from query params
+	walletAddress := r.URL.Query().Get("walletAddress")
+
+	// 5. validate wallet address
+	re := regexp.MustCompile("^0x[0-9a-fA-F]{40}$")
+	if !re.MatchString(walletAddress) {
+		ErrorJSON(w, "invalid wallet address", http.StatusInternalServerError)
+		return
+	}
+
+	// 7. check if identifier is already registered or not
+	u, err := c.user.FindUserByDID(r.Context(), jwtUser.Identifier)
+	if err != nil {
+		if err != user.ErrUserNotFound {
+			zap.L().Error("failed to find user", zap.Error(err))
+			ErrorJSON(w, "failed to find user", http.StatusInternalServerError)
+			return
+		}
+	} else {
+		if u.WalletAddress != "" {
+			ErrorJSON(w, "user already registered", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	// 8. create user tba
+
+	// 9. update user
+
+	// 10. return success response
+}
 
 // Profile godoc
 //

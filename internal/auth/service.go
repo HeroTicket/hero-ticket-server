@@ -15,6 +15,7 @@ import (
 
 type Service interface {
 	AuthorizationRequest(ctx context.Context, params AuthorizationRequestParams) (protocol.AuthorizationRequestMessage, error)
+	AuthorizationCallback(ctx context.Context, id, token string) (*protocol.AuthorizationResponseMessage, error)
 }
 
 type AuthServiceConfig struct {

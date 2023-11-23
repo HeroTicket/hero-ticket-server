@@ -14,8 +14,8 @@ type Notice struct {
 	ID        string    `json:"id" bson:"_id"`
 	Title     string    `json:"title" bson:"title"`
 	Content   string    `json:"content" bson:"content"`
-	CreatedAt time.Time `json:"created_at" bson:"created_at"`
-	UpdatedAt time.Time `json:"updated_at" bson:"updated_at"`
+	CreatedAt time.Time `json:"createdAt" bson:"createdAt"`
+	UpdatedAt time.Time `json:"updatedAt" bson:"updatedAt"`
 }
 
 type NoticeUpdateParams struct {
@@ -27,12 +27,12 @@ type NoticeUpdateParams struct {
 type Pagination struct {
 	Total       int64 `json:"total"`
 	Pages       int64 `json:"pages"`
-	CurrentPage int64 `json:"current_page"`
+	CurrentPage int64 `json:"currentPage"`
 	Limit       int64 `json:"limit"`
 	Start       int64 `json:"start"`
 	End         int64 `json:"end"`
-	HasNext     bool  `json:"has_next"`
-	HasPrev     bool  `json:"has_prev"`
+	HasNext     bool  `json:"hasNext"`
+	HasPrev     bool  `json:"hasPrev"`
 }
 
 type Notices struct {

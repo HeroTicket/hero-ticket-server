@@ -14,12 +14,12 @@ var (
 
 type User struct {
 	DID           string    `json:"did" bson:"_id"`
-	WalletAddress string    `json:"wallet_address" bson:"wallet_address"`
-	TBAAddress    string    `json:"tba_address" bson:"tba_address"`
-	Name          string    `json:"name" bson:"name"`
-	IsAdmin       bool      `json:"is_admin" bson:"is_admin"`
-	CreatedAt     time.Time `json:"created_at" bson:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at" bson:"updated_at"`
+	WalletAddress string    `json:"walletAddress" bson:"walletAddress"`
+	TbaAddress    string    `json:"tbaAddress" bson:"tbaAddress"`
+	Nonce         int64     `json:"nonce" bson:"nonce"`
+	IsAdmin       bool      `json:"isAdmin" bson:"isAdmin"`
+	CreatedAt     time.Time `json:"createdAt" bson:"createdAt"`
+	UpdatedAt     time.Time `json:"updatedAt" bson:"updatedAt"`
 }
 
 type UserUpdateParams struct {

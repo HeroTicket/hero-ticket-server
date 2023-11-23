@@ -13,6 +13,7 @@ import (
 	"github.com/heroticket/internal/did"
 	"github.com/heroticket/internal/http"
 	"github.com/heroticket/internal/http/rest"
+	"github.com/heroticket/internal/jwt"
 	"github.com/heroticket/internal/notice"
 	noticerepo "github.com/heroticket/internal/notice/repository/mongo"
 	"github.com/heroticket/internal/shutdown"
@@ -25,7 +26,7 @@ import (
 
 //	@title			Hero Ticket API
 //	@version		1.0
-//	@description	This is Hero Ticket API server.
+//	@description	API for Hero Ticket DApp
 //	@termsOfService	http://swagger.io/terms/
 
 //	@contact.name	API Support
@@ -35,8 +36,8 @@ import (
 //	@license.name	Apache 2.0
 //	@license.url	http://www.apache.org/licenses/LICENSE-2.0.html
 
-// @host		localhost:8080
-// @BasePath	/api/v1
+// @host		api.heroticket.xyz
+// @BasePath	/v1
 func main() {
 	logger, _ := zap.NewProduction(zap.Fields(zap.String("service", "hero-ticket")))
 	defer logger.Sync()
@@ -75,7 +76,7 @@ func main() {
 	noticeRepo := noticerepo.New(client, "hero-ticket", "notices")
 	userRepo := userrepo.NewMongoRepository(client, "hero-ticket", "users")
 
-	_ = auth.New(auth.AuthServiceConfig{
+	authSvc := auth.New(auth.AuthServiceConfig{
 		ReqCache: redis.NewCache(authRedis),
 	})
 
@@ -89,12 +90,14 @@ func main() {
 		Client:  did.DefaultClient,
 	})
 
+	jwtSvc := jwt.New("secret")
+
 	noticeSvc := notice.New(noticeRepo)
 	userSvc := user.New(userRepo)
 	tx := mongo.NewTx(client)
 
 	server := newServer(
-		initUserController(didSvc, userSvc, tx),
+		initUserController(authSvc, didSvc, jwtSvc, userSvc, tx),
 		initNoticeController(noticeSvc, userSvc),
 		initTicketController(),
 	)
@@ -122,8 +125,8 @@ func main() {
 	<-stop
 }
 
-func initUserController(didSvc did.Service, userSvc user.Service, tx db.Tx) *rest.UserCtrl {
-	return rest.NewUserCtrl(didSvc, userSvc, tx)
+func initUserController(authSvc auth.Service, didSvc did.Service, jwtSvc jwt.Service, userSvc user.Service, tx db.Tx) *rest.UserCtrl {
+	return rest.NewUserCtrl(authSvc, didSvc, jwtSvc, userSvc, tx, os.Getenv("BASE_URL"))
 }
 
 func initNoticeController(noticeSvc notice.Service, userSvc user.Service) *rest.NoticeCtrl {
