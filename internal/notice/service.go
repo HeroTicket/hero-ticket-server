@@ -5,7 +5,7 @@ import "context"
 type Service interface {
 	CreateNotice(ctx context.Context, n *Notice) (*Notice, error)
 	GetNotice(ctx context.Context, id string) (*Notice, error)
-	GetNotices(ctx context.Context, page, limit int64) ([]*Notice, *Pagination, error)
+	GetNotices(ctx context.Context, page, limit int64) (*Notices, error)
 	UpdateNotice(ctx context.Context, params *NoticeUpdateParams) error
 	DeleteNotice(ctx context.Context, id string) error
 }
@@ -30,7 +30,7 @@ func (svc *noticeService) GetNotice(ctx context.Context, id string) (*Notice, er
 	return svc.repo.GetNotice(ctx, id)
 }
 
-func (svc *noticeService) GetNotices(ctx context.Context, page int64, limit int64) ([]*Notice, *Pagination, error) {
+func (svc *noticeService) GetNotices(ctx context.Context, page int64, limit int64) (*Notices, error) {
 	return svc.repo.GetNotices(ctx, page, limit)
 }
 

@@ -44,18 +44,21 @@ func (q *mongoQuery) GetNotice(ctx context.Context, id string) (*notice.Notice, 
 	return &n, nil
 }
 
-func (q *mongoQuery) GetNotices(ctx context.Context, page, limit int64) ([]*notice.Notice, *notice.Pagination, error) {
+func (q *mongoQuery) GetNotices(ctx context.Context, page, limit int64) (*notice.Notices, error) {
 	coll := q.collection()
 
 	total, err := coll.CountDocuments(ctx, primitive.M{})
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	pagination := q.pagination(total, page, limit)
 
 	if total == 0 {
-		return []*notice.Notice{}, pagination, nil
+		return &notice.Notices{
+			Items:      []*notice.Notice{},
+			Pagination: pagination,
+		}, nil
 	}
 
 	skip := (pagination.CurrentPage - 1) * pagination.Limit
@@ -67,7 +70,7 @@ func (q *mongoQuery) GetNotices(ctx context.Context, page, limit int64) ([]*noti
 
 	cursor, err := coll.Find(ctx, primitive.M{}, findOptions)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
 
 	var notices []*notice.Notice
@@ -77,13 +80,16 @@ func (q *mongoQuery) GetNotices(ctx context.Context, page, limit int64) ([]*noti
 
 		err := cursor.Decode(&n)
 		if err != nil {
-			return nil, nil, err
+			return nil, err
 		}
 
 		notices = append(notices, &n)
 	}
 
-	return notices, pagination, nil
+	return &notice.Notices{
+		Items:      notices,
+		Pagination: pagination,
+	}, nil
 }
 
 func (q *mongoQuery) collection() *mongo.Collection {

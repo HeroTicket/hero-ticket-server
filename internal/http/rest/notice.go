@@ -79,22 +79,17 @@ func (c *NoticeCtrl) Notices(w http.ResponseWriter, r *http.Request) {
 		limit = limitInt
 	}
 
-	notices, pagination, err := c.notice.GetNotices(r.Context(), page, limit)
+	notices, err := c.notice.GetNotices(r.Context(), page, limit)
 	if err != nil {
 		zap.L().Error("failed to get notices", zap.Error(err))
 		ErrorJSON(w, "failed to get notices", http.StatusInternalServerError)
 		return
 	}
 
-	var nresp NoticesResponse
-
-	nresp.Notices = notices
-	nresp.Pagination = pagination
-
 	resp := CommonResponse{
 		Status:  http.StatusOK,
 		Message: "notices retrieved",
-		Data:    nresp,
+		Data:    notices,
 	}
 
 	_ = WriteJSON(w, http.StatusOK, resp)

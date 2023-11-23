@@ -34,3 +34,8 @@ type Pagination struct {
 	HasNext     bool  `json:"has_next"`
 	HasPrev     bool  `json:"has_prev"`
 }
+
+type Notices struct {
+	Items      []*Notice   `json:"items"`
+	Pagination *Pagination `json:"pagination"`
+}

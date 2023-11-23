@@ -10,7 +10,7 @@ type Command interface {
 
 type Query interface {
 	GetNotice(ctx context.Context, id string) (*Notice, error)
-	GetNotices(ctx context.Context, page, limit int64) ([]*Notice, *Pagination, error)
+	GetNotices(ctx context.Context, page, limit int64) (*Notices, error)
 }
 
 type Repository interface {
