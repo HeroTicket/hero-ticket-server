@@ -1,133 +1,166 @@
 package did
 
 import (
+	"bytes"
 	"context"
-	"time"
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
+	"net/http"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/heroticket/internal/cache"
-	auth "github.com/iden3/go-iden3-auth/v2"
-	"github.com/iden3/go-iden3-auth/v2/loaders"
-	"github.com/iden3/go-iden3-auth/v2/pubsignals"
-	"github.com/iden3/go-iden3-auth/v2/state"
-	"github.com/iden3/iden3comm/v2/protocol"
 )
 
 type Service interface {
-	LoginRequest(ctx context.Context, id, audience, callbackUrl string) (protocol.AuthorizationRequestMessage, error)
-	LoginCallback(ctx context.Context, id, token string) (*protocol.AuthorizationResponseMessage, error)
-	// TODO: add more methods
-	// CreateCredential()
-	// VerifyCredential()
-	// VerifyCredentialCallback()
-	// RevokeCredential()
-
-	CreateVerifier(ctx context.Context, v *Verifier) (*Verifier, error)
-	DeleteVerifier(ctx context.Context, id string) error
-	FindVerifierByID(ctx context.Context, id string) (*Verifier, error)
-	FindMatchedVerifier(ctx context.Context, didStr, walletAddress, contractAddress string) (*Verifier, error)
+	CreateIdentity(ctx context.Context, identity CreateIdentityRequest) (*CreateIdentityResponse, error)
+	CreateClaim(ctx context.Context, identifier string, claim CreateClaimRequest) (*CreateClaimResponse, error)
+	GetClaimQrCode(ctx context.Context, identifier string, claimId string) (*GetClaimQrCodeResponse, error)
 }
 
-type didService struct {
-	rpcUrl string
+type DidServiceConfig struct {
+	RPCUrl       string
+	IssuerUrl    string
+	Username     string
+	Password     string
+	RequestCache cache.Cache
+	Client       *http.Client
+}
 
-	repo         Repository
+type DidService struct {
+	rpcUrl    string
+	issuerUrl string
+	username  string
+	password  string
+
 	requestCache cache.Cache
+	client       *http.Client
 }
 
-func New(repo Repository, requestCache cache.Cache, rpcUrl string) Service {
-	svc := &didService{
-		repo:         repo,
-		requestCache: requestCache,
-		rpcUrl:       rpcUrl,
+func New(cfg DidServiceConfig) Service {
+	svc := &DidService{
+		rpcUrl:       cfg.RPCUrl,
+		issuerUrl:    cfg.IssuerUrl,
+		username:     cfg.Username,
+		password:     cfg.Password,
+		requestCache: cfg.RequestCache,
+		client:       cfg.Client,
 	}
 
 	return svc
 }
 
-func (s *didService) LoginRequest(ctx context.Context, id string, audience string, callbackUrl string) (protocol.AuthorizationRequestMessage, error) {
-	var request protocol.AuthorizationRequestMessage = auth.CreateAuthorizationRequestWithMessage(
-		"Login to Hero Ticket",
-		"Scan the QR code to login to Hero Ticket",
-		audience,
-		callbackUrl,
-	)
+func (s *DidService) CreateIdentity(ctx context.Context, identity CreateIdentityRequest) (*CreateIdentityResponse, error) {
+	url := fmt.Sprintf("%s/v1/identities", s.issuerUrl)
 
-	request.ID = id
-	request.ThreadID = id
-
-	err := s.requestCache.Set(ctx, id, request, DefaultCacheExpiry)
-	if err != nil {
-		return protocol.AuthorizationRequestMessage{}, err
-	}
-
-	return request, nil
-}
-
-func (s *didService) LoginCallback(ctx context.Context, id string, token string) (*protocol.AuthorizationResponseMessage, error) {
-	var request protocol.AuthorizationRequestMessage
-
-	err := s.requestCache.Get(ctx, id, &request)
+	body, err := json.Marshal(identity)
 	if err != nil {
 		return nil, err
 	}
 
-	ipfsUrl := "https://ipfs.io"
-	contractAddress := "134B1BE34911E39A8397ec6289782989729807a4"
-	resolverPrefix := "polygon:mumbai"
-	ketDir := "./keys"
-
-	var verificationKeyLoader = &loaders.FSKeyLoader{
-		Dir: ketDir,
-	}
-
-	resolver := state.ETHResolver{
-		RPCUrl:          s.rpcUrl,
-		ContractAddress: common.HexToAddress(contractAddress),
-	}
-
-	resolvers := map[string]pubsignals.StateResolver{
-		resolverPrefix: &resolver,
-	}
-
-	verifier, err := auth.NewVerifier(
-		verificationKeyLoader,
-		resolvers,
-		auth.WithIPFSGateway(ipfsUrl),
-	)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(body))
 	if err != nil {
 		return nil, err
 	}
 
-	response, err := verifier.FullVerify(
-		ctx,
-		token,
-		request,
-		pubsignals.WithAcceptedProofGenerationDelay(time.Minute*5),
-	)
+	s.setAuthorizationHeader(req)
+
+	res, err := s.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusCreated {
+		return nil, ReadErrorResponse(res)
+	}
+
+	var createIdentityResponse CreateIdentityResponse
+
+	err = json.NewDecoder(res.Body).Decode(&createIdentityResponse)
 	if err != nil {
 		return nil, err
 	}
 
-	go func() {
-		_ = s.requestCache.Delete(ctx, id)
-	}()
+	if createIdentityResponse.Identifier == "" {
+		return nil, fmt.Errorf("identity id is empty")
+	}
 
-	return response, nil
+	return &createIdentityResponse, nil
 }
 
-func (s *didService) CreateVerifier(ctx context.Context, v *Verifier) (*Verifier, error) {
-	return s.repo.CreateVerifier(ctx, v)
+func (s *DidService) CreateClaim(ctx context.Context, identifier string, claim CreateClaimRequest) (*CreateClaimResponse, error) {
+	url := fmt.Sprintf("%s/v1/%s/claims", identifier, s.issuerUrl)
+
+	body, err := json.Marshal(claim)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(body))
+	if err != nil {
+		return nil, err
+	}
+
+	s.setAuthorizationHeader(req)
+
+	res, err := s.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusCreated {
+		return nil, ReadErrorResponse(res)
+	}
+
+	var createClaimResponse CreateClaimResponse
+
+	err = json.NewDecoder(res.Body).Decode(&createClaimResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return &createClaimResponse, nil
 }
 
-func (s *didService) DeleteVerifier(ctx context.Context, id string) error {
-	return s.repo.DeleteVerifier(ctx, id)
+func (s *DidService) GetClaimQrCode(ctx context.Context, identifier string, claimId string) (*GetClaimQrCodeResponse, error) {
+	// check if qrcode exists in cache
+	var qrcode GetClaimQrCodeResponse
+
+	err := s.requestCache.Get(ctx, claimId, &qrcode)
+	if err == nil {
+		return &qrcode, nil
+	}
+
+	url := fmt.Sprintf("%s/v1/%s/claims/%s/qrcode", s.issuerUrl, identifier, claimId)
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	s.setAuthorizationHeader(req)
+
+	res, err := s.client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return nil, ReadErrorResponse(res)
+	}
+
+	var getClaimQrCodeResponse GetClaimQrCodeResponse
+
+	err = json.NewDecoder(res.Body).Decode(&getClaimQrCodeResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return &getClaimQrCodeResponse, nil
 }
 
-func (s *didService) FindVerifierByID(ctx context.Context, id string) (*Verifier, error) {
-	return s.repo.FindVerifierByID(ctx, id)
-}
-
-func (s *didService) FindMatchedVerifier(ctx context.Context, didStr, walletAddress, contractAddress string) (*Verifier, error) {
-	return s.repo.FindMatchedVerifier(ctx, didStr, walletAddress, contractAddress)
+func (s *DidService) setAuthorizationHeader(req *http.Request) {
+	req.Header.Set("Authorization", fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", s.username, s.password)))))
 }

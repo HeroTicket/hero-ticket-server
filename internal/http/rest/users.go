@@ -164,7 +164,7 @@ func (c *UserCtrl) loginCallback(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// 4. handle login callback
-	authResponse, err := c.did.LoginCallback(r.Context(), sessionId, string(tokenBytes))
+	authResponse, err := c.did.AuthorizationCallback(r.Context(), sessionId, string(tokenBytes))
 	if err != nil {
 		zap.L().Error("failed to handle login callback", zap.Error(err))
 		ErrorJSON(w, "failed to handle login callback", http.StatusInternalServerError)

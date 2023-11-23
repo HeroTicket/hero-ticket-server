@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"os"
-	"syscall"
 
 	"github.com/heroticket/internal/cache/redis"
 	"github.com/heroticket/internal/db"
@@ -16,7 +15,6 @@ import (
 	"github.com/heroticket/internal/jwt"
 	"github.com/heroticket/internal/notice"
 	noticerepo "github.com/heroticket/internal/notice/repository/mongo"
-	"github.com/heroticket/internal/shutdown"
 	"github.com/heroticket/internal/user"
 	userrepo "github.com/heroticket/internal/user/repository/mongo"
 	"go.uber.org/zap"
@@ -70,39 +68,49 @@ func main() {
 	noticeRepo := noticerepo.New(client, "hero-ticket", "notices")
 	userRepo := userrepo.NewMongoRepository(client, "hero-ticket", "users")
 
-	didSvc := did.New(didRepo, redis.NewCache(cache), os.Getenv("RPC_URL_MUMBAI"))
+	// didSvc := did.New(config.DIDServiceConfig{
+	// 	RPCUrl:    os.Getenv("RPC_URL"),
+	// 	IssuerUrl: "https://issuer.heroticket.xyz",
+	// 	Username:  "user-issuer",
+	// 	Password:  "password-issuer",
+
+	// 	Repo:         didRepo,
+	// 	RequestCache: redis.NewCache(cache),
+	// 	Client:       ohttp.DefaultClient,
+	// })
+
 	jwtSvc := jwt.New("secret1", "secret2")
 	noticeSvc := notice.New(noticeRepo)
 	userSvc := user.New(userRepo)
 	tx := mongo.NewTx(client)
 
-	server := newServer(
+	_ = newServer(
 		initUserController(didSvc, jwtSvc, userSvc, tx),
 		initNoticeController(jwtSvc, noticeSvc, userSvc),
 		initTicketController(),
 	)
 
-	go func() {
-		if err := server.Run(); err != nil && err != http.ErrServerClosed {
-			panic(err)
-		}
-	}()
+	// go func() {
+	// 	if err := server.Run(); err != nil && err != http.ErrServerClosed {
+	// 		panic(err)
+	// 	}
+	// }()
 
-	stop := shutdown.GracefulShutdown(func() {
-		if err := server.Shutdown(context.Background()); err != nil {
-			panic(err)
-		}
+	// stop := shutdown.GracefulShutdown(func() {
+	// 	if err := server.Shutdown(context.Background()); err != nil {
+	// 		panic(err)
+	// 	}
 
-		zap.L().Info("server stopped")
+	// 	zap.L().Info("server stopped")
 
-		if err := client.Disconnect(context.Background()); err != nil {
-			panic(err)
-		}
+	// 	if err := client.Disconnect(context.Background()); err != nil {
+	// 		panic(err)
+	// 	}
 
-		zap.L().Info("disconnected from mongo")
-	}, syscall.SIGINT, syscall.SIGTERM)
+	// 	zap.L().Info("disconnected from mongo")
+	// }, syscall.SIGINT, syscall.SIGTERM)
 
-	<-stop
+	// <-stop
 }
 
 func initUserController(didSvc did.Service, jwtSvc jwt.Service, userSvc user.Service, tx db.Tx) *rest.UserCtrl {
