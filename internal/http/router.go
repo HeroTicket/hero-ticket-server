@@ -28,12 +28,10 @@ func newRouter(version string, ctrls ...Controller) *router {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 
-	r.Route("/api", func(r chi.Router) {
-		r.Route(fmt.Sprintf("/%s", version), func(r chi.Router) {
-			for _, ctrl := range ctrls {
-				r.Mount(ctrl.Pattern(), ctrl.Handler())
-			}
-		})
+	r.Route(fmt.Sprintf("/%s", version), func(r chi.Router) {
+		for _, ctrl := range ctrls {
+			r.Mount(ctrl.Pattern(), ctrl.Handler())
+		}
 	})
 
 	r.HandleFunc("/ws", ws.Serve())

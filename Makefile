@@ -1,3 +1,8 @@
+.PHONY: infra
+infra:
+	@echo "Starting up infrastructure..."
+	docker compose up -d mongo auth-redis did-redis
+
 .PHONY: up
 up:
 	@echo "Starting up containers..."

@@ -16,9 +16,11 @@ RUN apt-get install -y libgomp1
 
 RUN mkdir /app
 
+ENV GO_ENV=production
+
 COPY --from=builder /app/server /app
 
-COPY --from=builder /app/keys /app/keys
+COPY --from=builder /app/pkg/keys /app/pkg/keys
 
 WORKDIR /app
 
