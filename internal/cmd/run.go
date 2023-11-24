@@ -92,7 +92,8 @@ func Run() {
 		Secret: cfg.Ipfs.Secret,
 	})
 
-	jwtSvc := jwt.New(cfg.Jwt.SecretKey, jwt.WithAudience(cfg.Jwt.Audience), jwt.WithIssuer(cfg.Jwt.Issuer))
+	jwtSvc := jwt.New(cfg.Jwt.AccessTokenKey, cfg.Jwt.RefreshTokenKey,
+		jwt.WithAudience(cfg.Jwt.Audience), jwt.WithIssuer(cfg.Jwt.Issuer))
 
 	noticeSvc := notice.New(nrepo.New(mongoClient, cfg.Notice.DbName))
 

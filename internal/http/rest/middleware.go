@@ -33,7 +33,7 @@ func TokenRequired(jwtSvc jwt.Service) func(next http.Handler) http.Handler {
 
 			token := headerParts[1]
 
-			jwtUser, err := jwtSvc.VerifyToken(token)
+			jwtUser, err := jwtSvc.VerifyToken(token, jwt.TokenRoleAccess)
 			if err != nil {
 				zap.L().Error("failed to validate access token", zap.Error(err))
 				ErrorJSON(w, "unauthorized", http.StatusUnauthorized)

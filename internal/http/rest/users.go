@@ -181,7 +181,7 @@ func (c *UserCtrl) loginCallback(w http.ResponseWriter, r *http.Request) {
 	userID := resp.From
 
 	// 5. generate jwt token
-	token, err := c.jwt.GenerateToken(jwt.JWTUser{
+	tokenPair, err := c.jwt.GenerateTokenPair(jwt.JWTUser{
 		ID: userID,
 	})
 	if err != nil {
@@ -196,7 +196,7 @@ func (c *UserCtrl) loginCallback(w http.ResponseWriter, r *http.Request) {
 		Event: ws.Event{
 			Name:   "login-callback",
 			Status: ws.Done,
-			Data:   token,
+			Data:   tokenPair,
 		},
 	})
 

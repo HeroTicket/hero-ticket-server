@@ -76,7 +76,7 @@ func (s *DidService) CreateIdentity(ctx context.Context, identity CreateIdentity
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusCreated {
-		return nil, ReadErrorResponse(res)
+		return nil, errorFromResponse(res)
 	}
 
 	var createIdentityResponse CreateIdentityResponse
@@ -115,7 +115,7 @@ func (s *DidService) CreateClaim(ctx context.Context, identifier string, claim C
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusCreated {
-		return nil, ReadErrorResponse(res)
+		return nil, errorFromResponse(res)
 	}
 
 	var createClaimResponse CreateClaimResponse
@@ -153,7 +153,7 @@ func (s *DidService) GetClaimQrCode(ctx context.Context, identifier string, clai
 	defer res.Body.Close()
 
 	if res.StatusCode != http.StatusOK {
-		return nil, ReadErrorResponse(res)
+		return nil, errorFromResponse(res)
 	}
 
 	var getClaimQrCodeResponse GetClaimQrCodeResponse
@@ -174,4 +174,19 @@ func (s *DidService) GetClaimQrCode(ctx context.Context, identifier string, clai
 
 func (s *DidService) setAuthorizationHeader(req *http.Request) {
 	req.Header.Set("Authorization", fmt.Sprintf("Basic %s", base64.StdEncoding.EncodeToString([]byte(fmt.Sprintf("%s:%s", s.username, s.password)))))
+}
+
+func errorFromResponse(res *http.Response) error {
+	var data map[string]interface{}
+
+	err := json.NewDecoder(res.Body).Decode(&data)
+	if err != nil {
+		return err
+	}
+
+	if msg, ok := data["message"].(string); ok {
+		return fmt.Errorf(msg)
+	}
+
+	return fmt.Errorf("unknown error")
 }

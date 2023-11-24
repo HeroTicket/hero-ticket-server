@@ -62,7 +62,13 @@ func (s *AuthService) AuthorizationRequest(ctx context.Context, params Authoriza
 		req.Body.Scope = append(req.Body.Scope, params.Scope...)
 	}
 
-	err := s.reqCache.Set(ctx, params.ID, req, DefaultTimeout)
+	timeout := DefaultTimeout
+
+	if params.Timeout > 0 {
+		timeout = params.Timeout
+	}
+
+	err := s.reqCache.Set(ctx, params.ID, req, timeout)
 	if err != nil {
 		return protocol.AuthorizationRequestMessage{}, err
 	}
