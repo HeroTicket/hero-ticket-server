@@ -9,7 +9,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/heroticket/internal/db"
 	"github.com/heroticket/internal/service/auth"
-	"github.com/heroticket/internal/service/did"
 	"github.com/heroticket/internal/service/jwt"
 	"github.com/heroticket/internal/service/user"
 	"github.com/heroticket/internal/web3"
@@ -21,17 +20,15 @@ type UserCtrl struct {
 	baseUrl string
 
 	auth auth.Service
-	did  did.Service
 	jwt  jwt.Service
 	user user.Service
 	tx   db.Tx
 }
 
-func NewUserCtrl(auth auth.Service, did did.Service, jwt jwt.Service, user user.Service, tx db.Tx, baseUrl string) *UserCtrl {
+func NewUserCtrl(auth auth.Service, jwt jwt.Service, user user.Service, tx db.Tx, baseUrl string) *UserCtrl {
 	return &UserCtrl{
 		baseUrl: baseUrl,
 		auth:    auth,
-		did:     did,
 		jwt:     jwt,
 		user:    user,
 		tx:      tx,
@@ -47,10 +44,11 @@ func (c *UserCtrl) Handler() http.Handler {
 
 	r.Get("/login-qr", c.loginQR)
 	r.Post("/login-callback", c.loginCallback)
+	r.Post("/refresh", c.refresh)
 
 	r.Group(func(r chi.Router) {
 		r.Use(TokenRequired(c.jwt))
-		r.Post("/register", c.register)
+		r.Post("/register/{accountAddress}", c.register)
 	})
 
 	return r
@@ -61,9 +59,10 @@ func (c *UserCtrl) Handler() http.Handler {
 //	@Tags			users
 //	@Summary		returns login qr code
 //	@Description	returns login qr code
+//	@Accept 		json
 //	@Produce		json
 //	@Param			sessionId	query		string	true	"session id"
-//	@Success		200			{object}	CommonResponse
+//	@Success		200			{object}	CommonResponse{data=protocol.AuthorizationRequestMessage}
 //	@Failure		400			{object}	CommonResponse
 //	@Failure		500			{object}	CommonResponse
 //	@Router			/users/login-qr [get]
@@ -136,6 +135,7 @@ func (c *UserCtrl) loginQR(w http.ResponseWriter, r *http.Request) {
 //	@Accept 		plain
 //	@Produce		json
 //	@Param			sessionId	query		string	true	"session id"
+//	@Param			token		body		string	true	"token"
 //	@Success		200			{object}	CommonResponse
 //	@Failure		400			{object}	CommonResponse
 //	@Failure		500			{object}	CommonResponse
@@ -209,16 +209,66 @@ func (c *UserCtrl) loginCallback(w http.ResponseWriter, r *http.Request) {
 	_ = WriteJSON(w, http.StatusOK, response)
 }
 
+// Refresh Token Pair godoc
+//
+//	@Tags			users
+//	@Summary		refreshes token pair
+//	@Description	refreshes token pair
+//	@Accept 		plain
+//	@Produce		json
+//	@Param			refreshToken		body		string	true	"refresh token"
+//	@Success		200			{object}	CommonResponse{data=jwt.TokenPair}
+//	@Failure		400			{object}	CommonResponse
+//	@Failure		500			{object}	CommonResponse
+//	@Router			/users/refresh [post]
+func (c *UserCtrl) refresh(w http.ResponseWriter, r *http.Request) {
+	// 1. read token from request body
+	tokenBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		zap.L().Error("failed to read token", zap.Error(err))
+		ErrorJSON(w, "failed to read token", http.StatusInternalServerError)
+		return
+	}
+	defer r.Body.Close()
+
+	// 2. validate token
+	jwtUser, err := c.jwt.VerifyToken(string(tokenBytes), jwt.TokenRoleRefresh)
+	if err != nil {
+		ErrorJSON(w, "invalid token", http.StatusBadRequest)
+		return
+	}
+
+	// 3. generate new token pair
+	newTokenPair, err := c.jwt.GenerateTokenPair(jwt.JWTUser{
+		ID: jwtUser.ID,
+	})
+	if err != nil {
+		zap.L().Error("failed to generate token pair", zap.Error(err))
+		ErrorJSON(w, "failed to generate token pair", http.StatusInternalServerError)
+		return
+	}
+
+	// 4. return new token pair as json response
+	resp := CommonResponse{
+		Status:  http.StatusOK,
+		Message: "Successfully refreshed token pair",
+		Data:    newTokenPair,
+	}
+
+	_ = WriteJSON(w, http.StatusOK, resp)
+}
+
 // Register godoc
 //
 //	@Tags			users
 //	@Summary		registers user
 //	@Description	registers user
 //	@Produce		json
-//	@Param			accountAddress	query		string	true	"account address"
+//	@Param			accountAddress 	path	string	true	"account address"
 //	@Success		201		{object}	CommonResponse
 //	@Failure		400		{object}	CommonResponse
 //	@Failure		500		{object}	CommonResponse
+//	@Security 		BearerAuth
 //	@Router			/users/register [post]
 func (c *UserCtrl) register(w http.ResponseWriter, r *http.Request) {
 	// 1. get user from context
@@ -229,8 +279,8 @@ func (c *UserCtrl) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 2. get account address from query params
-	accountAddress := r.URL.Query().Get("accountAddress")
+	// 2. get account address from path params
+	accountAddress := chi.URLParam(r, "accountAddress")
 
 	// 3. validate account address
 	if !web3.IsAddressValid(accountAddress) {

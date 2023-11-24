@@ -22,10 +22,10 @@ const (
 )
 
 type TokenPair struct {
-	AccessToken        string        `json:"access_token"`
-	RefreshToken       string        `json:"refresh_token"`
-	AccessTokenExpiry  time.Duration `json:"access_token_expiry"`
-	RefreshTokenExpiry time.Duration `json:"refresh_token_expiry"`
+	AccessToken        string        `json:"accessToken"`
+	RefreshToken       string        `json:"refreshToken"`
+	AccessTokenExpiry  time.Duration `json:"accessTokenExpiry"`
+	RefreshTokenExpiry time.Duration `json:"refreshTokenExpiry"`
 }
 
 type JWTUser struct {

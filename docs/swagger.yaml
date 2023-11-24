@@ -1,5 +1,104 @@
-basePath: /api/v1
+basePath: /v1
 definitions:
+  jwt.TokenPair:
+    properties:
+      accessToken:
+        type: string
+      accessTokenExpiry:
+        $ref: '#/definitions/time.Duration'
+      refreshToken:
+        type: string
+      refreshTokenExpiry:
+        $ref: '#/definitions/time.Duration'
+    type: object
+  notice.Notice:
+    properties:
+      content:
+        type: string
+      createdAt:
+        type: integer
+      id:
+        type: integer
+      title:
+        type: string
+      updatedAt:
+        type: integer
+    type: object
+  notice.Notices:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/notice.Notice'
+        type: array
+      pagination:
+        $ref: '#/definitions/notice.Pagination'
+    type: object
+  notice.Pagination:
+    properties:
+      currentPage:
+        type: integer
+      end:
+        type: integer
+      hasNext:
+        type: boolean
+      hasPrev:
+        type: boolean
+      limit:
+        type: integer
+      pages:
+        type: integer
+      start:
+        type: integer
+      total:
+        type: integer
+    type: object
+  protocol.AuthorizationRequestMessage:
+    properties:
+      body:
+        $ref: '#/definitions/protocol.AuthorizationRequestMessageBody'
+      from:
+        type: string
+      id:
+        type: string
+      thid:
+        type: string
+      to:
+        type: string
+      typ:
+        type: string
+      type:
+        type: string
+    type: object
+  protocol.AuthorizationRequestMessageBody:
+    properties:
+      callbackUrl:
+        type: string
+      did_doc:
+        items:
+          type: integer
+        type: array
+      message:
+        type: string
+      reason:
+        type: string
+      scope:
+        items:
+          $ref: '#/definitions/protocol.ZeroKnowledgeProofRequest'
+        type: array
+    type: object
+  protocol.ZeroKnowledgeProofRequest:
+    properties:
+      circuitId:
+        type: string
+      id:
+        description: unique request id
+        type: integer
+      optional:
+        type: boolean
+      query:
+        additionalProperties: true
+        type: object
+    type: object
   rest.CommonResponse:
     properties:
       data: {}
@@ -8,13 +107,49 @@ definitions:
       status:
         type: integer
     type: object
-host: localhost:8080
+  time.Duration:
+    enum:
+    - -9223372036854775808
+    - 9223372036854775807
+    - 1
+    - 1000
+    - 1000000
+    - 1000000000
+    - 60000000000
+    - 3600000000000
+    - -9223372036854775808
+    - 9223372036854775807
+    - 1
+    - 1000
+    - 1000000
+    - 1000000000
+    - 60000000000
+    - 3600000000000
+    type: integer
+    x-enum-varnames:
+    - minDuration
+    - maxDuration
+    - Nanosecond
+    - Microsecond
+    - Millisecond
+    - Second
+    - Minute
+    - Hour
+    - minDuration
+    - maxDuration
+    - Nanosecond
+    - Microsecond
+    - Millisecond
+    - Second
+    - Minute
+    - Hour
+host: api.heroticket.xyz
 info:
   contact:
     email: support@swagger.io
     name: API Support
     url: http://www.swagger.io/support
-  description: This is Hero Ticket API server.
+  description: API for Hero Ticket DApp
   license:
     name: Apache 2.0
     url: http://www.apache.org/licenses/LICENSE-2.0.html
@@ -24,7 +159,9 @@ info:
 paths:
   /notices:
     get:
-      description: Get notices
+      consumes:
+      - application/json
+      description: returns notices paginated
       parameters:
       - description: page
         in: query
@@ -40,7 +177,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/rest.CommonResponse'
+            allOf:
+            - $ref: '#/definitions/rest.CommonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/notice.Notices'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -52,57 +194,29 @@ paths:
       summary: Get notices
       tags:
       - notices
-    post:
-      description: Create notice
-      parameters:
-      - description: title
-        in: formData
-        name: title
-        required: true
-        type: string
-      - description: content
-        in: formData
-        name: content
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-          schema:
-            $ref: '#/definitions/rest.CommonResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/rest.CommonResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/rest.CommonResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/rest.CommonResponse'
-      summary: Create notice
-      tags:
-      - notices
   /notices/{id}:
     get:
-      description: Get notice
+      consumes:
+      - application/json
+      description: returns notice by id
       parameters:
-      - description: id
+      - description: notice id
         in: path
         name: id
         required: true
-        type: string
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/rest.CommonResponse'
+            allOf:
+            - $ref: '#/definitions/rest.CommonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/notice.Notice'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -114,22 +228,15 @@ paths:
       summary: Get notice
       tags:
       - notices
-    put:
-      description: Update notice
+  /profile:
+    get:
+      consumes:
+      - application/json
+      description: returns user profile
       parameters:
-      - description: id
+      - description: user name
         in: path
-        name: id
-        required: true
-        type: string
-      - description: title
-        in: formData
-        name: title
-        required: true
-        type: string
-      - description: content
-        in: formData
-        name: content
+        name: name
         required: true
         type: string
       produces:
@@ -143,23 +250,13 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/rest.CommonResponse'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/rest.CommonResponse'
         "500":
           description: Internal Server Error
           schema:
             $ref: '#/definitions/rest.CommonResponse'
-      summary: Update notice
+      summary: returns user profile
       tags:
-      - notices
-  /users/create-tba:
-    post:
-      responses: {}
-  /users/issued-tickets:
-    get:
-      responses: {}
+      - profile
   /users/login-callback:
     post:
       consumes:
@@ -171,6 +268,12 @@ paths:
         name: sessionId
         required: true
         type: string
+      - description: token
+        in: body
+        name: token
+        required: true
+        schema:
+          type: string
       produces:
       - application/json
       responses:
@@ -191,6 +294,8 @@ paths:
       - users
   /users/login-qr:
     get:
+      consumes:
+      - application/json
       description: returns login qr code
       parameters:
       - description: session id
@@ -204,7 +309,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/rest.CommonResponse'
+            allOf:
+            - $ref: '#/definitions/rest.CommonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/protocol.AuthorizationRequestMessage'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -216,43 +326,73 @@ paths:
       summary: returns login qr code
       tags:
       - users
-  /users/profile:
-    get:
-      description: returns user profile
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/rest.CommonResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/rest.CommonResponse'
-      summary: returns user profile
-      tags:
-      - users
-  /users/purchased-tickets:
-    get:
-      responses: {}
-  /users/refresh-token:
+  /users/refresh:
     post:
       consumes:
       - text/plain
       description: refreshes token pair
+      parameters:
+      - description: refresh token
+        in: body
+        name: refreshToken
+        required: true
+        schema:
+          type: string
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/rest.CommonResponse'
+            allOf:
+            - $ref: '#/definitions/rest.CommonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/jwt.TokenPair'
+              type: object
         "400":
           description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/rest.CommonResponse'
       summary: refreshes token pair
       tags:
       - users
+  /users/register:
+    post:
+      description: registers user
+      parameters:
+      - description: account address
+        in: path
+        name: accountAddress
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+      security:
+      - BearerAuth: []
+      summary: registers user
+      tags:
+      - users
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

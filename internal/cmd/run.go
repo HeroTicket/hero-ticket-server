@@ -79,7 +79,7 @@ func Run() {
 		ReqCache:        authCache,
 	})
 
-	didSvc := did.New(did.DidServiceConfig{
+	_ = did.New(did.DidServiceConfig{
 		RPCUrl:    cfg.RpcUrl,
 		IssuerUrl: cfg.Did.IssuerUrl,
 		Username:  cfg.Did.Username,
@@ -105,7 +105,7 @@ func Run() {
 
 	tx := mongo.NewTx(mongoClient)
 
-	userCtrl := rest.NewUserCtrl(authSvc, didSvc, jwtSvc, userSvc, tx, cfg.ServerUrl)
+	userCtrl := rest.NewUserCtrl(authSvc, jwtSvc, userSvc, tx, cfg.ServerUrl)
 	noticeCtrl := rest.NewNoticeCtrl(noticeSvc, userSvc)
 	ticketCtrl := rest.NewTicketCtrl()
 

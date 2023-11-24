@@ -105,7 +105,7 @@ func Serve() http.HandlerFunc {
 		go client.readPump()
 
 		msg := Message{
-			Type: InitMessage,
+			Type: IdMessage,
 			ID:   ID(id),
 		}
 

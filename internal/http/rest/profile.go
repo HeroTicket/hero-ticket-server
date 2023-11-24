@@ -33,12 +33,13 @@ func (c *ProfileCtrl) Handler() http.Handler {
 //	@Tags			profile
 //	@Summary		returns user profile
 //	@Description	returns user profile
+//	@Accept			json
 //	@Produce		json
 //	@Param 			name	path	string	true	"user name"
 //	@Success		200			{object}	CommonResponse
 //	@Failure		400			{object}	CommonResponse
 //	@Failure		500			{object}	CommonResponse
-//	@Router			/users/profile
+//	@Router			/profile	[get]
 func (c *ProfileCtrl) profile(w http.ResponseWriter, r *http.Request) {
 	// 1. check params
 	name := chi.URLParam(r, "name")
