@@ -18,6 +18,10 @@ import (
 
 // @host		api.heroticket.xyz
 // @BasePath	/v1
+
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 func main() {
 	cmd.Run()
 }

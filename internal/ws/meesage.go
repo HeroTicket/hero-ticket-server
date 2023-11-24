@@ -5,13 +5,13 @@ import "github.com/google/uuid"
 type MessageType string
 
 const (
-	InitMessage  MessageType = "init"
+	IdMessage    MessageType = "id"
 	EventMessage MessageType = "event"
 	ErrorMessage MessageType = "error"
 )
 
 func (t MessageType) Valid() bool {
-	return t == InitMessage || t == EventMessage || t == ErrorMessage
+	return t == IdMessage || t == EventMessage || t == ErrorMessage
 }
 
 type ID string

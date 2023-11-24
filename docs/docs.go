@@ -26,7 +26,10 @@ const docTemplate = `{
     "paths": {
         "/notices": {
             "get": {
-                "description": "Get notices",
+                "description": "returns notices paginated",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -52,63 +55,23 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/rest.CommonResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/rest.CommonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/notice.Notices"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
                         "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/rest.CommonResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/rest.CommonResponse"
-                        }
-                    }
-                }
-            },
-            "post": {
-                "description": "Create notice",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "notices"
-                ],
-                "summary": "Create notice",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "title",
-                        "name": "title",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "content",
-                        "name": "content",
-                        "in": "formData",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created",
-                        "schema": {
-                            "$ref": "#/definitions/rest.CommonResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/rest.CommonResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/rest.CommonResponse"
                         }
@@ -124,7 +87,10 @@ const docTemplate = `{
         },
         "/notices/{id}": {
             "get": {
-                "description": "Get notice",
+                "description": "returns notice by id",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -134,8 +100,8 @@ const docTemplate = `{
                 "summary": "Get notice",
                 "parameters": [
                     {
-                        "type": "string",
-                        "description": "id",
+                        "type": "integer",
+                        "description": "notice id",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -145,7 +111,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/rest.CommonResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/rest.CommonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/notice.Notice"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -161,36 +139,27 @@ const docTemplate = `{
                         }
                     }
                 }
-            },
-            "put": {
-                "description": "Update notice",
+            }
+        },
+        "/profile": {
+            "get": {
+                "description": "returns user profile",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
                 "tags": [
-                    "notices"
+                    "profile"
                 ],
-                "summary": "Update notice",
+                "summary": "returns user profile",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "id",
-                        "name": "id",
+                        "description": "user name",
+                        "name": "name",
                         "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "title",
-                        "name": "title",
-                        "in": "formData",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "content",
-                        "name": "content",
-                        "in": "formData",
                         "required": true
                     }
                 ],
@@ -207,12 +176,6 @@ const docTemplate = `{
                             "$ref": "#/definitions/rest.CommonResponse"
                         }
                     },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/rest.CommonResponse"
-                        }
-                    },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
@@ -220,16 +183,6 @@ const docTemplate = `{
                         }
                     }
                 }
-            }
-        },
-        "/users/create-tba": {
-            "post": {
-                "responses": {}
-            }
-        },
-        "/users/issued-tickets": {
-            "get": {
-                "responses": {}
             }
         },
         "/users/login-callback": {
@@ -252,6 +205,15 @@ const docTemplate = `{
                         "name": "sessionId",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "description": "token",
+                        "name": "token",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "responses": {
@@ -279,6 +241,9 @@ const docTemplate = `{
         "/users/login-qr": {
             "get": {
                 "description": "returns login qr code",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -299,7 +264,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/rest.CommonResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/rest.CommonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/protocol.AuthorizationRequestMessage"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -317,38 +294,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/users/profile": {
-            "get": {
-                "description": "returns user profile",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "returns user profile",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/rest.CommonResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/rest.CommonResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/users/purchased-tickets": {
-            "get": {
-                "responses": {}
-            }
-        },
-        "/users/refresh-token": {
+        "/users/refresh": {
             "post": {
                 "description": "refreshes token pair",
                 "consumes": [
@@ -361,9 +307,78 @@ const docTemplate = `{
                     "users"
                 ],
                 "summary": "refreshes token pair",
+                "parameters": [
+                    {
+                        "description": "refresh token",
+                        "name": "refreshToken",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/rest.CommonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/jwt.TokenPair"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/rest.CommonResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rest.CommonResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/register": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "registers user",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "registers user",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "account address",
+                        "name": "accountAddress",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
                         "schema": {
                             "$ref": "#/definitions/rest.CommonResponse"
                         }
@@ -373,12 +388,169 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/rest.CommonResponse"
                         }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rest.CommonResponse"
+                        }
                     }
                 }
             }
         }
     },
     "definitions": {
+        "jwt.TokenPair": {
+            "type": "object",
+            "properties": {
+                "accessToken": {
+                    "type": "string"
+                },
+                "accessTokenExpiry": {
+                    "$ref": "#/definitions/time.Duration"
+                },
+                "refreshToken": {
+                    "type": "string"
+                },
+                "refreshTokenExpiry": {
+                    "$ref": "#/definitions/time.Duration"
+                }
+            }
+        },
+        "notice.Notice": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "integer"
+                }
+            }
+        },
+        "notice.Notices": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/notice.Notice"
+                    }
+                },
+                "pagination": {
+                    "$ref": "#/definitions/notice.Pagination"
+                }
+            }
+        },
+        "notice.Pagination": {
+            "type": "object",
+            "properties": {
+                "currentPage": {
+                    "type": "integer"
+                },
+                "end": {
+                    "type": "integer"
+                },
+                "hasNext": {
+                    "type": "boolean"
+                },
+                "hasPrev": {
+                    "type": "boolean"
+                },
+                "limit": {
+                    "type": "integer"
+                },
+                "pages": {
+                    "type": "integer"
+                },
+                "start": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "protocol.AuthorizationRequestMessage": {
+            "type": "object",
+            "properties": {
+                "body": {
+                    "$ref": "#/definitions/protocol.AuthorizationRequestMessageBody"
+                },
+                "from": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "thid": {
+                    "type": "string"
+                },
+                "to": {
+                    "type": "string"
+                },
+                "typ": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "protocol.AuthorizationRequestMessageBody": {
+            "type": "object",
+            "properties": {
+                "callbackUrl": {
+                    "type": "string"
+                },
+                "did_doc": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                },
+                "reason": {
+                    "type": "string"
+                },
+                "scope": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/protocol.ZeroKnowledgeProofRequest"
+                    }
+                }
+            }
+        },
+        "protocol.ZeroKnowledgeProofRequest": {
+            "type": "object",
+            "properties": {
+                "circuitId": {
+                    "type": "string"
+                },
+                "id": {
+                    "description": "unique request id",
+                    "type": "integer"
+                },
+                "optional": {
+                    "type": "boolean"
+                },
+                "query": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            }
+        },
         "rest.CommonResponse": {
             "type": "object",
             "properties": {
@@ -390,6 +562,52 @@ const docTemplate = `{
                     "type": "integer"
                 }
             }
+        },
+        "time.Duration": {
+            "type": "integer",
+            "enum": [
+                -9223372036854775808,
+                9223372036854775807,
+                1,
+                1000,
+                1000000,
+                1000000000,
+                60000000000,
+                3600000000000,
+                -9223372036854775808,
+                9223372036854775807,
+                1,
+                1000,
+                1000000,
+                1000000000,
+                60000000000,
+                3600000000000
+            ],
+            "x-enum-varnames": [
+                "minDuration",
+                "maxDuration",
+                "Nanosecond",
+                "Microsecond",
+                "Millisecond",
+                "Second",
+                "Minute",
+                "Hour",
+                "minDuration",
+                "maxDuration",
+                "Nanosecond",
+                "Microsecond",
+                "Millisecond",
+                "Second",
+                "Minute",
+                "Hour"
+            ]
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
         }
     }
 }`
@@ -397,11 +615,11 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8080",
-	BasePath:         "/api/v1",
+	Host:             "api.heroticket.xyz",
+	BasePath:         "/v1",
 	Schemes:          []string{},
 	Title:            "Hero Ticket API",
-	Description:      "This is Hero Ticket API server.",
+	Description:      "API for Hero Ticket DApp",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

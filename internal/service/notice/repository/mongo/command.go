@@ -2,58 +2,59 @@ package mongo
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/heroticket/internal/service/notice"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type mongoCommand struct {
-	client   *mongo.Client
-	dbname   string
-	collname string
+	client *mongo.Client
+	dbname string
 }
 
-func NewCommand(client *mongo.Client, dbname, collname string) notice.Command {
+func NewCommand(client *mongo.Client, dbname string) notice.Command {
 	return &mongoCommand{
-		client:   client,
-		dbname:   dbname,
-		collname: collname,
+		client: client,
+		dbname: dbname,
 	}
 }
 
 func (c *mongoCommand) CreateNotice(ctx context.Context, n *notice.Notice) (*notice.Notice, error) {
 	coll := c.collection()
 
-	n.CreatedAt = time.Now()
-	n.UpdatedAt = time.Now()
+	// find last inserted id
+	var last notice.Notice
+	opts := options.FindOne().SetSort(primitive.D{{Key: "_id", Value: -1}})
+	err := coll.FindOne(ctx, primitive.M{}, opts).Decode(&last)
+	if err != nil && err != mongo.ErrNoDocuments {
+		return nil, err
+	}
 
-	result, err := coll.InsertOne(ctx, n)
+	// set id
+	if err == mongo.ErrNoDocuments {
+		n.ID = 1
+	} else {
+		n.ID = last.ID + 1
+	}
+
+	n.CreatedAt = time.Now().Unix()
+	n.UpdatedAt = time.Now().Unix()
+
+	_, err = coll.InsertOne(ctx, n)
 	if err != nil {
 		return nil, err
 	}
 
-	objectID, ok := result.InsertedID.(primitive.ObjectID)
-	if !ok {
-		return nil, errors.New("failed to convert InsertedID to primitive.ObjectID")
-	}
-
-	n.ID = objectID.Hex()
-
 	return n, nil
 }
 
-func (c *mongoCommand) DeleteNotice(ctx context.Context, id string) error {
+func (c *mongoCommand) DeleteNotice(ctx context.Context, id int64) error {
 	coll := c.collection()
 
-	objectID, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		return err
-	}
-
-	filter := primitive.M{"_id": objectID}
+	filter := primitive.M{"_id": id}
 
 	result, err := coll.DeleteOne(ctx, filter)
 	if err != nil {
@@ -70,12 +71,7 @@ func (c *mongoCommand) DeleteNotice(ctx context.Context, id string) error {
 func (c *mongoCommand) UpdateNotice(ctx context.Context, params *notice.NoticeUpdateParams) error {
 	coll := c.collection()
 
-	objectID, err := primitive.ObjectIDFromHex(params.ID)
-	if err != nil {
-		return err
-	}
-
-	filter := primitive.M{"_id": objectID}
+	filter := primitive.M{"_id": params.ID}
 
 	value := primitive.D{}
 
@@ -91,7 +87,7 @@ func (c *mongoCommand) UpdateNotice(ctx context.Context, params *notice.NoticeUp
 		value = append(value, primitive.E{Key: "content", Value: params.Content})
 	}
 
-	value = append(value, primitive.E{Key: "updated_at", Value: time.Now()})
+	value = append(value, primitive.E{Key: "updated_at", Value: time.Now().Unix()})
 
 	update := primitive.D{
 		{
@@ -113,5 +109,5 @@ func (c *mongoCommand) UpdateNotice(ctx context.Context, params *notice.NoticeUp
 }
 
 func (c *mongoCommand) collection() *mongo.Collection {
-	return c.client.Database(c.dbname).Collection(c.collname)
+	return c.client.Database(c.dbname).Collection("notices")
 }

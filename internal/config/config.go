@@ -23,23 +23,23 @@ type IpfsServiceConfig struct {
 }
 
 type JwtServiceConfig struct {
-	Issuer      string `mapstructure:"issuer"`
-	Audience    string `mapstructure:"audience"`
-	SecretKey   string `mapstructure:"secretKey"`
-	TokenExpiry int64  `mapstructure:"tokenExpiry"`
+	Issuer             string `mapstructure:"issuer"`
+	Audience           string `mapstructure:"audience"`
+	AccessTokenKey     string `mapstructure:"accessTokenKey"`
+	RefreshTokenKey    string `mapstructure:"refreshTokenKey"`
+	AccessTokenExpiry  int64  `mapstructure:"accessTokenExpiry"`
+	RefreshTokenExpiry int64  `mapstructure:"refreshTokenExpiry"`
 }
 
 type NoticeServiceConfig struct {
-	DbName     string `mapstructure:"dbName"`
-	Collection string `mapstructure:"collection"`
+	DbName string `mapstructure:"dbName"`
 }
 
 type TicketServiceConfig struct {
 }
 
 type UserServiceConfig struct {
-	DbName     string `mapstructure:"dbName"`
-	Collection string `mapstructure:"collection"`
+	DbName string `mapstructure:"dbName"`
 }
 
 type Config struct {

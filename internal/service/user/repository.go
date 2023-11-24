@@ -4,14 +4,15 @@ import "context"
 
 type Query interface {
 	FindUsers(ctx context.Context) ([]*User, error)
-	FindUserByDID(ctx context.Context, did string) (*User, error)
-	FindUserByWalletAddress(ctx context.Context, walletAddress string) (*User, error)
+	FindUserByID(ctx context.Context, id string) (*User, error)
+	FindUserByAccountAddress(ctx context.Context, accountAddress string) (*User, error)
+	FindUserByName(ctx context.Context, name string) (*User, error)
 }
 
 type Command interface {
-	CreateUser(ctx context.Context, u *User) (*User, error)
-	UpdateUser(ctx context.Context, params *UserUpdateParams) error
-	DeleteUser(ctx context.Context, did string) error
+	CreateUser(ctx context.Context, params CreateUserParams) (*User, error)
+	UpdateUser(ctx context.Context, params UpdateUserParams) error
+	DeleteUser(ctx context.Context, id string) error
 }
 
 type Repository interface {

@@ -15,4 +15,5 @@ type AuthorizationRequestParams struct {
 	Sender      string
 	CallbackUrl string
 	Scope       []protocol.ZeroKnowledgeProofRequest
+	Timeout     time.Duration
 }

@@ -79,7 +79,7 @@ func Run() {
 		ReqCache:        authCache,
 	})
 
-	didSvc := did.New(did.DidServiceConfig{
+	_ = did.New(did.DidServiceConfig{
 		RPCUrl:    cfg.RpcUrl,
 		IssuerUrl: cfg.Did.IssuerUrl,
 		Username:  cfg.Did.Username,
@@ -92,17 +92,20 @@ func Run() {
 		Secret: cfg.Ipfs.Secret,
 	})
 
-	jwtSvc := jwt.New(cfg.Jwt.SecretKey, jwt.WithAudience(cfg.Jwt.Audience), jwt.WithIssuer(cfg.Jwt.Issuer))
+	jwtSvc := jwt.New(cfg.Jwt.AccessTokenKey, cfg.Jwt.RefreshTokenKey,
+		jwt.WithAudience(cfg.Jwt.Audience), jwt.WithIssuer(cfg.Jwt.Issuer))
 
-	noticeSvc := notice.New(nrepo.New(mongoClient, cfg.Notice.DbName, cfg.Notice.Collection))
+	noticeSvc := notice.New(nrepo.New(mongoClient, cfg.Notice.DbName))
 
 	// TODO: add ticket service
+	userRepo, err := urepo.New(ctx, mongoClient, cfg.User.DbName)
+	handleErr(err)
 
-	userSvc := user.New(urepo.New(mongoClient, cfg.User.DbName, cfg.User.Collection))
+	userSvc := user.New(userRepo)
 
 	tx := mongo.NewTx(mongoClient)
 
-	userCtrl := rest.NewUserCtrl(authSvc, didSvc, jwtSvc, userSvc, tx, cfg.ServerUrl)
+	userCtrl := rest.NewUserCtrl(authSvc, jwtSvc, userSvc, tx, cfg.ServerUrl)
 	noticeCtrl := rest.NewNoticeCtrl(noticeSvc, userSvc)
 	ticketCtrl := rest.NewTicketCtrl()
 

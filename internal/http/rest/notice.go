@@ -38,12 +38,13 @@ func (c *NoticeCtrl) Handler() http.Handler {
 // Notices godoc
 //
 // @Summary Get notices
-// @Description Get notices
+// @Description returns notices paginated
 // @Tags notices
+// @Accept json
 // @Produce json
 // @Param page query int false "page"
 // @Param limit query int false "limit"
-// @Success 200 {object} CommonResponse
+// @Success 200 {object} CommonResponse{data=notice.Notices}
 // @Failure 400 {object} CommonResponse
 // @Failure 500 {object} CommonResponse
 // @Router /notices [get]
@@ -98,11 +99,12 @@ func (c *NoticeCtrl) Notices(w http.ResponseWriter, r *http.Request) {
 // Notice godoc
 //
 // @Summary Get notice
-// @Description Get notice
+// @Description returns notice by id
 // @Tags notices
+// @Accept json
 // @Produce json
-// @Param id path string true "id"
-// @Success 200 {object} CommonResponse
+// @Param id path int true "notice id"
+// @Success 200 {object} CommonResponse{data=notice.Notice}
 // @Failure 400 {object} CommonResponse
 // @Failure 500 {object} CommonResponse
 // @Router /notices/{id} [get]

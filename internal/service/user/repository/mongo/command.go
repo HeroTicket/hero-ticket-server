@@ -9,38 +9,44 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type mongoCommand struct {
-	client   *mongo.Client
-	dbname   string
-	collname string
+type MongoCommand struct {
+	client *mongo.Client
+	dbname string
 }
 
-func NewMongoCommand(client *mongo.Client, dbname, collname string) user.Command {
-	return &mongoCommand{
-		client:   client,
-		dbname:   dbname,
-		collname: collname,
+func NewMongoCommand(client *mongo.Client, dbname string) *MongoCommand {
+	return &MongoCommand{
+		client: client,
+		dbname: dbname,
 	}
 }
 
-func (c *mongoCommand) CreateUser(ctx context.Context, u *user.User) (*user.User, error) {
+func (c *MongoCommand) CreateUser(ctx context.Context, params user.CreateUserParams) (*user.User, error) {
 	coll := c.collection()
 
-	u.CreatedAt = time.Now()
-	u.UpdatedAt = time.Now()
+	var u user.User
+
+	u.ID = params.ID
+	u.AccountAddress = params.AccountAddress
+	u.TbaAddress = params.TbaAddress
+	u.Name = params.Name
+	u.Avatar = params.Avatar
+	u.IsAdmin = params.IsAdmin
+	u.CreatedAt = time.Now().Unix()
+	u.UpdatedAt = time.Now().Unix()
 
 	_, err := coll.InsertOne(ctx, u)
 	if err != nil {
 		return nil, err
 	}
 
-	return u, nil
+	return &u, nil
 }
 
-func (c *mongoCommand) DeleteUser(ctx context.Context, did string) error {
+func (c *MongoCommand) DeleteUser(ctx context.Context, id string) error {
 	coll := c.collection()
 
-	filter := bson.M{"_id": did}
+	filter := bson.M{"_id": id}
 
 	_, err := coll.DeleteOne(ctx, filter)
 	if err != nil {
@@ -50,18 +56,18 @@ func (c *mongoCommand) DeleteUser(ctx context.Context, did string) error {
 	return nil
 }
 
-func (c *mongoCommand) UpdateUser(ctx context.Context, params *user.UserUpdateParams) error {
+func (c *MongoCommand) UpdateUser(ctx context.Context, params user.UpdateUserParams) error {
 	coll := c.collection()
 
-	if params.DID == "" {
+	if params.ID == "" {
 		return user.ErrInvalidID
 	}
 
-	filter := bson.M{"_id": params.DID}
+	filter := bson.M{"_id": params.ID}
 
 	value := bson.D{}
 
-	if params.Name == "" && params.WalletAddress == "" && params.TBAAddress == "" {
+	if params.Name == "" && params.AccountAddress == "" && params.TBAAddress == "" {
 		return user.ErrNothingToUpdate
 	}
 
@@ -69,15 +75,15 @@ func (c *mongoCommand) UpdateUser(ctx context.Context, params *user.UserUpdatePa
 		value = append(value, bson.E{Key: "name", Value: params.Name})
 	}
 
-	if params.WalletAddress != "" {
-		value = append(value, bson.E{Key: "wallet_address", Value: params.WalletAddress})
+	if params.AccountAddress != "" {
+		value = append(value, bson.E{Key: "accountAddress", Value: params.AccountAddress})
 	}
 
 	if params.TBAAddress != "" {
-		value = append(value, bson.E{Key: "tba_address", Value: params.TBAAddress})
+		value = append(value, bson.E{Key: "tbaAddress", Value: params.TBAAddress})
 	}
 
-	value = append(value, bson.E{Key: "updated_at", Value: time.Now()})
+	value = append(value, bson.E{Key: "updated_at", Value: time.Now().Unix()})
 
 	update := bson.D{
 		{
@@ -98,6 +104,6 @@ func (c *mongoCommand) UpdateUser(ctx context.Context, params *user.UserUpdatePa
 	return nil
 }
 
-func (c *mongoCommand) collection() *mongo.Collection {
-	return c.client.Database(c.dbname).Collection(c.collname)
+func (c *MongoCommand) collection() *mongo.Collection {
+	return c.client.Database(c.dbname).Collection("users")
 }

@@ -9,7 +9,6 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/heroticket/internal/db"
 	"github.com/heroticket/internal/service/auth"
-	"github.com/heroticket/internal/service/did"
 	"github.com/heroticket/internal/service/jwt"
 	"github.com/heroticket/internal/service/user"
 	"github.com/heroticket/internal/web3"
@@ -21,17 +20,15 @@ type UserCtrl struct {
 	baseUrl string
 
 	auth auth.Service
-	did  did.Service
 	jwt  jwt.Service
 	user user.Service
 	tx   db.Tx
 }
 
-func NewUserCtrl(auth auth.Service, did did.Service, jwt jwt.Service, user user.Service, tx db.Tx, baseUrl string) *UserCtrl {
+func NewUserCtrl(auth auth.Service, jwt jwt.Service, user user.Service, tx db.Tx, baseUrl string) *UserCtrl {
 	return &UserCtrl{
 		baseUrl: baseUrl,
 		auth:    auth,
-		did:     did,
 		jwt:     jwt,
 		user:    user,
 		tx:      tx,
@@ -47,17 +44,12 @@ func (c *UserCtrl) Handler() http.Handler {
 
 	r.Get("/login-qr", c.loginQR)
 	r.Post("/login-callback", c.loginCallback)
+	r.Post("/refresh", c.refresh)
 
 	r.Group(func(r chi.Router) {
 		r.Use(TokenRequired(c.jwt))
-		r.Post("/register", c.register)
+		r.Post("/register/{accountAddress}", c.register)
 	})
-
-	// r.Group(func(r chi.Router) {
-	// 	r.Get("/profile", c.profile)
-	// 	r.Get("/purchased-tickets", c.purchasedTickets)
-	// 	r.Get("/issued-tickets", c.issuedTickets)
-	// })
 
 	return r
 }
@@ -67,9 +59,10 @@ func (c *UserCtrl) Handler() http.Handler {
 //	@Tags			users
 //	@Summary		returns login qr code
 //	@Description	returns login qr code
+//	@Accept 		json
 //	@Produce		json
 //	@Param			sessionId	query		string	true	"session id"
-//	@Success		200			{object}	CommonResponse
+//	@Success		200			{object}	CommonResponse{data=protocol.AuthorizationRequestMessage}
 //	@Failure		400			{object}	CommonResponse
 //	@Failure		500			{object}	CommonResponse
 //	@Router			/users/login-qr [get]
@@ -142,6 +135,7 @@ func (c *UserCtrl) loginQR(w http.ResponseWriter, r *http.Request) {
 //	@Accept 		plain
 //	@Produce		json
 //	@Param			sessionId	query		string	true	"session id"
+//	@Param			token		body		string	true	"token"
 //	@Success		200			{object}	CommonResponse
 //	@Failure		400			{object}	CommonResponse
 //	@Failure		500			{object}	CommonResponse
@@ -184,11 +178,11 @@ func (c *UserCtrl) loginCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userIdentifier := resp.From
+	userID := resp.From
 
 	// 5. generate jwt token
-	token, err := c.jwt.GenerateToken(jwt.JWTUser{
-		Identifier: userIdentifier,
+	tokenPair, err := c.jwt.GenerateTokenPair(jwt.JWTUser{
+		ID: userID,
 	})
 	if err != nil {
 		zap.L().Error("failed to generate jwt token", zap.Error(err))
@@ -202,17 +196,66 @@ func (c *UserCtrl) loginCallback(w http.ResponseWriter, r *http.Request) {
 		Event: ws.Event{
 			Name:   "login-callback",
 			Status: ws.Done,
-			Data:   token,
+			Data:   tokenPair,
 		},
 	})
 
 	// 6. return success response
 	response := CommonResponse{
 		Status:  http.StatusOK,
-		Message: fmt.Sprintf("User with ID %s Successfully authenticated", userIdentifier),
+		Message: fmt.Sprintf("User with ID %s Successfully authenticated", userID),
 	}
 
 	_ = WriteJSON(w, http.StatusOK, response)
+}
+
+// Refresh Token Pair godoc
+//
+//	@Tags			users
+//	@Summary		refreshes token pair
+//	@Description	refreshes token pair
+//	@Accept 		plain
+//	@Produce		json
+//	@Param			refreshToken		body		string	true	"refresh token"
+//	@Success		200			{object}	CommonResponse{data=jwt.TokenPair}
+//	@Failure		400			{object}	CommonResponse
+//	@Failure		500			{object}	CommonResponse
+//	@Router			/users/refresh [post]
+func (c *UserCtrl) refresh(w http.ResponseWriter, r *http.Request) {
+	// 1. read token from request body
+	tokenBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		zap.L().Error("failed to read token", zap.Error(err))
+		ErrorJSON(w, "failed to read token", http.StatusInternalServerError)
+		return
+	}
+	defer r.Body.Close()
+
+	// 2. validate token
+	jwtUser, err := c.jwt.VerifyToken(string(tokenBytes), jwt.TokenRoleRefresh)
+	if err != nil {
+		ErrorJSON(w, "invalid token", http.StatusBadRequest)
+		return
+	}
+
+	// 3. generate new token pair
+	newTokenPair, err := c.jwt.GenerateTokenPair(jwt.JWTUser{
+		ID: jwtUser.ID,
+	})
+	if err != nil {
+		zap.L().Error("failed to generate token pair", zap.Error(err))
+		ErrorJSON(w, "failed to generate token pair", http.StatusInternalServerError)
+		return
+	}
+
+	// 4. return new token pair as json response
+	resp := CommonResponse{
+		Status:  http.StatusOK,
+		Message: "Successfully refreshed token pair",
+		Data:    newTokenPair,
+	}
+
+	_ = WriteJSON(w, http.StatusOK, resp)
 }
 
 // Register godoc
@@ -221,11 +264,11 @@ func (c *UserCtrl) loginCallback(w http.ResponseWriter, r *http.Request) {
 //	@Summary		registers user
 //	@Description	registers user
 //	@Produce		json
-//	@Param			sessionId		query		string	true	"session id"
-//	@Param			walletAddress	query		string	true	"wallet address"
+//	@Param			accountAddress 	path	string	true	"account address"
 //	@Success		201		{object}	CommonResponse
 //	@Failure		400		{object}	CommonResponse
 //	@Failure		500		{object}	CommonResponse
+//	@Security 		BearerAuth
 //	@Router			/users/register [post]
 func (c *UserCtrl) register(w http.ResponseWriter, r *http.Request) {
 	// 1. get user from context
@@ -236,124 +279,56 @@ func (c *UserCtrl) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 2. get session id from query params
-	sessionId := r.URL.Query().Get("sessionId")
+	// 2. get account address from path params
+	accountAddress := chi.URLParam(r, "accountAddress")
 
-	// 3. validate session id
-	id := ws.ID(sessionId)
-
-	if !id.Valid() {
-		ErrorJSON(w, "invalid session id")
+	// 3. validate account address
+	if !web3.IsAddressValid(accountAddress) {
+		ErrorJSON(w, "invalid account address", http.StatusInternalServerError)
 		return
 	}
 
-	// 4. get wallet address from query params
-	walletAddress := r.URL.Query().Get("walletAddress")
-
-	// 5. validate wallet address
-	if !web3.IsAddressValid(walletAddress) {
-		ErrorJSON(w, "invalid wallet address", http.StatusInternalServerError)
+	// 4. check if id is already registered or not
+	_, err = c.user.FindUserByID(r.Context(), jwtUser.ID)
+	if err == nil {
+		ErrorJSON(w, "user already registered", http.StatusBadRequest)
 		return
 	}
 
-	// 7. check if identifier is already registered or not
-	u, err := c.user.FindUserByDID(r.Context(), jwtUser.Identifier)
+	if err != nil && err != user.ErrUserNotFound {
+		zap.L().Error("failed to find user", zap.Error(err))
+		ErrorJSON(w, "failed to register user", http.StatusInternalServerError)
+		return
+	}
+
+	// 5. create user tba
+
+	// TODO: call contract to create user tba
+
+	tempTbaAddress := "0x1234567890"
+
+	// 6. create user
+	params := user.CreateUserParams{
+		ID:             jwtUser.ID,
+		AccountAddress: accountAddress,
+		TbaAddress:     tempTbaAddress,
+		Name:           accountAddress,
+		IsAdmin:        false,
+	}
+
+	u, err := c.user.CreateUser(r.Context(), params)
 	if err != nil {
-		if err != user.ErrUserNotFound {
-			zap.L().Error("failed to find user", zap.Error(err))
-			ErrorJSON(w, "failed to find user", http.StatusInternalServerError)
-			return
-		}
-	} else {
-		if u.WalletAddress != "" {
-			ErrorJSON(w, "user already registered", http.StatusInternalServerError)
-			return
-		}
+		zap.L().Error("failed to create user", zap.Error(err))
+		ErrorJSON(w, "failed to create user", http.StatusInternalServerError)
+		return
 	}
 
-	// 8. create user tba
+	// 7. return user as json response
+	resp := CommonResponse{
+		Status:  http.StatusCreated,
+		Message: "Successfully created user",
+		Data:    u,
+	}
 
-	// 9. update user
-
-	// 10. return success response
+	_ = WriteJSON(w, http.StatusCreated, resp)
 }
-
-// Profile godoc
-//
-//	@Tags			users
-//	@Summary		returns user profile
-//	@Description	returns user profile
-//	@Produce		json
-//	@Success		200			{object}	CommonResponse
-//	@Failure		400			{object}	CommonResponse
-//	@Router			/users/profile [get]
-// func (c *UserCtrl) profile(w http.ResponseWriter, r *http.Request) {
-// 	// 1. get user from context
-// 	jwtUser, err := c.jwt.FromContext(r.Context())
-// 	if err != nil {
-// 		zap.L().Error("failed to get user from context", zap.Error(err))
-// 		ErrorJSON(w, "user not found")
-// 		return
-// 	}
-
-// 	// 2. get user from db
-// 	u, err := c.user.FindUserByDID(r.Context(), jwtUser.DID)
-// 	if err != nil {
-// 		zap.L().Error("failed to find user", zap.Error(err))
-// 		ErrorJSON(w, "failed to find user")
-// 		return
-// 	}
-
-// 	resp := CommonResponse{
-// 		Status:  http.StatusOK,
-// 		Message: "Successfully fetched user profile",
-// 		Data:    u,
-// 	}
-
-// 	// 3. return user as json response
-// 	_ = WriteJSON(w, http.StatusOK, resp)
-// }
-
-// PurchasedTickets godoc
-//
-//	@Tags			users
-//	@Summary		returns purchased tickets
-//	@Description	returns purchased tickets
-//	@Produce		json
-
-// @Router			/users/purchased-tickets [get]
-// func (c *UserCtrl) purchasedTickets(w http.ResponseWriter, r *http.Request) {
-// 	// 1. get user from context
-// 	_, err := c.jwt.FromContext(r.Context())
-// 	if err != nil {
-// 		zap.L().Error("failed to get user from context", zap.Error(err))
-// 		ErrorJSON(w, "user not found")
-// 		return
-// 	}
-
-// 	// 2. get purchased tickets from db
-
-// 	// 3. return purchased tickets as json response
-// }
-
-// IssuedTickets godoc
-//
-//	@Tags			users
-//	@Summary		returns issued tickets
-//	@Description	returns issued tickets
-//	@Produce		json
-
-// @Router			/users/issued-tickets [get]
-// func (c *UserCtrl) issuedTickets(w http.ResponseWriter, r *http.Request) {
-// 	// 1. get user from context
-// 	_, err := c.jwt.FromContext(r.Context())
-// 	if err != nil {
-// 		zap.L().Error("failed to get user from context", zap.Error(err))
-// 		ErrorJSON(w, "user not found")
-// 		return
-// 	}
-
-// 	// 2. get issued tickets from db
-
-// 	// 3. return issued tickets as json response
-// }

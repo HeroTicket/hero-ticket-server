@@ -3,9 +3,10 @@ package jwt
 import "time"
 
 var (
-	defaultIssuer      = "hero-ticket"
-	defaultAudience    = "localhost"
-	defaultTokenExpiry = time.Minute * 30
+	defaultIssuer             = "heroticket"
+	defaultAudience           = "localhost"
+	defaultAccessTokenExpiry  = time.Minute * 15
+	defaultRefreshTokenExpiry = time.Hour * 24
 )
 
 type Option func(*jwtService)
@@ -14,7 +15,8 @@ func WithDefaultOptions() Option {
 	return func(s *jwtService) {
 		s.issuer = defaultIssuer
 		s.audience = defaultAudience
-		s.tokenExpiry = defaultTokenExpiry
+		s.accessTokenExpiry = defaultAccessTokenExpiry
+		s.refreshTokenExpiry = defaultRefreshTokenExpiry
 	}
 }
 
@@ -30,8 +32,14 @@ func WithAudience(audience string) Option {
 	}
 }
 
-func WithTokenExpiry(expiry time.Duration) Option {
+func WithAccessTokenExpiry(expiry time.Duration) Option {
 	return func(s *jwtService) {
-		s.tokenExpiry = expiry
+		s.accessTokenExpiry = expiry
+	}
+}
+
+func WithRefreshTokenExpiry(expiry time.Duration) Option {
+	return func(s *jwtService) {
+		s.refreshTokenExpiry = expiry
 	}
 }

@@ -7,7 +7,7 @@ type Service interface {
 	GetNotice(ctx context.Context, id string) (*Notice, error)
 	GetNotices(ctx context.Context, page, limit int64) (*Notices, error)
 	UpdateNotice(ctx context.Context, params *NoticeUpdateParams) error
-	DeleteNotice(ctx context.Context, id string) error
+	DeleteNotice(ctx context.Context, id int64) error
 }
 
 type noticeService struct {
@@ -22,7 +22,7 @@ func (svc *noticeService) CreateNotice(ctx context.Context, n *Notice) (*Notice,
 	return svc.repo.CreateNotice(ctx, n)
 }
 
-func (svc *noticeService) DeleteNotice(ctx context.Context, id string) error {
+func (svc *noticeService) DeleteNotice(ctx context.Context, id int64) error {
 	return svc.repo.DeleteNotice(ctx, id)
 }
 

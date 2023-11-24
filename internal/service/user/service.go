@@ -3,12 +3,13 @@ package user
 import "context"
 
 type Service interface {
-	CreateUser(ctx context.Context, u *User) (*User, error)
-	UpdateUser(ctx context.Context, params *UserUpdateParams) error
-	DeleteUser(ctx context.Context, did string) error
+	CreateUser(ctx context.Context, params CreateUserParams) (*User, error)
+	UpdateUser(ctx context.Context, params UpdateUserParams) error
+	DeleteUser(ctx context.Context, id string) error
 	FindUsers(ctx context.Context) ([]*User, error)
-	FindUserByDID(ctx context.Context, did string) (*User, error)
-	FindUserByWalletAddress(ctx context.Context, walletAddress string) (*User, error)
+	FindUserByID(ctx context.Context, id string) (*User, error)
+	FindUserByAccountAddress(ctx context.Context, accountAddress string) (*User, error)
+	FindUserByName(ctx context.Context, name string) (*User, error)
 }
 
 type userService struct {
@@ -19,26 +20,30 @@ func New(repo Repository) Service {
 	return &userService{repo}
 }
 
-func (s *userService) CreateUser(ctx context.Context, u *User) (*User, error) {
-	return s.repo.CreateUser(ctx, u)
+func (s *userService) CreateUser(ctx context.Context, params CreateUserParams) (*User, error) {
+	return s.repo.CreateUser(ctx, params)
 }
 
-func (s *userService) UpdateUser(ctx context.Context, params *UserUpdateParams) error {
+func (s *userService) UpdateUser(ctx context.Context, params UpdateUserParams) error {
 	return s.repo.UpdateUser(ctx, params)
 }
 
-func (s *userService) DeleteUser(ctx context.Context, did string) error {
-	return s.repo.DeleteUser(ctx, did)
+func (s *userService) DeleteUser(ctx context.Context, id string) error {
+	return s.repo.DeleteUser(ctx, id)
 }
 
 func (s *userService) FindUsers(ctx context.Context) ([]*User, error) {
 	return s.repo.FindUsers(ctx)
 }
 
-func (s *userService) FindUserByDID(ctx context.Context, did string) (*User, error) {
-	return s.repo.FindUserByDID(ctx, did)
+func (s *userService) FindUserByID(ctx context.Context, id string) (*User, error) {
+	return s.repo.FindUserByID(ctx, id)
 }
 
-func (s *userService) FindUserByWalletAddress(ctx context.Context, walletAddress string) (*User, error) {
-	return s.repo.FindUserByWalletAddress(ctx, walletAddress)
+func (s *userService) FindUserByAccountAddress(ctx context.Context, accountAddress string) (*User, error) {
+	return s.repo.FindUserByAccountAddress(ctx, accountAddress)
+}
+
+func (s *userService) FindUserByName(ctx context.Context, name string) (*User, error) {
+	return s.repo.FindUserByName(ctx, name)
 }

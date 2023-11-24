@@ -73,7 +73,7 @@ func (svc *IpfsService) PinFile(ctx context.Context, file io.Reader, filename st
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, svc.errorFromResponse(resp)
+		return nil, errorFromResponse(resp)
 	}
 
 	var data PinFileResponse
@@ -85,7 +85,7 @@ func (svc *IpfsService) PinFile(ctx context.Context, file io.Reader, filename st
 	return &data, nil
 }
 
-func (svc *IpfsService) errorFromResponse(resp *http.Response) error {
+func errorFromResponse(resp *http.Response) error {
 	var data map[string]interface{}
 
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
