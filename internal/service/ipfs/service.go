@@ -14,14 +14,14 @@ type Service interface {
 	PinFile(ctx context.Context, file io.Reader, filename string) (*PinFileResponse, error)
 }
 
-type ipfsService struct {
+type IpfsService struct {
 	apiKey string
 	secret string
 	client *http.Client
 }
 
 func New(apiKey, secret string, clients ...*http.Client) Service {
-	svc := &ipfsService{
+	svc := &IpfsService{
 		apiKey: apiKey,
 		secret: secret,
 		client: http.DefaultClient,
@@ -34,7 +34,7 @@ func New(apiKey, secret string, clients ...*http.Client) Service {
 	return svc
 }
 
-func (svc *ipfsService) PinFile(ctx context.Context, file io.Reader, filename string) (*PinFileResponse, error) {
+func (svc *IpfsService) PinFile(ctx context.Context, file io.Reader, filename string) (*PinFileResponse, error) {
 	body := &bytes.Buffer{}
 
 	m := multipart.NewWriter(body)
@@ -79,7 +79,7 @@ func (svc *ipfsService) PinFile(ctx context.Context, file io.Reader, filename st
 	return &data, nil
 }
 
-func (svc *ipfsService) errorFromResponse(resp *http.Response) error {
+func (svc *IpfsService) errorFromResponse(resp *http.Response) error {
 	var data map[string]interface{}
 
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
