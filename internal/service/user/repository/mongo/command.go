@@ -32,8 +32,8 @@ func (c *MongoCommand) CreateUser(ctx context.Context, params user.CreateUserPar
 	u.Name = params.Name
 	u.Avatar = params.Avatar
 	u.IsAdmin = params.IsAdmin
-	u.CreatedAt = time.Now()
-	u.UpdatedAt = time.Now()
+	u.CreatedAt = time.Now().Unix()
+	u.UpdatedAt = time.Now().Unix()
 
 	_, err := coll.InsertOne(ctx, u)
 	if err != nil {
@@ -83,7 +83,7 @@ func (c *MongoCommand) UpdateUser(ctx context.Context, params user.UpdateUserPar
 		value = append(value, bson.E{Key: "tbaAddress", Value: params.TBAAddress})
 	}
 
-	value = append(value, bson.E{Key: "updated_at", Value: time.Now()})
+	value = append(value, bson.E{Key: "updated_at", Value: time.Now().Unix()})
 
 	update := bson.D{
 		{

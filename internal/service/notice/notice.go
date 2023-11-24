@@ -2,7 +2,6 @@ package notice
 
 import (
 	"errors"
-	"time"
 )
 
 var (
@@ -11,11 +10,11 @@ var (
 )
 
 type Notice struct {
-	ID        int64     `json:"id" bson:"_id"`
-	Title     string    `json:"title" bson:"title"`
-	Content   string    `json:"content,omitempty" bson:"content"`
-	CreatedAt time.Time `json:"createdAt" bson:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt" bson:"updatedAt"`
+	ID        int64  `json:"id" bson:"_id"`
+	Title     string `json:"title" bson:"title"`
+	Content   string `json:"content,omitempty" bson:"content"`
+	CreatedAt int64  `json:"createdAt" bson:"createdAt"`
+	UpdatedAt int64  `json:"updatedAt" bson:"updatedAt"`
 }
 
 type NoticeUpdateParams struct {

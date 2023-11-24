@@ -40,8 +40,8 @@ func (c *mongoCommand) CreateNotice(ctx context.Context, n *notice.Notice) (*not
 		n.ID = last.ID + 1
 	}
 
-	n.CreatedAt = time.Now()
-	n.UpdatedAt = time.Now()
+	n.CreatedAt = time.Now().Unix()
+	n.UpdatedAt = time.Now().Unix()
 
 	_, err = coll.InsertOne(ctx, n)
 	if err != nil {
@@ -87,7 +87,7 @@ func (c *mongoCommand) UpdateNotice(ctx context.Context, params *notice.NoticeUp
 		value = append(value, primitive.E{Key: "content", Value: params.Content})
 	}
 
-	value = append(value, primitive.E{Key: "updated_at", Value: time.Now()})
+	value = append(value, primitive.E{Key: "updated_at", Value: time.Now().Unix()})
 
 	update := primitive.D{
 		{
