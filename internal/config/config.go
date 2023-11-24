@@ -4,7 +4,6 @@ import "github.com/spf13/viper"
 
 type AuthServiceConfig struct {
 	IPFSUrl         string `mapstructure:"ipfsUrl"`
-	RPCUrl          string `mapstructure:"rpcUrl"`
 	ContractAddress string `mapstructure:"contractAddress"`
 	ResolverPrefix  string `mapstructure:"resolverPrefix"`
 	KeyDir          string `mapstructure:"keyDir"`
@@ -12,7 +11,6 @@ type AuthServiceConfig struct {
 }
 
 type DidServiceConfig struct {
-	RPCUrl    string `mapstructure:"rpcUrl"`
 	IssuerUrl string `mapstructure:"issuerUrl"`
 	Username  string `mapstructure:"username"`
 	Password  string `mapstructure:"password"`
@@ -53,6 +51,7 @@ type Config struct {
 	Ticket    TicketServiceConfig `mapstructure:"ticket"`
 	User      UserServiceConfig   `mapstructure:"user"`
 	MongoUrl  string              `mapstructure:"mongoUrl"`
+	RpcUrl    string              `mapstructure:"rpcUrl"`
 	ServerUrl string              `mapstructure:"serverUrl"`
 }
 

@@ -12,7 +12,7 @@ type mongoRepository struct {
 	dbname string
 }
 
-func NewMongoRepository(client *mongo.Client, dbname, collname string) user.Repository {
+func New(client *mongo.Client, dbname, collname string) user.Repository {
 	return &mongoRepository{
 		Query:   NewMongoQuery(client, dbname, collname),
 		Command: NewMongoCommand(client, dbname, collname),

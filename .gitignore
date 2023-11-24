@@ -1,6 +1,9 @@
 # local env
 .env
 
+# config files
+config*.json
+
 # deployments
 .terraform*
 terraform.tfstate

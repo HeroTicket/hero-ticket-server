@@ -14,21 +14,27 @@ type Service interface {
 	PinFile(ctx context.Context, file io.Reader, filename string) (*PinFileResponse, error)
 }
 
+type IpfsServiceConfig struct {
+	ApiKey string
+	Secret string
+	Client *http.Client
+}
+
 type IpfsService struct {
 	apiKey string
 	secret string
 	client *http.Client
 }
 
-func New(apiKey, secret string, clients ...*http.Client) Service {
+func New(cfg IpfsServiceConfig) Service {
 	svc := &IpfsService{
-		apiKey: apiKey,
-		secret: secret,
+		apiKey: cfg.ApiKey,
+		secret: cfg.Secret,
 		client: http.DefaultClient,
 	}
 
-	if len(clients) > 0 {
-		svc.client = clients[0]
+	if cfg.Client != nil {
+		svc.client = cfg.Client
 	}
 
 	return svc

@@ -2,7 +2,6 @@ package did
 
 import (
 	"errors"
-	"net/http"
 	"time"
 )
 
@@ -10,10 +9,7 @@ var (
 	ErrRequestNotFound = errors.New("request not found")
 )
 
-var (
-	DefaultClient      = http.DefaultClient
-	DefaultCacheExpiry = 10 * time.Minute
-)
+var DefaultCacheExpiry = 10 * time.Minute
 
 type Membership struct {
 	Identifier string    `json:"identifier" bson:"_id"`

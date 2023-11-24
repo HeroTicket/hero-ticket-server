@@ -44,7 +44,11 @@ func New(cfg DidServiceConfig) Service {
 		username:  cfg.Username,
 		password:  cfg.Password,
 		qrCache:   cfg.QrCache,
-		client:    cfg.Client,
+		client:    http.DefaultClient,
+	}
+
+	if cfg.Client != nil {
+		svc.client = cfg.Client
 	}
 
 	return svc
