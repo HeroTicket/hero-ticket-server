@@ -9,16 +9,14 @@ import (
 )
 
 type MongoQuery struct {
-	client   *mongo.Client
-	dbname   string
-	collname string
+	client *mongo.Client
+	dbname string
 }
 
-func NewMongoQuery(client *mongo.Client, dbname, collname string) *MongoQuery {
+func NewMongoQuery(client *mongo.Client, dbname string) *MongoQuery {
 	return &MongoQuery{
-		client:   client,
-		dbname:   dbname,
-		collname: collname,
+		client: client,
+		dbname: dbname,
 	}
 }
 
@@ -82,5 +80,5 @@ func (q *MongoQuery) FindUsers(ctx context.Context) ([]*user.User, error) {
 }
 
 func (q *MongoQuery) collection() *mongo.Collection {
-	return q.client.Database(q.dbname).Collection(q.collname)
+	return q.client.Database(q.dbname).Collection("users")
 }

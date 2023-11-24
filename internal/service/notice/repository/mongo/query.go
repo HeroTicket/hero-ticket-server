@@ -11,16 +11,14 @@ import (
 )
 
 type mongoQuery struct {
-	client   *mongo.Client
-	dbname   string
-	collname string
+	client *mongo.Client
+	dbname string
 }
 
-func NewQuery(client *mongo.Client, dbname, collname string) notice.Query {
+func NewQuery(client *mongo.Client, dbname string) notice.Query {
 	return &mongoQuery{
-		client:   client,
-		dbname:   dbname,
-		collname: collname,
+		client: client,
+		dbname: dbname,
 	}
 }
 
@@ -96,7 +94,7 @@ func (q *mongoQuery) GetNotices(ctx context.Context, page, limit int64) (*notice
 }
 
 func (q *mongoQuery) collection() *mongo.Collection {
-	return q.client.Database(q.dbname).Collection(q.collname)
+	return q.client.Database(q.dbname).Collection("notices")
 }
 
 func (q *mongoQuery) pagination(total, page, limit int64) *notice.Pagination {

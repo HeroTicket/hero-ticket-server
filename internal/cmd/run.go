@@ -94,10 +94,10 @@ func Run() {
 
 	jwtSvc := jwt.New(cfg.Jwt.SecretKey, jwt.WithAudience(cfg.Jwt.Audience), jwt.WithIssuer(cfg.Jwt.Issuer))
 
-	noticeSvc := notice.New(nrepo.New(mongoClient, cfg.Notice.DbName, cfg.Notice.Collection))
+	noticeSvc := notice.New(nrepo.New(mongoClient, cfg.Notice.DbName))
 
 	// TODO: add ticket service
-	userRepo, err := urepo.New(ctx, mongoClient, cfg.User.DbName, cfg.User.Collection)
+	userRepo, err := urepo.New(ctx, mongoClient, cfg.User.DbName)
 	handleErr(err)
 
 	userSvc := user.New(userRepo)

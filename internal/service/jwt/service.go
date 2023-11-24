@@ -76,7 +76,7 @@ func (s *jwtService) VerifyToken(rawToken string) (*JWTUser, error) {
 
 		// check subject
 		if sub, ok := claims["sub"].(string); ok {
-			u.Identifier = sub
+			u.ID = sub
 		}
 
 		// return jwt user
@@ -121,7 +121,7 @@ func (s *jwtService) getTokenClaims(u JWTUser) jwt.MapClaims {
 	return jwt.MapClaims{
 		"iss": s.issuer,
 		"aud": s.audience,
-		"sub": u.Identifier,
+		"sub": u.ID,
 		"exp": time.Now().Add(s.tokenExpiry).UTC().Unix(),
 		"iat": time.Now().UTC().Unix(),
 		"typ": "JWT",

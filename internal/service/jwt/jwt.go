@@ -17,7 +17,7 @@ type JwtToken struct {
 }
 
 type JWTUser struct {
-	Identifier string `json:"identifier"`
+	ID string `json:"id"`
 }
 
 type JWTUserKey struct{}

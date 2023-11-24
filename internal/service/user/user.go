@@ -13,7 +13,7 @@ var (
 )
 
 type User struct {
-	Identifier     string    `json:"identifier" bson:"_id"`
+	ID             string    `json:"id" bson:"_id"`
 	AccountAddress string    `json:"accountAddress" bson:"accountAddress"`
 	TbaAddress     string    `json:"tbaAddress" bson:"tbaAddress"`
 	Name           string    `json:"name" bson:"name"`
@@ -21,22 +21,21 @@ type User struct {
 	Avatar         string    `json:"avatar" bson:"avatar"`
 	Banner         string    `json:"banner" bson:"banner"`
 	IsAdmin        bool      `json:"isAdmin" bson:"isAdmin"`
-	Verified       bool      `json:"verified" bson:"verified"`
 	CreatedAt      time.Time `json:"createdAt" bson:"createdAt"`
 	UpdatedAt      time.Time `json:"updatedAt" bson:"updatedAt"`
 }
 
 type CreateUserParams struct {
-	Identifier     string
+	ID             string
 	AccountAddress string
-	TBAAddress     string
+	TbaAddress     string
 	Name           string
 	Avatar         string
 	IsAdmin        bool
 }
 
 type UpdateUserParams struct {
-	Identifier     string
+	ID             string
 	AccountAddress string
 	TBAAddress     string
 	Name           string

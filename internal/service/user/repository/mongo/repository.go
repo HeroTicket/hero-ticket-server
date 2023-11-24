@@ -16,9 +16,9 @@ type mongoRepository struct {
 	dbname string
 }
 
-func New(ctx context.Context, client *mongo.Client, dbname, collname string) (user.Repository, error) {
-	cmd := NewMongoCommand(client, dbname, collname)
-	qry := NewMongoQuery(client, dbname, collname)
+func New(ctx context.Context, client *mongo.Client, dbname string) (user.Repository, error) {
+	cmd := NewMongoCommand(client, dbname)
+	qry := NewMongoQuery(client, dbname)
 	repo := &mongoRepository{
 		Query:   qry,
 		Command: cmd,
@@ -26,11 +26,17 @@ func New(ctx context.Context, client *mongo.Client, dbname, collname string) (us
 		dbname:  dbname,
 	}
 
-	_, err := cmd.collection().Indexes().CreateOne(
+	_, err := cmd.collection().Indexes().CreateMany(
 		ctx,
-		mongo.IndexModel{
-			Keys:    bson.M{"accountAddress": 1},
-			Options: options.Index().SetUnique(true),
+		[]mongo.IndexModel{
+			{
+				Keys:    bson.M{"accountAddress": 1},
+				Options: options.Index().SetUnique(true),
+			},
+			{
+				Keys:    bson.M{"name": 1},
+				Options: options.Index().SetUnique(true),
+			},
 		},
 	)
 

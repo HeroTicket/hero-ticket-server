@@ -10,16 +10,14 @@ import (
 )
 
 type MongoCommand struct {
-	client   *mongo.Client
-	dbname   string
-	collname string
+	client *mongo.Client
+	dbname string
 }
 
-func NewMongoCommand(client *mongo.Client, dbname, collname string) *MongoCommand {
+func NewMongoCommand(client *mongo.Client, dbname string) *MongoCommand {
 	return &MongoCommand{
-		client:   client,
-		dbname:   dbname,
-		collname: collname,
+		client: client,
+		dbname: dbname,
 	}
 }
 
@@ -28,9 +26,9 @@ func (c *MongoCommand) CreateUser(ctx context.Context, params user.CreateUserPar
 
 	var u user.User
 
-	u.Identifier = params.Identifier
+	u.ID = params.ID
 	u.AccountAddress = params.AccountAddress
-	u.TbaAddress = params.TBAAddress
+	u.TbaAddress = params.TbaAddress
 	u.Name = params.Name
 	u.Avatar = params.Avatar
 	u.IsAdmin = params.IsAdmin
@@ -61,11 +59,11 @@ func (c *MongoCommand) DeleteUser(ctx context.Context, id string) error {
 func (c *MongoCommand) UpdateUser(ctx context.Context, params user.UpdateUserParams) error {
 	coll := c.collection()
 
-	if params.Identifier == "" {
+	if params.ID == "" {
 		return user.ErrInvalidID
 	}
 
-	filter := bson.M{"_id": params.Identifier}
+	filter := bson.M{"_id": params.ID}
 
 	value := bson.D{}
 
@@ -107,5 +105,5 @@ func (c *MongoCommand) UpdateUser(ctx context.Context, params user.UpdateUserPar
 }
 
 func (c *MongoCommand) collection() *mongo.Collection {
-	return c.client.Database(c.dbname).Collection(c.collname)
+	return c.client.Database(c.dbname).Collection("users")
 }

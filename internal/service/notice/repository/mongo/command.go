@@ -11,16 +11,14 @@ import (
 )
 
 type mongoCommand struct {
-	client   *mongo.Client
-	dbname   string
-	collname string
+	client *mongo.Client
+	dbname string
 }
 
-func NewCommand(client *mongo.Client, dbname, collname string) notice.Command {
+func NewCommand(client *mongo.Client, dbname string) notice.Command {
 	return &mongoCommand{
-		client:   client,
-		dbname:   dbname,
-		collname: collname,
+		client: client,
+		dbname: dbname,
 	}
 }
 
@@ -111,5 +109,5 @@ func (c *mongoCommand) UpdateNotice(ctx context.Context, params *notice.NoticeUp
 }
 
 func (c *mongoCommand) collection() *mongo.Collection {
-	return c.client.Database(c.dbname).Collection(c.collname)
+	return c.client.Database(c.dbname).Collection("notices")
 }

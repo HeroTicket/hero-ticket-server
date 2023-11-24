@@ -30,16 +30,14 @@ type JwtServiceConfig struct {
 }
 
 type NoticeServiceConfig struct {
-	DbName     string `mapstructure:"dbName"`
-	Collection string `mapstructure:"collection"`
+	DbName string `mapstructure:"dbName"`
 }
 
 type TicketServiceConfig struct {
 }
 
 type UserServiceConfig struct {
-	DbName     string `mapstructure:"dbName"`
-	Collection string `mapstructure:"collection"`
+	DbName string `mapstructure:"dbName"`
 }
 
 type Config struct {
