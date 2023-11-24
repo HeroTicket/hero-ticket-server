@@ -9,6 +9,7 @@ type Service interface {
 	FindUsers(ctx context.Context) ([]*User, error)
 	FindUserByID(ctx context.Context, id string) (*User, error)
 	FindUserByAccountAddress(ctx context.Context, accountAddress string) (*User, error)
+	FindUserByName(ctx context.Context, name string) (*User, error)
 }
 
 type userService struct {
@@ -41,4 +42,8 @@ func (s *userService) FindUserByID(ctx context.Context, id string) (*User, error
 
 func (s *userService) FindUserByAccountAddress(ctx context.Context, accountAddress string) (*User, error) {
 	return s.repo.FindUserByAccountAddress(ctx, accountAddress)
+}
+
+func (s *userService) FindUserByName(ctx context.Context, name string) (*User, error) {
+	return s.repo.FindUserByName(ctx, name)
 }

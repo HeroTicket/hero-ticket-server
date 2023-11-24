@@ -6,6 +6,7 @@ type Query interface {
 	FindUsers(ctx context.Context) ([]*User, error)
 	FindUserByID(ctx context.Context, id string) (*User, error)
 	FindUserByAccountAddress(ctx context.Context, accountAddress string) (*User, error)
+	FindUserByName(ctx context.Context, name string) (*User, error)
 }
 
 type Command interface {

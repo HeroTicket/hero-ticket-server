@@ -79,6 +79,23 @@ func (q *MongoQuery) FindUsers(ctx context.Context) ([]*user.User, error) {
 	return users, nil
 }
 
+func (q *MongoQuery) FindUserByName(ctx context.Context, name string) (*user.User, error) {
+	coll := q.collection()
+
+	filter := bson.M{"name": name}
+
+	var u user.User
+
+	if err := coll.FindOne(ctx, filter).Decode(&u); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, user.ErrUserNotFound
+		}
+		return nil, err
+	}
+
+	return &u, nil
+}
+
 func (q *MongoQuery) collection() *mongo.Collection {
 	return q.client.Database(q.dbname).Collection("users")
 }

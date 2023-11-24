@@ -4,9 +4,12 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/heroticket/internal/service/user"
+	"go.uber.org/zap"
 )
 
 type ProfileCtrl struct {
+	user user.Service
 }
 
 func NewProfileCtrl() *ProfileCtrl {
@@ -20,7 +23,7 @@ func (c *ProfileCtrl) Pattern() string {
 func (c *ProfileCtrl) Handler() http.Handler {
 	r := chi.NewRouter()
 
-	r.Get("/profile", c.profile)
+	r.Get("/profile/{name}", c.profile)
 
 	return r
 }
@@ -31,23 +34,28 @@ func (c *ProfileCtrl) Handler() http.Handler {
 //	@Summary		returns user profile
 //	@Description	returns user profile
 //	@Produce		json
-//	@Param			id			query		string	false	"id"
-//	@Param			name		query		string	false	"name"
+//	@Param 			name	path	string	true	"user name"
 //	@Success		200			{object}	CommonResponse
 //	@Failure		400			{object}	CommonResponse
 //	@Failure		500			{object}	CommonResponse
-//	@Router			/users/profile [get]
+//	@Router			/users/profile
 func (c *ProfileCtrl) profile(w http.ResponseWriter, r *http.Request) {
 	// 1. check params
-	id := r.URL.Query().Get("id")
-	name := r.URL.Query().Get("name")
+	name := chi.URLParam(r, "name")
 
-	if id == "" && name == "" {
-		ErrorJSON(w, "id or name is required", http.StatusBadRequest)
+	// 2. get user
+	_, err := c.user.FindUserByName(r.Context(), name)
+	if err != nil {
+		zap.L().Error("failed to find user", zap.Error(err))
+		if err == user.ErrUserNotFound {
+			ErrorJSON(w, "user not found", http.StatusBadRequest)
+		} else {
+			ErrorJSON(w, "failed to find user", http.StatusInternalServerError)
+		}
 		return
 	}
 
-	// 2. get user profile
+	// 3. get purchased tickets and issued tickets
 
-	// 3. return user profile
+	// 4. return user profile
 }
