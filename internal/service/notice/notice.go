@@ -11,15 +11,15 @@ var (
 )
 
 type Notice struct {
-	ID        string    `json:"id" bson:"_id"`
+	ID        int64     `json:"id" bson:"_id"`
 	Title     string    `json:"title" bson:"title"`
-	Content   string    `json:"content" bson:"content"`
+	Content   string    `json:"content,omitempty" bson:"content"`
 	CreatedAt time.Time `json:"createdAt" bson:"createdAt"`
 	UpdatedAt time.Time `json:"updatedAt" bson:"updatedAt"`
 }
 
 type NoticeUpdateParams struct {
-	ID      string
+	ID      int64
 	Title   string
 	Content string
 }

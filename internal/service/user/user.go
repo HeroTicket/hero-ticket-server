@@ -28,3 +28,18 @@ type UserUpdateParams struct {
 	TBAAddress    string
 	Name          string
 }
+
+type Membership struct {
+	Identifier string    `json:"identifier" bson:"_id"`
+	ClaimID    string    `json:"claimId,omitempty" bson:"claimId,omitempty"`
+	CreatedAt  time.Time `json:"createdAt" bson:"createdAt"`
+	UpdatedAt  time.Time `json:"updatedAt" bson:"updatedAt"`
+}
+
+type TicketOwnership struct {
+	ID         string    `json:"id" bson:"_id"`
+	Identifier string    `json:"identifier" bson:"identifier"`
+	ClaimID    string    `json:"claimId" bson:"claimId"`
+	CreatedAt  time.Time `json:"createdAt" bson:"createdAt"`
+	UpdatedAt  time.Time `json:"updatedAt" bson:"updatedAt"`
+}

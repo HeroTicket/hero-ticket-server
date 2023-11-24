@@ -66,6 +66,7 @@ func (q *mongoQuery) GetNotices(ctx context.Context, page, limit int64) (*notice
 	findOptions := &options.FindOptions{
 		Skip:  &skip,
 		Limit: &pagination.Limit,
+		Sort:  primitive.D{{Key: "_id", Value: -1}},
 	}
 
 	cursor, err := coll.Find(ctx, primitive.M{}, findOptions)
@@ -82,6 +83,8 @@ func (q *mongoQuery) GetNotices(ctx context.Context, page, limit int64) (*notice
 		if err != nil {
 			return nil, err
 		}
+
+		n.Content = ""
 
 		notices = append(notices, &n)
 	}
