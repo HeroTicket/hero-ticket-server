@@ -97,8 +97,10 @@ func Run() {
 	noticeSvc := notice.New(nrepo.New(mongoClient, cfg.Notice.DbName, cfg.Notice.Collection))
 
 	// TODO: add ticket service
+	userRepo, err := urepo.New(ctx, mongoClient, cfg.User.DbName, cfg.User.Collection)
+	handleErr(err)
 
-	userSvc := user.New(urepo.New(mongoClient, cfg.User.DbName, cfg.User.Collection))
+	userSvc := user.New(userRepo)
 
 	tx := mongo.NewTx(mongoClient)
 

@@ -257,7 +257,7 @@ func (c *UserCtrl) register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 7. check if identifier is already registered or not
-	u, err := c.user.FindUserByDID(r.Context(), jwtUser.Identifier)
+	u, err := c.user.FindUserByID(r.Context(), jwtUser.Identifier)
 	if err != nil {
 		if err != user.ErrUserNotFound {
 			zap.L().Error("failed to find user", zap.Error(err))
@@ -265,7 +265,7 @@ func (c *UserCtrl) register(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		if u.WalletAddress != "" {
+		if u.AccountAddress != "" {
 			ErrorJSON(w, "user already registered", http.StatusInternalServerError)
 			return
 		}

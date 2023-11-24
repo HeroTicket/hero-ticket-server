@@ -13,33 +13,36 @@ var (
 )
 
 type User struct {
-	DID           string    `json:"did" bson:"_id"`
-	WalletAddress string    `json:"walletAddress" bson:"walletAddress"`
-	TbaAddress    string    `json:"tbaAddress" bson:"tbaAddress"`
-	Nonce         int64     `json:"nonce" bson:"nonce"`
-	IsAdmin       bool      `json:"isAdmin" bson:"isAdmin"`
-	CreatedAt     time.Time `json:"createdAt" bson:"createdAt"`
-	UpdatedAt     time.Time `json:"updatedAt" bson:"updatedAt"`
+	Identifier     string    `json:"identifier" bson:"_id"`
+	AccountAddress string    `json:"accountAddress" bson:"accountAddress"`
+	TbaAddress     string    `json:"tbaAddress" bson:"tbaAddress"`
+	Name           string    `json:"name" bson:"name"`
+	Bio            string    `json:"bio" bson:"bio"`
+	Avatar         string    `json:"avatar" bson:"avatar"`
+	Banner         string    `json:"banner" bson:"banner"`
+	IsAdmin        bool      `json:"isAdmin" bson:"isAdmin"`
+	Verified       bool      `json:"verified" bson:"verified"`
+	CreatedAt      time.Time `json:"createdAt" bson:"createdAt"`
+	UpdatedAt      time.Time `json:"updatedAt" bson:"updatedAt"`
 }
 
-type UserUpdateParams struct {
-	DID           string
-	WalletAddress string
-	TBAAddress    string
-	Name          string
+type CreateUserParams struct {
+	Identifier     string
+	AccountAddress string
+	TBAAddress     string
+	Name           string
+	Avatar         string
+	IsAdmin        bool
 }
 
-type Membership struct {
-	Identifier string    `json:"identifier" bson:"_id"`
-	ClaimID    string    `json:"claimId,omitempty" bson:"claimId,omitempty"`
-	CreatedAt  time.Time `json:"createdAt" bson:"createdAt"`
-	UpdatedAt  time.Time `json:"updatedAt" bson:"updatedAt"`
-}
-
-type TicketOwnership struct {
-	ID         string    `json:"id" bson:"_id"`
-	Identifier string    `json:"identifier" bson:"identifier"`
-	ClaimID    string    `json:"claimId" bson:"claimId"`
-	CreatedAt  time.Time `json:"createdAt" bson:"createdAt"`
-	UpdatedAt  time.Time `json:"updatedAt" bson:"updatedAt"`
+type UpdateUserParams struct {
+	Identifier     string
+	AccountAddress string
+	TBAAddress     string
+	Name           string
+	Bio            string
+	Avatar         string
+	Banner         string
+	IsAdmin        bool
+	Verified       bool
 }

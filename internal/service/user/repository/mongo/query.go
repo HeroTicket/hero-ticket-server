@@ -8,24 +8,24 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type mongoQuery struct {
+type MongoQuery struct {
 	client   *mongo.Client
 	dbname   string
 	collname string
 }
 
-func NewMongoQuery(client *mongo.Client, dbname, collname string) user.Query {
-	return &mongoQuery{
+func NewMongoQuery(client *mongo.Client, dbname, collname string) *MongoQuery {
+	return &MongoQuery{
 		client:   client,
 		dbname:   dbname,
 		collname: collname,
 	}
 }
 
-func (q *mongoQuery) FindUserByDID(ctx context.Context, did string) (*user.User, error) {
+func (q *MongoQuery) FindUserByID(ctx context.Context, id string) (*user.User, error) {
 	coll := q.collection()
 
-	filter := bson.M{"_id": did}
+	filter := bson.M{"_id": id}
 
 	var u user.User
 
@@ -39,10 +39,10 @@ func (q *mongoQuery) FindUserByDID(ctx context.Context, did string) (*user.User,
 	return &u, nil
 }
 
-func (q *mongoQuery) FindUserByWalletAddress(ctx context.Context, walletAddress string) (*user.User, error) {
+func (q *MongoQuery) FindUserByAccountAddress(ctx context.Context, accountAddress string) (*user.User, error) {
 	coll := q.collection()
 
-	filter := bson.M{"wallet_address": walletAddress}
+	filter := bson.M{"accountAddress": accountAddress}
 
 	var u user.User
 
@@ -56,7 +56,7 @@ func (q *mongoQuery) FindUserByWalletAddress(ctx context.Context, walletAddress 
 	return &u, nil
 }
 
-func (q *mongoQuery) FindUsers(ctx context.Context) ([]*user.User, error) {
+func (q *MongoQuery) FindUsers(ctx context.Context) ([]*user.User, error) {
 	coll := q.collection()
 
 	filter := bson.M{}
@@ -81,6 +81,6 @@ func (q *mongoQuery) FindUsers(ctx context.Context) ([]*user.User, error) {
 	return users, nil
 }
 
-func (q *mongoQuery) collection() *mongo.Collection {
+func (q *MongoQuery) collection() *mongo.Collection {
 	return q.client.Database(q.dbname).Collection(q.collname)
 }
