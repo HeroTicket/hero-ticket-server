@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/heroticket/internal/cmd"
-	_ "github.com/joho/godotenv/autoload"
 )
 
 //	@title			Hero Ticket API
