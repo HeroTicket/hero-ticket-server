@@ -34,6 +34,10 @@ func newRouter(version string, ctrls ...Controller) *router {
 		}
 	})
 
+	r.Get("/status", func(w http.ResponseWriter, r *http.Request) {
+		w.Write([]byte("OK"))
+	})
+
 	r.HandleFunc("/ws", ws.Serve())
 
 	return &router{r}

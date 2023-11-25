@@ -34,13 +34,3 @@ jobs:
         run: |
           docker build -t $ECR_REGISTRY/$SERVER_REPOSITORY:$SERVER_IMAGE_TAG . -f ./build/server/Dockerfile
           docker push $ECR_REGISTRY/$SERVER_REPOSITORY:$SERVER_IMAGE_TAG
-
-      - name: Build, tag, and push swagger image to Amazon ECR
-        id: build-swagger-image
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          SWAGGER_REPOSITORY: ${{ secrets.SWAGGER_REPOSITORY }}
-          SWAGGER_IMAGE_TAG: ${{ secrets.SWAGGER_IMAGE_TAG }}
-        run: |
-          docker build -t $ECR_REGISTRY/$SWAGGER_REPOSITORY:$SWAGGER_IMAGE_TAG . -f ./build/swagger/Dockerfile
-          docker push $ECR_REGISTRY/$SWAGGER_REPOSITORY:$SWAGGER_IMAGE_TAG

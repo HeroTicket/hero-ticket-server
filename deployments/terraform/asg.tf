@@ -40,8 +40,7 @@ resource "aws_autoscaling_group" "hero_ticket_server_asg" {
   vpc_zone_identifier = aws_subnet.hero_ticket_public_subnets[*].id
 
   target_group_arns = [
-    aws_alb_target_group.hero_ticket_server_target_group.arn,
-    aws_alb_target_group.hero_ticket_swagger_target_group.arn
+    aws_alb_target_group.hero_ticket_server_target_group.arn
   ]
 
   tag {
