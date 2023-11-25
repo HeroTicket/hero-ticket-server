@@ -75,11 +75,3 @@ data "aws_instances" "hero_ticket_server_instances" {
   }
   instance_state_names = ["running"]
 }
-
-output "hero_ticket_issuer_node_public_ips" {
-  value = data.aws_instances.hero_ticket_issuer_node_instances.public_ips
-}
-
-output "hero_ticket_server_public_ips" {
-  value = data.aws_instances.hero_ticket_server_instances.public_ips
-}

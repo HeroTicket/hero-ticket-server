@@ -40,54 +40,53 @@ resource "aws_alb_target_group" "hero_ticket_issuer_node_target_group" {
   )
 }
 
-# # resource "aws_alb_target_group" "hero_ticket_server_target_group" {
-# #   name     = "alb-target-server"
-# #   port     = 8080
-# #   protocol = "HTTP"
-# #   vpc_id   = aws_vpc.hero_ticket_vpc.id
+resource "aws_alb_target_group" "hero_ticket_server_target_group" {
+  name     = "alb-target-server"
+  port     = 8080
+  protocol = "HTTP"
+  vpc_id   = aws_vpc.hero_ticket_vpc.id
 
-# #   health_check {
-# #     path                = "/status"
-# #     protocol            = "HTTP"
-# #     interval            = 30
-# #     timeout             = 5
-# #     healthy_threshold   = 5
-# #     unhealthy_threshold = 5
-# #     matcher             = "200-399"
-# #   }
+  health_check {
+    path                = "/status"
+    protocol            = "HTTP"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 5
+    unhealthy_threshold = 5
+    matcher             = "200-399"
+  }
 
-# #   tags = merge(
-# #     var.common_tags,
-# #     {
-# #       Name = "Hero Ticket Server Target Group"
-# #     }
-# #   )
+  tags = merge(
+    var.common_tags,
+    {
+      Name = "Hero Ticket Server Target Group"
+    }
+  )
+}
 
-# # }
+resource "aws_alb_target_group" "hero_ticket_swagger_target_group" {
+  name     = "alb-target-swagger"
+  port     = 1323
+  protocol = "HTTP"
+  vpc_id   = aws_vpc.hero_ticket_vpc.id
 
-# # resource "aws_alb_target_group" "hero_ticket_swagger_target_group" {
-# #   name     = "alb-target-swagger"
-# #   port     = 1323
-# #   protocol = "HTTP"
-# #   vpc_id   = aws_vpc.hero_ticket_vpc.id
+  health_check {
+    path                = "/"
+    protocol            = "HTTP"
+    interval            = 30
+    timeout             = 5
+    healthy_threshold   = 5
+    unhealthy_threshold = 5
+    matcher             = "200-399"
+  }
 
-# #   health_check {
-# #     path                = "/"
-# #     protocol            = "HTTP"
-# #     interval            = 30
-# #     timeout             = 5
-# #     healthy_threshold   = 5
-# #     unhealthy_threshold = 5
-# #     matcher             = "200-399"
-# #   }
-
-# #   tags = merge(
-# #     var.common_tags,
-# #     {
-# #       Name = "Hero Ticket Swagger Target Group"
-# #     }
-# #   )
-# # }
+  tags = merge(
+    var.common_tags,
+    {
+      Name = "Hero Ticket Swagger Target Group"
+    }
+  )
+}
 
 resource "aws_lb_listener" "hero_ticket_http_listener" {
   load_balancer_arn = aws_alb.hero_ticket_alb.arn
@@ -124,7 +123,7 @@ resource "aws_lb_listener" "hero_ticket_https_listener" {
       port        = "443"
       protocol    = "HTTPS"
       status_code = "HTTP_301"
-      host        = "www.${aws_route53_zone.hero_ticket_zone.name}"
+      host        = aws_route53_zone.hero_ticket_zone.name
     }
   }
 
@@ -138,7 +137,7 @@ resource "aws_lb_listener" "hero_ticket_https_listener" {
 
 resource "aws_lb_listener_rule" "hero_ticket_alb_listener_rule_https_issuer_node" {
   listener_arn = aws_lb_listener.hero_ticket_https_listener.arn
-  priority     = 1
+  priority     = 2
 
   action {
     type             = "forward"
@@ -157,6 +156,56 @@ resource "aws_lb_listener_rule" "hero_ticket_alb_listener_rule_https_issuer_node
     var.common_tags,
     {
       Name = "Hero Ticket ALB Listener Rule HTTPS Issuer Node"
+    }
+  )
+}
+
+resource "aws_lb_listener_rule" "hero_ticket_alb_listener_rule_https_server" {
+  listener_arn = aws_lb_listener.hero_ticket_https_listener.arn
+  priority     = 1
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_alb_target_group.hero_ticket_server_target_group.arn
+  }
+
+  condition {
+    host_header {
+      values = [
+        aws_route53_record.hero_ticket_server_record.name,
+      ]
+    }
+  }
+
+  tags = merge(
+    var.common_tags,
+    {
+      Name = "Hero Ticket ALB Listener Rule HTTPS Server"
+    }
+  )
+}
+
+resource "aws_lb_listener_rule" "hero_ticket_alb_listener_rule_https_swagger" {
+  listener_arn = aws_lb_listener.hero_ticket_https_listener.arn
+  priority     = 3
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_alb_target_group.hero_ticket_swagger_target_group.arn
+  }
+
+  condition {
+    host_header {
+      values = [
+        aws_route53_record.hero_ticket_swagger_record.name,
+      ]
+    }
+  }
+
+  tags = merge(
+    var.common_tags,
+    {
+      Name = "Hero Ticket ALB Listener Rule HTTPS Swagger"
     }
   )
 }

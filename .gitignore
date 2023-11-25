@@ -11,3 +11,4 @@ terraform.tfstate.backup
 terraform.tfvars
 *.pem
 setup*.sh
+docker-compose.prod.yml
