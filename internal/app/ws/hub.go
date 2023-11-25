@@ -78,6 +78,12 @@ func Unregister(id ID) {
 	hub.unregister <- id
 }
 
+// Serve godoc
+//
+// @Summary Serve websocket
+// @Description returns websocket connection
+// @Tags websocket
+// @Router /ws [get]
 func Serve() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		conn, err := upgrader.Upgrade(w, r, nil)

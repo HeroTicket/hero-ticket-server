@@ -34,11 +34,22 @@ func newRouter(version string, ctrls ...Controller) *router {
 		}
 	})
 
-	r.Get("/status", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("OK"))
-	})
+	r.Get("/status", statusHandler)
 
 	r.HandleFunc("/ws", ws.Serve())
 
 	return &router{r}
+}
+
+// Status godoc
+//
+// @Summary Get status
+// @Description returns status
+// @Tags status
+// @Accept plain
+// @Produce plain
+// @Success 200 {string} string "OK"
+// @Router /status [get]
+func statusHandler(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("OK"))
 }
