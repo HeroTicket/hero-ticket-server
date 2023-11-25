@@ -1,4 +1,4 @@
-package http
+package app
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
-	"github.com/heroticket/internal/ws"
+	"github.com/heroticket/internal/app/ws"
 )
 
 type Controller interface {

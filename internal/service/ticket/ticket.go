@@ -1,6 +1,6 @@
 package ticket
 
-type Collection struct {
+type TicketCollection struct {
 	ID              string `json:"id" bson:"_id"`
 	CreatorID       string `json:"creatorId" bson:"creatorId"`
 	ContractAddress string `json:"contractAddress" bson:"contractAddress"`

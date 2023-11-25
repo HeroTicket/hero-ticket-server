@@ -2,15 +2,17 @@ package cmd
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"syscall"
 	"time"
 
+	"github.com/heroticket/internal/app"
+	"github.com/heroticket/internal/app/rest"
+	"github.com/heroticket/internal/app/shutdown"
 	"github.com/heroticket/internal/cache/redis"
 	"github.com/heroticket/internal/config"
 	"github.com/heroticket/internal/db/mongo"
-	"github.com/heroticket/internal/http"
-	"github.com/heroticket/internal/http/rest"
 	"github.com/heroticket/internal/service/auth"
 	"github.com/heroticket/internal/service/did"
 	"github.com/heroticket/internal/service/ipfs"
@@ -19,7 +21,6 @@ import (
 	nrepo "github.com/heroticket/internal/service/notice/repository/mongo"
 	"github.com/heroticket/internal/service/user"
 	urepo "github.com/heroticket/internal/service/user/repository/mongo"
-	"github.com/heroticket/internal/shutdown"
 	"go.uber.org/zap"
 )
 
@@ -70,7 +71,7 @@ func Run() {
 	authCache := redis.NewCache(authRedis)
 	didCache := redis.NewCache(didRedis)
 
-	authSvc := auth.New(auth.AuthServiceConfig{
+	auth := auth.New(auth.AuthServiceConfig{
 		IPFSUrl:         cfg.Auth.IPFSUrl,
 		RPCUrl:          cfg.RpcUrl,
 		ContractAddress: cfg.Auth.ContractAddress,
@@ -79,7 +80,7 @@ func Run() {
 		ReqCache:        authCache,
 	})
 
-	_ = did.New(did.DidServiceConfig{
+	did := did.New(did.DidServiceConfig{
 		RPCUrl:    cfg.RpcUrl,
 		IssuerUrl: cfg.Did.IssuerUrl,
 		Username:  cfg.Did.Username,
@@ -87,29 +88,30 @@ func Run() {
 		QrCache:   didCache,
 	})
 
-	_ = ipfs.New(ipfs.IpfsServiceConfig{
+	ipfs := ipfs.New(ipfs.IpfsServiceConfig{
 		ApiKey: cfg.Ipfs.ApiKey,
 		Secret: cfg.Ipfs.Secret,
 	})
 
-	jwtSvc := jwt.New(cfg.Jwt.AccessTokenKey, cfg.Jwt.RefreshTokenKey,
+	jwt := jwt.New(cfg.Jwt.AccessTokenKey, cfg.Jwt.RefreshTokenKey,
 		jwt.WithAudience(cfg.Jwt.Audience), jwt.WithIssuer(cfg.Jwt.Issuer))
 
-	noticeSvc := notice.New(nrepo.New(mongoClient, cfg.Notice.DbName))
+	notice := notice.New(nrepo.New(mongoClient, cfg.Notice.DbName))
 
 	// TODO: add ticket service
 	userRepo, err := urepo.New(ctx, mongoClient, cfg.User.DbName)
 	handleErr(err)
 
-	userSvc := user.New(userRepo)
+	user := user.New(userRepo)
 
-	tx := mongo.NewTx(mongoClient)
+	_ = mongo.NewTx(mongoClient)
 
-	userCtrl := rest.NewUserCtrl(authSvc, jwtSvc, userSvc, tx, cfg.ServerUrl)
-	noticeCtrl := rest.NewNoticeCtrl(noticeSvc, userSvc)
-	ticketCtrl := rest.NewTicketCtrl()
+	claimCtrl := rest.NewClaimCtrl(did, jwt, user)
+	userCtrl := rest.NewUserCtrl(auth, jwt, user, cfg.ServerUrl)
+	noticeCtrl := rest.NewNoticeCtrl(notice, user)
+	ticketCtrl := rest.NewTicketCtrl(auth, ipfs, jwt, user, cfg.ServerUrl)
 
-	srv := http.NewServer(http.DefaultConfig(), userCtrl, noticeCtrl, ticketCtrl)
+	srv := app.New(app.DefaultConfig(), claimCtrl, userCtrl, noticeCtrl, ticketCtrl)
 
 	logger.Info("Starting server")
 

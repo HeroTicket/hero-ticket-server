@@ -7,7 +7,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	_ "github.com/heroticket/docs"
-	"github.com/heroticket/internal/shutdown"
+	"github.com/heroticket/internal/app/shutdown"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
 	"go.uber.org/zap"
 )

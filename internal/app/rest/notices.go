@@ -42,8 +42,8 @@ func (c *NoticeCtrl) Handler() http.Handler {
 // @Tags notices
 // @Accept json
 // @Produce json
-// @Param page query int false "page"
-// @Param limit query int false "limit"
+// @Param page query int false "page number"
+// @Param limit query int false "page size"
 // @Success 200 {object} CommonResponse{data=notice.Notices}
 // @Failure 400 {object} CommonResponse
 // @Failure 500 {object} CommonResponse

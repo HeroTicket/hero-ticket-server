@@ -1,5 +1,28 @@
 basePath: /v1
 definitions:
+  github_com_heroticket_internal_service_user.User:
+    properties:
+      accountAddress:
+        type: string
+      avatar:
+        type: string
+      banner:
+        type: string
+      bio:
+        type: string
+      createdAt:
+        type: integer
+      id:
+        type: string
+      isAdmin:
+        type: boolean
+      name:
+        type: string
+      tbaAddress:
+        type: string
+      updatedAt:
+        type: integer
+    type: object
   jwt.TokenPair:
     properties:
       accessToken:
@@ -117,14 +140,11 @@ definitions:
     - 1000000000
     - 60000000000
     - 3600000000000
-    - -9223372036854775808
-    - 9223372036854775807
     - 1
     - 1000
     - 1000000
     - 1000000000
     - 60000000000
-    - 3600000000000
     type: integer
     x-enum-varnames:
     - minDuration
@@ -135,14 +155,11 @@ definitions:
     - Second
     - Minute
     - Hour
-    - minDuration
-    - maxDuration
     - Nanosecond
     - Microsecond
     - Millisecond
     - Second
     - Minute
-    - Hour
 host: api.heroticket.xyz
 info:
   contact:
@@ -157,17 +174,94 @@ info:
   title: Hero Ticket API
   version: "1.0"
 paths:
+  /claims/{contractAddress}:
+    get:
+      consumes:
+      - application/json
+      description: returns claim qr
+      parameters:
+      - description: contract address
+        in: path
+        name: contractAddress
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+      security:
+      - BearerAuth: []
+      summary: returns claim qr
+      tags:
+      - claims
+    post:
+      consumes:
+      - application/json
+      description: requests claim
+      parameters:
+      - description: contract address
+        in: path
+        name: contractAddress
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+      security:
+      - BearerAuth: []
+      summary: requests claim
+      tags:
+      - claims
   /notices:
     get:
       consumes:
       - application/json
       description: returns notices paginated
       parameters:
-      - description: page
+      - description: page number
         in: query
         name: page
         type: integer
-      - description: limit
+      - description: page size
         in: query
         name: limit
         type: integer
@@ -228,7 +322,7 @@ paths:
       summary: Get notice
       tags:
       - notices
-  /profile:
+  /profile/{name}:
     get:
       consumes:
       - application/json
@@ -257,6 +351,339 @@ paths:
       summary: returns user profile
       tags:
       - profile
+  /tickets:
+    get:
+      consumes:
+      - application/json
+      description: returns tickets
+      parameters:
+      - description: page number
+        in: query
+        name: page
+        type: integer
+      - description: page size
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+      summary: returns tickets
+      tags:
+      - tickets
+  /tickets/{contractAddress}:
+    get:
+      consumes:
+      - application/json
+      description: returns ticket
+      parameters:
+      - description: contract address
+        in: path
+        name: contractAddress
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+      summary: returns ticket
+      tags:
+      - tickets
+  /tickets/{contractAddress}/purchase-qr:
+    get:
+      consumes:
+      - application/json
+      description: returns purchase authorization qr code
+      parameters:
+      - description: contract address
+        in: path
+        name: contractAddress
+        required: true
+        type: string
+      - description: session id
+        in: query
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/rest.CommonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/protocol.AuthorizationRequestMessage'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+      security:
+      - BearerAuth: []
+      summary: returns purchase authorization qr code
+      tags:
+      - tickets
+  /tickets/{contractAddress}/verify-qr:
+    get:
+      consumes:
+      - application/json
+      description: returns verify authorization qr code
+      parameters:
+      - description: contract address
+        in: path
+        name: contractAddress
+        required: true
+        type: string
+      - description: session id
+        in: query
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/rest.CommonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/protocol.AuthorizationRequestMessage'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+      security:
+      - BearerAuth: []
+      summary: returns verify authorization qr code
+      tags:
+      - tickets
+  /tickets/create:
+    post:
+      consumes:
+      - application/json
+      description: creates ticket
+      parameters:
+      - description: ticket name
+        in: formData
+        name: name
+        required: true
+        type: string
+      - description: ticket symbol
+        in: formData
+        name: symbol
+        required: true
+        type: string
+      - description: ticket description
+        in: formData
+        name: description
+        required: true
+        type: string
+      - description: ticket organizer
+        in: formData
+        name: organizer
+        required: true
+        type: string
+      - description: ticket location
+        in: formData
+        name: location
+        required: true
+        type: string
+      - description: ticket date
+        in: formData
+        name: date
+        required: true
+        type: string
+      - description: ticket banner image
+        in: formData
+        name: bannerImage
+        required: true
+        type: file
+      - description: ticket image
+        in: formData
+        name: ticketImage
+        required: true
+        type: file
+      - description: ticket price
+        in: formData
+        name: price
+        required: true
+        type: integer
+      - description: ticket total supply
+        in: formData
+        name: totalSupply
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+      security:
+      - BearerAuth: []
+      summary: creates ticket
+      tags:
+      - tickets
+  /tickets/purchase-callback:
+    post:
+      consumes:
+      - application/json
+      description: purchase callback
+      parameters:
+      - description: contract address
+        in: path
+        name: contractAddress
+        required: true
+        type: string
+      - description: account address
+        in: query
+        name: accountAddress
+        required: true
+        type: string
+      - description: session id
+        in: query
+        name: sessionId
+        required: true
+        type: string
+      - description: token
+        in: body
+        name: token
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+      summary: purchase callback
+      tags:
+      - tickets
+  /tickets/verify-callback:
+    post:
+      consumes:
+      - application/json
+      description: verify callback
+      parameters:
+      - description: session id
+        in: query
+        name: sessionId
+        required: true
+        type: string
+      - description: token
+        in: body
+        name: token
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+      summary: verify callback
+      tags:
+      - tickets
+  /users/info:
+    get:
+      consumes:
+      - application/json
+      description: returns user info
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/rest.CommonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_heroticket_internal_service_user.User'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+      security:
+      - BearerAuth: []
+      summary: returns user info
+      tags:
+      - users
   /users/login-callback:
     post:
       consumes:
@@ -361,7 +788,7 @@ paths:
       summary: refreshes token pair
       tags:
       - users
-  /users/register:
+  /users/register/{accountAddress}:
     post:
       description: registers user
       parameters:
@@ -376,7 +803,12 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/rest.CommonResponse'
+            allOf:
+            - $ref: '#/definitions/rest.CommonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/github_com_heroticket_internal_service_user.User'
+              type: object
         "400":
           description: Bad Request
           schema:
