@@ -2,15 +2,17 @@ package cmd
 
 import (
 	"context"
+	"net/http"
 	"os"
 	"syscall"
 	"time"
 
+	"github.com/heroticket/internal/app"
+	"github.com/heroticket/internal/app/rest"
+	"github.com/heroticket/internal/app/shutdown"
 	"github.com/heroticket/internal/cache/redis"
 	"github.com/heroticket/internal/config"
 	"github.com/heroticket/internal/db/mongo"
-	"github.com/heroticket/internal/http"
-	"github.com/heroticket/internal/http/rest"
 	"github.com/heroticket/internal/service/auth"
 	"github.com/heroticket/internal/service/did"
 	"github.com/heroticket/internal/service/ipfs"
@@ -19,7 +21,6 @@ import (
 	nrepo "github.com/heroticket/internal/service/notice/repository/mongo"
 	"github.com/heroticket/internal/service/user"
 	urepo "github.com/heroticket/internal/service/user/repository/mongo"
-	"github.com/heroticket/internal/shutdown"
 	"go.uber.org/zap"
 )
 
@@ -109,7 +110,7 @@ func Run() {
 	noticeCtrl := rest.NewNoticeCtrl(noticeSvc, userSvc)
 	ticketCtrl := rest.NewTicketCtrl()
 
-	srv := http.NewServer(http.DefaultConfig(), userCtrl, noticeCtrl, ticketCtrl)
+	srv := app.New(app.DefaultConfig(), userCtrl, noticeCtrl, ticketCtrl)
 
 	logger.Info("Starting server")
 

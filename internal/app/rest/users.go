@@ -7,12 +7,12 @@ import (
 	"os"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/heroticket/internal/app/ws"
 	"github.com/heroticket/internal/db"
 	"github.com/heroticket/internal/service/auth"
 	"github.com/heroticket/internal/service/jwt"
 	"github.com/heroticket/internal/service/user"
 	"github.com/heroticket/internal/web3"
-	"github.com/heroticket/internal/ws"
 	"go.uber.org/zap"
 )
 

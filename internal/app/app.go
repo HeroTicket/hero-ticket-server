@@ -1,4 +1,4 @@
-package http
+package app
 
 import (
 	"context"
@@ -26,12 +26,12 @@ func DefaultConfig() *Config {
 	}
 }
 
-type Server struct {
+type App struct {
 	*http.Server
 }
 
-func NewServer(cfg *Config, ctrls ...Controller) *Server {
-	return &Server{
+func New(cfg *Config, ctrls ...Controller) *App {
+	return &App{
 		Server: &http.Server{
 			Addr:         cfg.Addr,
 			Handler:      newRouter(cfg.Version, ctrls...),
@@ -41,10 +41,10 @@ func NewServer(cfg *Config, ctrls ...Controller) *Server {
 	}
 }
 
-func (s *Server) Run() error {
+func (s *App) Run() error {
 	return s.ListenAndServe()
 }
 
-func (s *Server) Shutdown(ctx context.Context) error {
+func (s *App) Shutdown(ctx context.Context) error {
 	return s.Server.Shutdown(ctx)
 }
