@@ -269,7 +269,7 @@ func (c *UserCtrl) refresh(w http.ResponseWriter, r *http.Request) {
 //	@Failure		400		{object}	CommonResponse
 //	@Failure		500		{object}	CommonResponse
 //	@Security 		BearerAuth
-//	@Router			/users/register [post]
+//	@Router			/users/register/{accountAddress} [post]
 func (c *UserCtrl) register(w http.ResponseWriter, r *http.Request) {
 	// 1. get user from context
 	jwtUser, err := c.jwt.FromContext(r.Context())

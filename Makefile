@@ -18,6 +18,16 @@ down:
 	@echo "Stopping containers..."
 	docker compose down
 
+.PHONY: gen
+gen:
+	@echo "Generating go files from abis..."
+	mkdir -p pkg/contracts/gen/ticketex
+	abigen --abi=pkg/contracts/abi/TicketExtended.abi --pkg=ticketex --out=pkg/contracts/gen/ticketex/ticketex.go
+	mkdir -p pkg/contracts/gen/ticket
+	abigen --abi=pkg/contracts/abi/Ticket.abi --pkg=ticket --out=pkg/contracts/gen/ticket/ticket.go
+	mkdir -p pkg/contracts/gen/token
+	abigen --abi=pkg/contracts/abi/HeroToken.abi --pkg=token --out=pkg/contracts/gen/token/token.go
+
 .PHONY: swag_gen
 swag_gen:
 	@echo "Generating swagger docs..."
