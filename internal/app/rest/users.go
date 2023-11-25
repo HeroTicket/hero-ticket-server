@@ -8,7 +8,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/heroticket/internal/app/ws"
-	"github.com/heroticket/internal/db"
 	"github.com/heroticket/internal/service/auth"
 	"github.com/heroticket/internal/service/jwt"
 	"github.com/heroticket/internal/service/user"
@@ -17,21 +16,19 @@ import (
 )
 
 type UserCtrl struct {
-	baseUrl string
+	serverUrl string
 
 	auth auth.Service
 	jwt  jwt.Service
 	user user.Service
-	tx   db.Tx
 }
 
-func NewUserCtrl(auth auth.Service, jwt jwt.Service, user user.Service, tx db.Tx, baseUrl string) *UserCtrl {
+func NewUserCtrl(auth auth.Service, jwt jwt.Service, user user.Service, serverUrl string) *UserCtrl {
 	return &UserCtrl{
-		baseUrl: baseUrl,
-		auth:    auth,
-		jwt:     jwt,
-		user:    user,
-		tx:      tx,
+		serverUrl: serverUrl,
+		auth:      auth,
+		jwt:       jwt,
+		user:      user,
 	}
 }
 
@@ -48,6 +45,8 @@ func (c *UserCtrl) Handler() http.Handler {
 
 	r.Group(func(r chi.Router) {
 		r.Use(TokenRequired(c.jwt))
+		// 사용자 정보 조회
+		r.Get("/info", c.info)
 		r.Post("/register/{accountAddress}", c.register)
 	})
 
@@ -89,7 +88,7 @@ func (c *UserCtrl) loginQR(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 
-	callbackUrl := fmt.Sprintf("%s/v1/users/login-callback?sessionId=%s", c.baseUrl, sessionId)
+	callbackUrl := fmt.Sprintf("%s/v1/users/login-callback?sessionId=%s", c.serverUrl, sessionId)
 
 	// TODO: fetch audience from db
 	audience := os.Getenv("VERIFIER_DID")
@@ -258,6 +257,50 @@ func (c *UserCtrl) refresh(w http.ResponseWriter, r *http.Request) {
 	_ = WriteJSON(w, http.StatusOK, resp)
 }
 
+// Info godoc
+//
+//	@Tags			users
+//	@Summary		returns user info
+//	@Description	returns user info
+//	@Accept			json
+//	@Produce		json
+//	@Success		200			{object}	CommonResponse{data=user.User}
+//	@Failure		400			{object}	CommonResponse
+//	@Failure		404			{object}	CommonResponse
+//	@Failure		500			{object}	CommonResponse
+//	@Security 		BearerAuth
+//	@Router			/users/info [get]
+func (c *UserCtrl) info(w http.ResponseWriter, r *http.Request) {
+	// 1. get user from context
+	jwtUser, err := c.jwt.FromContext(r.Context())
+	if err != nil {
+		zap.L().Error("failed to get user from context", zap.Error(err))
+		ErrorJSON(w, "user not found")
+		return
+	}
+
+	// 2. get user from db
+	u, err := c.user.FindUserByID(r.Context(), jwtUser.ID)
+	if err != nil {
+		if err == user.ErrUserNotFound {
+			ErrorJSON(w, "user not registered yet", http.StatusNotFound)
+			return
+		}
+		zap.L().Error("failed to find user", zap.Error(err))
+		ErrorJSON(w, "failed to find user", http.StatusInternalServerError)
+		return
+	}
+
+	// 3. return user as json response
+	resp := CommonResponse{
+		Status:  http.StatusOK,
+		Message: "Successfully fetched user info",
+		Data:    u,
+	}
+
+	_ = WriteJSON(w, http.StatusOK, resp)
+}
+
 // Register godoc
 //
 //	@Tags			users
@@ -265,7 +308,7 @@ func (c *UserCtrl) refresh(w http.ResponseWriter, r *http.Request) {
 //	@Description	registers user
 //	@Produce		json
 //	@Param			accountAddress 	path	string	true	"account address"
-//	@Success		201		{object}	CommonResponse
+//	@Success		201		{object}	CommonResponse{data=user.User}
 //	@Failure		400		{object}	CommonResponse
 //	@Failure		500		{object}	CommonResponse
 //	@Security 		BearerAuth
@@ -296,8 +339,7 @@ func (c *UserCtrl) register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil && err != user.ErrUserNotFound {
-		zap.L().Error("failed to find user", zap.Error(err))
-		ErrorJSON(w, "failed to register user", http.StatusInternalServerError)
+		ErrorJSON(w, "failed to check if user is already registered or not", http.StatusInternalServerError)
 		return
 	}
 

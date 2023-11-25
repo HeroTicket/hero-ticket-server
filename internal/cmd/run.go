@@ -71,7 +71,7 @@ func Run() {
 	authCache := redis.NewCache(authRedis)
 	didCache := redis.NewCache(didRedis)
 
-	authSvc := auth.New(auth.AuthServiceConfig{
+	auth := auth.New(auth.AuthServiceConfig{
 		IPFSUrl:         cfg.Auth.IPFSUrl,
 		RPCUrl:          cfg.RpcUrl,
 		ContractAddress: cfg.Auth.ContractAddress,
@@ -80,7 +80,7 @@ func Run() {
 		ReqCache:        authCache,
 	})
 
-	_ = did.New(did.DidServiceConfig{
+	did := did.New(did.DidServiceConfig{
 		RPCUrl:    cfg.RpcUrl,
 		IssuerUrl: cfg.Did.IssuerUrl,
 		Username:  cfg.Did.Username,
@@ -88,29 +88,30 @@ func Run() {
 		QrCache:   didCache,
 	})
 
-	_ = ipfs.New(ipfs.IpfsServiceConfig{
+	ipfs := ipfs.New(ipfs.IpfsServiceConfig{
 		ApiKey: cfg.Ipfs.ApiKey,
 		Secret: cfg.Ipfs.Secret,
 	})
 
-	jwtSvc := jwt.New(cfg.Jwt.AccessTokenKey, cfg.Jwt.RefreshTokenKey,
+	jwt := jwt.New(cfg.Jwt.AccessTokenKey, cfg.Jwt.RefreshTokenKey,
 		jwt.WithAudience(cfg.Jwt.Audience), jwt.WithIssuer(cfg.Jwt.Issuer))
 
-	noticeSvc := notice.New(nrepo.New(mongoClient, cfg.Notice.DbName))
+	notice := notice.New(nrepo.New(mongoClient, cfg.Notice.DbName))
 
 	// TODO: add ticket service
 	userRepo, err := urepo.New(ctx, mongoClient, cfg.User.DbName)
 	handleErr(err)
 
-	userSvc := user.New(userRepo)
+	user := user.New(userRepo)
 
-	tx := mongo.NewTx(mongoClient)
+	_ = mongo.NewTx(mongoClient)
 
-	userCtrl := rest.NewUserCtrl(authSvc, jwtSvc, userSvc, tx, cfg.ServerUrl)
-	noticeCtrl := rest.NewNoticeCtrl(noticeSvc, userSvc)
-	ticketCtrl := rest.NewTicketCtrl()
+	claimCtrl := rest.NewClaimCtrl(did, jwt, user)
+	userCtrl := rest.NewUserCtrl(auth, jwt, user, cfg.ServerUrl)
+	noticeCtrl := rest.NewNoticeCtrl(notice, user)
+	ticketCtrl := rest.NewTicketCtrl(auth, ipfs, jwt, user, cfg.ServerUrl)
 
-	srv := app.New(app.DefaultConfig(), userCtrl, noticeCtrl, ticketCtrl)
+	srv := app.New(app.DefaultConfig(), claimCtrl, userCtrl, noticeCtrl, ticketCtrl)
 
 	logger.Info("Starting server")
 

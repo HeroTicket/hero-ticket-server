@@ -14,15 +14,14 @@ var (
 type User struct {
 	ID             string `json:"id" bson:"_id"`
 	AccountAddress string `json:"accountAddress" bson:"accountAddress"`
-	//ChainID        int64    `json:"chainId" bson:"chainId"`
-	TbaAddress string `json:"tbaAddress" bson:"tbaAddress"`
-	Name       string `json:"name" bson:"name"`
-	Bio        string `json:"bio" bson:"bio"`
-	Avatar     string `json:"avatar" bson:"avatar"`
-	Banner     string `json:"banner" bson:"banner"`
-	IsAdmin    bool   `json:"isAdmin" bson:"isAdmin"`
-	CreatedAt  int64  `json:"createdAt" bson:"createdAt"`
-	UpdatedAt  int64  `json:"updatedAt" bson:"updatedAt"`
+	TbaAddress     string `json:"tbaAddress" bson:"tbaAddress"`
+	Name           string `json:"name" bson:"name"`
+	Bio            string `json:"bio" bson:"bio"`
+	Avatar         string `json:"avatar" bson:"avatar"`
+	Banner         string `json:"banner" bson:"banner"`
+	IsAdmin        bool   `json:"isAdmin" bson:"isAdmin"`
+	CreatedAt      int64  `json:"createdAt" bson:"createdAt"`
+	UpdatedAt      int64  `json:"updatedAt" bson:"updatedAt"`
 }
 
 type CreateUserParams struct {
