@@ -28,12 +28,6 @@ variable "ecr_repos" {
       scan_on_push         = true
       name_tag             = "hero-ticket-issuer-node"
     }
-    "hero-ticket-swagger" = {
-      name                 = "hero-ticket-swagger"
-      image_tag_mutability = "MUTABLE"
-      scan_on_push         = true
-      name_tag             = "hero-ticket-swagger"
-    }
   }
 }
 
