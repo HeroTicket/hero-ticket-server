@@ -26,6 +26,7 @@ var (
 		unregister: make(chan ID),
 		clients:    make(map[ID]*client),
 		send:       make(chan Message, 256),
+		mu:         &sync.RWMutex{},
 	}
 )
 
@@ -38,6 +39,8 @@ type Hub struct {
 	register   chan registerRequest
 	unregister chan ID
 	send       chan Message
+
+	mu *sync.RWMutex
 }
 
 type registerRequest struct {
@@ -49,25 +52,40 @@ func (h *Hub) run() {
 	for {
 		select {
 		case req := <-h.register:
+			h.mu.Lock()
 			h.clients[req.id] = req.client
+			h.mu.Unlock()
 		case id := <-h.unregister:
+			h.mu.Lock()
 			if client, ok := h.clients[id]; ok {
 				close(client.send)
 				delete(h.clients, id)
 			}
+			h.mu.Unlock()
 		case msg := <-h.send:
+			h.mu.RLock()
 			client, ok := h.clients[msg.ID]
+			h.mu.RUnlock()
 			if ok {
 				select {
 				case client.send <- msg:
 				default:
+					h.mu.Lock()
 					close(client.send)
 					delete(h.clients, msg.ID)
+					h.mu.Unlock()
 				}
 			}
 
 		}
 	}
+}
+
+func (h *Hub) hasClient(id ID) bool {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	_, ok := h.clients[id]
+	return ok
 }
 
 func Send(msg Message) {

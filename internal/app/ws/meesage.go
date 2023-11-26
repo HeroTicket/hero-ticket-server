@@ -18,7 +18,10 @@ type ID string
 
 func (id ID) Valid() bool {
 	_, err := uuid.Parse(string(id))
-	return err == nil
+	if err != nil {
+		return false
+	}
+	return hub.hasClient(id)
 }
 
 type Message struct {
