@@ -20,6 +20,23 @@ func NewMongoQuery(client *mongo.Client, dbname string) *MongoQuery {
 	}
 }
 
+func (q *MongoQuery) FindAdmin(ctx context.Context) (*user.User, error) {
+	coll := q.collection()
+
+	filter := bson.M{"isAdmin": true}
+
+	var u user.User
+
+	if err := coll.FindOne(ctx, filter).Decode(&u); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, user.ErrUserNotFound
+		}
+		return nil, err
+	}
+
+	return &u, nil
+}
+
 func (q *MongoQuery) FindUserByID(ctx context.Context, id string) (*user.User, error) {
 	coll := q.collection()
 

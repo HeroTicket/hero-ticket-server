@@ -71,7 +71,7 @@ func Run() {
 	authCache := redis.NewCache(authRedis)
 	didCache := redis.NewCache(didRedis)
 
-	auth := auth.New(auth.AuthServiceConfig{
+	auths := auth.New(auth.AuthServiceConfig{
 		IPFSUrl:         cfg.Auth.IPFSUrl,
 		RPCUrl:          cfg.RpcUrl,
 		ContractAddress: cfg.Auth.ContractAddress,
@@ -80,7 +80,7 @@ func Run() {
 		ReqCache:        authCache,
 	})
 
-	did := did.New(did.DidServiceConfig{
+	dids := did.New(did.DidServiceConfig{
 		RPCUrl:    cfg.RpcUrl,
 		IssuerUrl: cfg.Did.IssuerUrl,
 		Username:  cfg.Did.Username,
@@ -88,28 +88,54 @@ func Run() {
 		QrCache:   didCache,
 	})
 
-	ipfs := ipfs.New(ipfs.IpfsServiceConfig{
+	ipfss := ipfs.New(ipfs.IpfsServiceConfig{
 		ApiKey: cfg.Ipfs.ApiKey,
 		Secret: cfg.Ipfs.Secret,
 	})
 
-	jwt := jwt.New(cfg.Jwt.AccessTokenKey, cfg.Jwt.RefreshTokenKey,
+	jwts := jwt.New(cfg.Jwt.AccessTokenKey, cfg.Jwt.RefreshTokenKey,
 		jwt.WithAudience(cfg.Jwt.Audience), jwt.WithIssuer(cfg.Jwt.Issuer))
 
-	notice := notice.New(nrepo.New(mongoClient, cfg.Notice.DbName))
+	notices := notice.New(nrepo.New(mongoClient, cfg.Notice.DbName))
 
 	// TODO: add ticket service
 	userRepo, err := urepo.New(ctx, mongoClient, cfg.User.DbName)
 	handleErr(err)
 
-	user := user.New(userRepo)
+	users := user.New(userRepo)
 
 	_ = mongo.NewTx(mongoClient)
 
-	claimCtrl := rest.NewClaimCtrl(did, jwt, user)
-	userCtrl := rest.NewUserCtrl(auth, jwt, user, cfg.ServerUrl)
-	noticeCtrl := rest.NewNoticeCtrl(notice, user)
-	ticketCtrl := rest.NewTicketCtrl(auth, ipfs, jwt, user, cfg.ServerUrl)
+	// find admin user
+	var admin *user.User
+
+	admin, err = users.FindAdmin(ctx)
+	if err != nil {
+		if err == user.ErrUserNotFound {
+			resp, err := dids.CreateIdentity(ctx, did.CreateIdentityRequest{
+				DidMetadata: did.DidMetadata{
+					Blockchain: "polygon",
+					Method:     "polygonid",
+					Network:    "mumbai",
+					Type:       did.BJJ,
+				},
+			})
+			handleErr(err)
+
+			admin, err = users.CreateUser(ctx, user.CreateUserParams{
+				ID:             resp.Identifier,
+				AccountAddress: resp.Address,
+				Name:           "admin",
+				IsAdmin:        true,
+			})
+			handleErr(err)
+		}
+	}
+
+	claimCtrl := rest.NewClaimCtrl(dids, jwts, users)
+	userCtrl := rest.NewUserCtrl(auths, jwts, users, cfg.ServerUrl, admin.ID)
+	noticeCtrl := rest.NewNoticeCtrl(notices, users)
+	ticketCtrl := rest.NewTicketCtrl(auths, ipfss, jwts, users, cfg.ServerUrl)
 
 	srv := app.New(app.DefaultConfig(), claimCtrl, userCtrl, noticeCtrl, ticketCtrl)
 

@@ -12,7 +12,7 @@ FROM debian:stable
 
 RUN apt-get update
 
-RUN apt-get install -y libgomp1
+RUN apt-get install -y libgomp1 ca-certificates
 
 RUN mkdir /app
 

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/heroticket/internal/app/ws"
@@ -17,15 +16,17 @@ import (
 
 type UserCtrl struct {
 	serverUrl string
+	adminID   string
 
 	auth auth.Service
 	jwt  jwt.Service
 	user user.Service
 }
 
-func NewUserCtrl(auth auth.Service, jwt jwt.Service, user user.Service, serverUrl string) *UserCtrl {
+func NewUserCtrl(auth auth.Service, jwt jwt.Service, user user.Service, serverUrl, adminID string) *UserCtrl {
 	return &UserCtrl{
 		serverUrl: serverUrl,
+		adminID:   adminID,
 		auth:      auth,
 		jwt:       jwt,
 		user:      user,
@@ -91,7 +92,7 @@ func (c *UserCtrl) loginQR(w http.ResponseWriter, r *http.Request) {
 	callbackUrl := fmt.Sprintf("%s/v1/users/login-callback?sessionId=%s", c.serverUrl, sessionId)
 
 	// TODO: fetch audience from db
-	audience := os.Getenv("VERIFIER_DID")
+	audience := c.adminID
 
 	// 3. create login request
 	req, err := c.auth.AuthorizationRequest(r.Context(), auth.AuthorizationRequestParams{

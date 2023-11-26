@@ -6,6 +6,7 @@ type Service interface {
 	CreateUser(ctx context.Context, params CreateUserParams) (*User, error)
 	UpdateUser(ctx context.Context, params UpdateUserParams) error
 	DeleteUser(ctx context.Context, id string) error
+	FindAdmin(ctx context.Context) (*User, error)
 	FindUsers(ctx context.Context) ([]*User, error)
 	FindUserByID(ctx context.Context, id string) (*User, error)
 	FindUserByAccountAddress(ctx context.Context, accountAddress string) (*User, error)
@@ -30,6 +31,10 @@ func (s *userService) UpdateUser(ctx context.Context, params UpdateUserParams) e
 
 func (s *userService) DeleteUser(ctx context.Context, id string) error {
 	return s.repo.DeleteUser(ctx, id)
+}
+
+func (s *userService) FindAdmin(ctx context.Context) (*User, error) {
+	return s.repo.FindAdmin(ctx)
 }
 
 func (s *userService) FindUsers(ctx context.Context) ([]*User, error) {

@@ -3,6 +3,7 @@ package user
 import "context"
 
 type Query interface {
+	FindAdmin(ctx context.Context) (*User, error)
 	FindUsers(ctx context.Context) ([]*User, error)
 	FindUserByID(ctx context.Context, id string) (*User, error)
 	FindUserByAccountAddress(ctx context.Context, accountAddress string) (*User, error)
