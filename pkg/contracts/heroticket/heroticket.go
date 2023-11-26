@@ -31,7 +31,7 @@ var (
 
 // HeroticketMetaData contains all meta data concerning the Heroticket contract.
 var HeroticketMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"OwnableInvalidOwner\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"OwnableUnauthorizedAccount\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"minted\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"_tbaAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"_ticketAddresses\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_ticketAddress\",\"type\":\"address\"}],\"name\":\"buyTicket\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_ticketExtendedAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_tokenAddress\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"ticketName\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"ticketSymbol\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"ticketUri\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"initialOwner\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"ticketAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"ticketPrice\",\"type\":\"uint256\"}],\"name\":\"issueTicket\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"tokenURI\",\"type\":\"string\"}],\"name\":\"mint\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"ownedTicket\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"buyer\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"newTicketAddress\",\"type\":\"address\"}],\"name\":\"updateTicketAddresses\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_ticketAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"}],\"name\":\"updateWhiteList\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"OwnableInvalidOwner\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"OwnableUnauthorizedAccount\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"minted\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"_tbaAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"_ticketAddresses\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"_tickets\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_ticketAddress\",\"type\":\"address\"}],\"name\":\"buyTicket\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_ticketAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"adminAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"ticketPrice\",\"type\":\"uint256\"}],\"name\":\"buyTicketByEther\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_tokenAddress\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"ticketName\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"ticketSymbol\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"ticketUri\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"initialOwner\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"ticketAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"ticketPrice\",\"type\":\"uint256\"}],\"name\":\"issueTicket\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"tokenURI\",\"type\":\"string\"}],\"name\":\"mint\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"ownedTicket\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"buyer\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"newTicketAddress\",\"type\":\"address\"}],\"name\":\"updateTicketAddresses\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_ticketAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"}],\"name\":\"updateWhiteList\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 }
 
 // HeroticketABI is the input ABI used to generate the binding from.
@@ -242,6 +242,37 @@ func (_Heroticket *HeroticketCallerSession) TicketAddresses(arg0 common.Address,
 	return _Heroticket.Contract.TicketAddresses(&_Heroticket.CallOpts, arg0, arg1)
 }
 
+// Tickets is a free data retrieval call binding the contract method 0x78a2db88.
+//
+// Solidity: function _tickets(uint256 ) view returns(address)
+func (_Heroticket *HeroticketCaller) Tickets(opts *bind.CallOpts, arg0 *big.Int) (common.Address, error) {
+	var out []interface{}
+	err := _Heroticket.contract.Call(opts, &out, "_tickets", arg0)
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
+}
+
+// Tickets is a free data retrieval call binding the contract method 0x78a2db88.
+//
+// Solidity: function _tickets(uint256 ) view returns(address)
+func (_Heroticket *HeroticketSession) Tickets(arg0 *big.Int) (common.Address, error) {
+	return _Heroticket.Contract.Tickets(&_Heroticket.CallOpts, arg0)
+}
+
+// Tickets is a free data retrieval call binding the contract method 0x78a2db88.
+//
+// Solidity: function _tickets(uint256 ) view returns(address)
+func (_Heroticket *HeroticketCallerSession) Tickets(arg0 *big.Int) (common.Address, error) {
+	return _Heroticket.Contract.Tickets(&_Heroticket.CallOpts, arg0)
+}
+
 // OwnedTicket is a free data retrieval call binding the contract method 0x5ce0e13c.
 //
 // Solidity: function ownedTicket() view returns(address[])
@@ -325,25 +356,46 @@ func (_Heroticket *HeroticketTransactorSession) BuyTicket(_ticketAddress common.
 	return _Heroticket.Contract.BuyTicket(&_Heroticket.TransactOpts, _ticketAddress)
 }
 
-// IssueTicket is a paid mutator transaction binding the contract method 0x5b851fde.
+// BuyTicketByEther is a paid mutator transaction binding the contract method 0x68705ec2.
 //
-// Solidity: function issueTicket(address _ticketExtendedAddress, address _tokenAddress, string ticketName, string ticketSymbol, string ticketUri, address initialOwner, uint256 ticketAmount, uint256 ticketPrice) returns(address)
-func (_Heroticket *HeroticketTransactor) IssueTicket(opts *bind.TransactOpts, _ticketExtendedAddress common.Address, _tokenAddress common.Address, ticketName string, ticketSymbol string, ticketUri string, initialOwner common.Address, ticketAmount *big.Int, ticketPrice *big.Int) (*types.Transaction, error) {
-	return _Heroticket.contract.Transact(opts, "issueTicket", _ticketExtendedAddress, _tokenAddress, ticketName, ticketSymbol, ticketUri, initialOwner, ticketAmount, ticketPrice)
+// Solidity: function buyTicketByEther(address _ticketAddress, address adminAddress, uint256 ticketPrice) payable returns(uint256)
+func (_Heroticket *HeroticketTransactor) BuyTicketByEther(opts *bind.TransactOpts, _ticketAddress common.Address, adminAddress common.Address, ticketPrice *big.Int) (*types.Transaction, error) {
+	return _Heroticket.contract.Transact(opts, "buyTicketByEther", _ticketAddress, adminAddress, ticketPrice)
 }
 
-// IssueTicket is a paid mutator transaction binding the contract method 0x5b851fde.
+// BuyTicketByEther is a paid mutator transaction binding the contract method 0x68705ec2.
 //
-// Solidity: function issueTicket(address _ticketExtendedAddress, address _tokenAddress, string ticketName, string ticketSymbol, string ticketUri, address initialOwner, uint256 ticketAmount, uint256 ticketPrice) returns(address)
-func (_Heroticket *HeroticketSession) IssueTicket(_ticketExtendedAddress common.Address, _tokenAddress common.Address, ticketName string, ticketSymbol string, ticketUri string, initialOwner common.Address, ticketAmount *big.Int, ticketPrice *big.Int) (*types.Transaction, error) {
-	return _Heroticket.Contract.IssueTicket(&_Heroticket.TransactOpts, _ticketExtendedAddress, _tokenAddress, ticketName, ticketSymbol, ticketUri, initialOwner, ticketAmount, ticketPrice)
+// Solidity: function buyTicketByEther(address _ticketAddress, address adminAddress, uint256 ticketPrice) payable returns(uint256)
+func (_Heroticket *HeroticketSession) BuyTicketByEther(_ticketAddress common.Address, adminAddress common.Address, ticketPrice *big.Int) (*types.Transaction, error) {
+	return _Heroticket.Contract.BuyTicketByEther(&_Heroticket.TransactOpts, _ticketAddress, adminAddress, ticketPrice)
 }
 
-// IssueTicket is a paid mutator transaction binding the contract method 0x5b851fde.
+// BuyTicketByEther is a paid mutator transaction binding the contract method 0x68705ec2.
 //
-// Solidity: function issueTicket(address _ticketExtendedAddress, address _tokenAddress, string ticketName, string ticketSymbol, string ticketUri, address initialOwner, uint256 ticketAmount, uint256 ticketPrice) returns(address)
-func (_Heroticket *HeroticketTransactorSession) IssueTicket(_ticketExtendedAddress common.Address, _tokenAddress common.Address, ticketName string, ticketSymbol string, ticketUri string, initialOwner common.Address, ticketAmount *big.Int, ticketPrice *big.Int) (*types.Transaction, error) {
-	return _Heroticket.Contract.IssueTicket(&_Heroticket.TransactOpts, _ticketExtendedAddress, _tokenAddress, ticketName, ticketSymbol, ticketUri, initialOwner, ticketAmount, ticketPrice)
+// Solidity: function buyTicketByEther(address _ticketAddress, address adminAddress, uint256 ticketPrice) payable returns(uint256)
+func (_Heroticket *HeroticketTransactorSession) BuyTicketByEther(_ticketAddress common.Address, adminAddress common.Address, ticketPrice *big.Int) (*types.Transaction, error) {
+	return _Heroticket.Contract.BuyTicketByEther(&_Heroticket.TransactOpts, _ticketAddress, adminAddress, ticketPrice)
+}
+
+// IssueTicket is a paid mutator transaction binding the contract method 0x8326c021.
+//
+// Solidity: function issueTicket(address _tokenAddress, string ticketName, string ticketSymbol, string ticketUri, address initialOwner, uint256 ticketAmount, uint256 ticketPrice) returns(address)
+func (_Heroticket *HeroticketTransactor) IssueTicket(opts *bind.TransactOpts, _tokenAddress common.Address, ticketName string, ticketSymbol string, ticketUri string, initialOwner common.Address, ticketAmount *big.Int, ticketPrice *big.Int) (*types.Transaction, error) {
+	return _Heroticket.contract.Transact(opts, "issueTicket", _tokenAddress, ticketName, ticketSymbol, ticketUri, initialOwner, ticketAmount, ticketPrice)
+}
+
+// IssueTicket is a paid mutator transaction binding the contract method 0x8326c021.
+//
+// Solidity: function issueTicket(address _tokenAddress, string ticketName, string ticketSymbol, string ticketUri, address initialOwner, uint256 ticketAmount, uint256 ticketPrice) returns(address)
+func (_Heroticket *HeroticketSession) IssueTicket(_tokenAddress common.Address, ticketName string, ticketSymbol string, ticketUri string, initialOwner common.Address, ticketAmount *big.Int, ticketPrice *big.Int) (*types.Transaction, error) {
+	return _Heroticket.Contract.IssueTicket(&_Heroticket.TransactOpts, _tokenAddress, ticketName, ticketSymbol, ticketUri, initialOwner, ticketAmount, ticketPrice)
+}
+
+// IssueTicket is a paid mutator transaction binding the contract method 0x8326c021.
+//
+// Solidity: function issueTicket(address _tokenAddress, string ticketName, string ticketSymbol, string ticketUri, address initialOwner, uint256 ticketAmount, uint256 ticketPrice) returns(address)
+func (_Heroticket *HeroticketTransactorSession) IssueTicket(_tokenAddress common.Address, ticketName string, ticketSymbol string, ticketUri string, initialOwner common.Address, ticketAmount *big.Int, ticketPrice *big.Int) (*types.Transaction, error) {
+	return _Heroticket.Contract.IssueTicket(&_Heroticket.TransactOpts, _tokenAddress, ticketName, ticketSymbol, ticketUri, initialOwner, ticketAmount, ticketPrice)
 }
 
 // Mint is a paid mutator transaction binding the contract method 0xd0def521.
