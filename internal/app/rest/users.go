@@ -91,7 +91,6 @@ func (c *UserCtrl) loginQR(w http.ResponseWriter, r *http.Request) {
 
 	callbackUrl := fmt.Sprintf("%s/v1/users/login-callback?sessionId=%s", c.serverUrl, sessionId)
 
-	// TODO: fetch audience from db
 	audience := c.adminID
 
 	// 3. create login request

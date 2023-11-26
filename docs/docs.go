@@ -512,9 +512,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/tickets/purchase-callback": {
+        "/v1/tickets/direct-purchase-callback": {
             "post": {
-                "description": "purchase callback",
+                "description": "direct purchase callback",
                 "consumes": [
                     "application/json"
                 ],
@@ -524,7 +524,7 @@ const docTemplate = `{
                 "tags": [
                     "tickets"
                 ],
-                "summary": "purchase callback",
+                "summary": "direct purchase callback",
                 "parameters": [
                     {
                         "type": "string",
@@ -676,14 +676,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/tickets/{contractAddress}/purchase-qr": {
+        "/v1/tickets/{contractAddress}/direct-purchase-qr": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "returns purchase authorization qr code",
+                "description": "returns direct purchase authorization qr code",
                 "consumes": [
                     "application/json"
                 ],
@@ -693,7 +693,7 @@ const docTemplate = `{
                 "tags": [
                     "tickets"
                 ],
-                "summary": "returns purchase authorization qr code",
+                "summary": "returns direct purchase authorization qr code",
                 "parameters": [
                     {
                         "type": "string",
@@ -762,6 +762,141 @@ const docTemplate = `{
                     "tickets"
                 ],
                 "summary": "returns verify authorization qr code",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "contract address",
+                        "name": "contractAddress",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "session id",
+                        "name": "sessionId",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/rest.CommonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/protocol.AuthorizationRequestMessage"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/rest.CommonResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rest.CommonResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/tickets/{contractAddress}/whitelist-callback": {
+            "post": {
+                "description": "whitelist callback",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tickets"
+                ],
+                "summary": "whitelist callback",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "contract address",
+                        "name": "contractAddress",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "account address",
+                        "name": "accountAddress",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "session id",
+                        "name": "sessionId",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "token",
+                        "name": "token",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/rest.CommonResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/rest.CommonResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rest.CommonResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/tickets/{contractAddress}/whitelist-qr": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "returns purchase authorization qr code",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tickets"
+                ],
+                "summary": "returns purchase authorization qr code",
                 "parameters": [
                     {
                         "type": "string",
