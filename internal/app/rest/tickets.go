@@ -65,7 +65,7 @@ func (c *TicketCtrl) Handler() http.Handler {
 // @Success		200			{object}	CommonResponse
 // @Failure		400			{object}	CommonResponse
 // @Failure		500			{object}	CommonResponse
-// @Router			/tickets [get]
+// @Router			/v1/tickets [get]
 func (c *TicketCtrl) Tickets(w http.ResponseWriter, r *http.Request) {
 	// 1. get page and limit from query
 
@@ -85,7 +85,7 @@ func (c *TicketCtrl) Tickets(w http.ResponseWriter, r *http.Request) {
 // @Success		200			{object}	CommonResponse
 // @Failure		400			{object}	CommonResponse
 // @Failure		500			{object}	CommonResponse
-// @Router			/tickets/{contractAddress} [get]
+// @Router			/v1/tickets/{contractAddress} [get]
 func (c *TicketCtrl) ticket(w http.ResponseWriter, r *http.Request) {
 	// 1. get contract address from path
 
@@ -107,7 +107,7 @@ func (c *TicketCtrl) ticket(w http.ResponseWriter, r *http.Request) {
 // @Failure		400			{object}	CommonResponse
 // @Failure		500			{object}	CommonResponse
 // @Security 		BearerAuth
-// @Router			/tickets/{contractAddress}/purchase-qr [get]
+// @Router			/v1/tickets/{contractAddress}/purchase-qr [get]
 func (c *TicketCtrl) purchaseQR(w http.ResponseWriter, r *http.Request) {
 	// 1. get jwt user from context
 
@@ -140,7 +140,7 @@ func (c *TicketCtrl) purchaseQR(w http.ResponseWriter, r *http.Request) {
 // @Success		200			{object}	CommonResponse
 // @Failure		400			{object}	CommonResponse
 // @Failure		500			{object}	CommonResponse
-// @Router			/tickets/purchase-callback [post]
+// @Router			/v1/tickets/purchase-callback [post]
 func (c *TicketCtrl) purchaseCallback(w http.ResponseWriter, r *http.Request) {
 	// 1. get contract address from path
 
@@ -180,7 +180,7 @@ func (c *TicketCtrl) purchaseCallback(w http.ResponseWriter, r *http.Request) {
 // @Failure		400			{object}	CommonResponse
 // @Failure		500			{object}	CommonResponse
 // @Security 		BearerAuth
-// @Router			/tickets/{contractAddress}/verify-qr [get]
+// @Router			/v1/tickets/{contractAddress}/verify-qr [get]
 func (c *TicketCtrl) verifyQR(w http.ResponseWriter, r *http.Request) {
 	// 1. get jwt user from context
 
@@ -211,7 +211,7 @@ func (c *TicketCtrl) verifyQR(w http.ResponseWriter, r *http.Request) {
 // @Success		200			{object}	CommonResponse
 // @Failure		400			{object}	CommonResponse
 // @Failure		500			{object}	CommonResponse
-// @Router			/tickets/verify-callback [post]
+// @Router			/v1/tickets/verify-callback [post]
 func (c *TicketCtrl) verifyCallback(w http.ResponseWriter, r *http.Request) {
 	// 1. get session id from query
 
@@ -243,7 +243,7 @@ func (c *TicketCtrl) verifyCallback(w http.ResponseWriter, r *http.Request) {
 // @Failure		400			{object}	CommonResponse
 // @Failure		500			{object}	CommonResponse
 // @Security 		BearerAuth
-// @Router			/tickets/create [post]
+// @Router			/v1/tickets/create [post]
 func (c *TicketCtrl) createTicket(w http.ResponseWriter, r *http.Request) {
 	// 1. get jwt user from context
 

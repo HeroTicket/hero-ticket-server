@@ -66,7 +66,7 @@ func statusHandler(w http.ResponseWriter, _ *http.Request) {
 // @Tags common
 // @Accept plain
 // @Produce plain
-// @Success 200
+// @Success 200 {file} file "favicon.ico"
 // @Router /favicon.ico [get]
 func faviconHandler(w http.ResponseWriter, r *http.Request) {
 	f, err := res.ReadFile("icon.png")

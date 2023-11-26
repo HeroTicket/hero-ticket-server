@@ -24,7 +24,53 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/claims/{contractAddress}": {
+        "/favicon.ico": {
+            "get": {
+                "description": "returns favicon",
+                "consumes": [
+                    "text/plain"
+                ],
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "Get favicon",
+                "responses": {
+                    "200": {
+                        "description": "favicon.ico",
+                        "schema": {
+                            "type": "file"
+                        }
+                    }
+                }
+            }
+        },
+        "/status": {
+            "get": {
+                "description": "returns status",
+                "consumes": [
+                    "text/plain"
+                ],
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "Get status",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/claims/{contractAddress}": {
             "get": {
                 "security": [
                     {
@@ -144,7 +190,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/notices": {
+        "/v1/notices": {
             "get": {
                 "description": "returns notices paginated",
                 "consumes": [
@@ -205,7 +251,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/notices/{id}": {
+        "/v1/notices/{id}": {
             "get": {
                 "description": "returns notice by id",
                 "consumes": [
@@ -261,7 +307,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/profile/{name}": {
+        "/v1/profile/{name}": {
             "get": {
                 "description": "returns user profile",
                 "consumes": [
@@ -305,30 +351,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/status": {
-            "get": {
-                "description": "returns status",
-                "consumes": [
-                    "text/plain"
-                ],
-                "produces": [
-                    "text/plain"
-                ],
-                "tags": [
-                    "status"
-                ],
-                "summary": "Get status",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/tickets": {
+        "/v1/tickets": {
             "get": {
                 "description": "returns tickets",
                 "consumes": [
@@ -377,7 +400,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/tickets/create": {
+        "/v1/tickets/create": {
             "post": {
                 "security": [
                     {
@@ -489,7 +512,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/tickets/purchase-callback": {
+        "/v1/tickets/purchase-callback": {
             "post": {
                 "description": "purchase callback",
                 "consumes": [
@@ -556,7 +579,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/tickets/verify-callback": {
+        "/v1/tickets/verify-callback": {
             "post": {
                 "description": "verify callback",
                 "consumes": [
@@ -609,7 +632,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/tickets/{contractAddress}": {
+        "/v1/tickets/{contractAddress}": {
             "get": {
                 "description": "returns ticket",
                 "consumes": [
@@ -653,7 +676,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/tickets/{contractAddress}/purchase-qr": {
+        "/v1/tickets/{contractAddress}/purchase-qr": {
             "get": {
                 "security": [
                     {
@@ -721,7 +744,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/tickets/{contractAddress}/verify-qr": {
+        "/v1/tickets/{contractAddress}/verify-qr": {
             "get": {
                 "security": [
                     {
@@ -789,7 +812,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/users/info": {
+        "/v1/users/info": {
             "get": {
                 "security": [
                     {
@@ -847,7 +870,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/users/login-callback": {
+        "/v1/users/login-callback": {
             "post": {
                 "description": "processes login callback",
                 "consumes": [
@@ -900,7 +923,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/users/login-qr": {
+        "/v1/users/login-qr": {
             "get": {
                 "description": "returns login qr code",
                 "consumes": [
@@ -956,7 +979,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/users/refresh": {
+        "/v1/users/refresh": {
             "post": {
                 "description": "refreshes token pair",
                 "consumes": [
@@ -1014,7 +1037,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/users/register/{accountAddress}": {
+        "/v1/users/register/{accountAddress}": {
             "post": {
                 "security": [
                     {
@@ -1335,7 +1358,7 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "api.heroticket.xyz",
-	BasePath:         "/v1",
+	BasePath:         "",
 	Schemes:          []string{},
 	Title:            "Hero Ticket API",
 	Description:      "API for Hero Ticket DApp",

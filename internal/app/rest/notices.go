@@ -47,7 +47,7 @@ func (c *NoticeCtrl) Handler() http.Handler {
 // @Success 200 {object} CommonResponse{data=notice.Notices}
 // @Failure 400 {object} CommonResponse
 // @Failure 500 {object} CommonResponse
-// @Router /notices [get]
+// @Router /v1/notices [get]
 func (c *NoticeCtrl) Notices(w http.ResponseWriter, r *http.Request) {
 	pageStr := r.URL.Query().Get("page")
 	limitStr := r.URL.Query().Get("limit")
@@ -107,7 +107,7 @@ func (c *NoticeCtrl) Notices(w http.ResponseWriter, r *http.Request) {
 // @Success 200 {object} CommonResponse{data=notice.Notice}
 // @Failure 400 {object} CommonResponse
 // @Failure 500 {object} CommonResponse
-// @Router /notices/{id} [get]
+// @Router /v1/notices/{id} [get]
 func (c *NoticeCtrl) Notice(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 
