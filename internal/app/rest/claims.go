@@ -51,7 +51,7 @@ func (c *ClaimCtrl) Handler() http.Handler {
 // @Failure			404	{object}	CommonResponse
 // @Failure			500	{object}	CommonResponse
 // @Security 		BearerAuth
-// @Router			/claims/{contractAddress}	[post]
+// @Router			/v1/claims/{contractAddress}	[post]
 func (c *ClaimCtrl) requestClaim(w http.ResponseWriter, r *http.Request) {
 	// 1. get jwt user from context
 
@@ -79,7 +79,7 @@ func (c *ClaimCtrl) requestClaim(w http.ResponseWriter, r *http.Request) {
 // @Failure			404	{object}	CommonResponse
 // @Failure			500	{object}	CommonResponse
 // @Security 		BearerAuth
-// @Router			/claims/{contractAddress}	[get]
+// @Router			/v1/claims/{contractAddress}	[get]
 func (c *ClaimCtrl) claimQR(w http.ResponseWriter, r *http.Request) {
 	// 1. get jwt user from context
 

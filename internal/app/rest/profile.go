@@ -39,7 +39,7 @@ func (c *ProfileCtrl) Handler() http.Handler {
 //	@Success		200			{object}	CommonResponse
 //	@Failure		400			{object}	CommonResponse
 //	@Failure		500			{object}	CommonResponse
-//	@Router			/profile/{name} [get]
+//	@Router			/v1/profile/{name} [get]
 func (c *ProfileCtrl) profile(w http.ResponseWriter, r *http.Request) {
 	// 1. check params
 	name := chi.URLParam(r, "name")

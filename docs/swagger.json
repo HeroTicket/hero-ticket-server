@@ -16,9 +16,54 @@
         "version": "1.0"
     },
     "host": "api.heroticket.xyz",
-    "basePath": "/v1",
     "paths": {
-        "/claims/{contractAddress}": {
+        "/favicon.ico": {
+            "get": {
+                "description": "returns favicon",
+                "consumes": [
+                    "text/plain"
+                ],
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "Get favicon",
+                "responses": {
+                    "200": {
+                        "description": "favicon.ico",
+                        "schema": {
+                            "type": "file"
+                        }
+                    }
+                }
+            }
+        },
+        "/status": {
+            "get": {
+                "description": "returns status",
+                "consumes": [
+                    "text/plain"
+                ],
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "Get status",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/claims/{contractAddress}": {
             "get": {
                 "security": [
                     {
@@ -138,7 +183,7 @@
                 }
             }
         },
-        "/notices": {
+        "/v1/notices": {
             "get": {
                 "description": "returns notices paginated",
                 "consumes": [
@@ -199,7 +244,7 @@
                 }
             }
         },
-        "/notices/{id}": {
+        "/v1/notices/{id}": {
             "get": {
                 "description": "returns notice by id",
                 "consumes": [
@@ -255,7 +300,7 @@
                 }
             }
         },
-        "/profile/{name}": {
+        "/v1/profile/{name}": {
             "get": {
                 "description": "returns user profile",
                 "consumes": [
@@ -299,30 +344,7 @@
                 }
             }
         },
-        "/status": {
-            "get": {
-                "description": "returns status",
-                "consumes": [
-                    "text/plain"
-                ],
-                "produces": [
-                    "text/plain"
-                ],
-                "tags": [
-                    "status"
-                ],
-                "summary": "Get status",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/tickets": {
+        "/v1/tickets": {
             "get": {
                 "description": "returns tickets",
                 "consumes": [
@@ -371,7 +393,7 @@
                 }
             }
         },
-        "/tickets/create": {
+        "/v1/tickets/create": {
             "post": {
                 "security": [
                     {
@@ -483,7 +505,7 @@
                 }
             }
         },
-        "/tickets/purchase-callback": {
+        "/v1/tickets/purchase-callback": {
             "post": {
                 "description": "purchase callback",
                 "consumes": [
@@ -550,7 +572,7 @@
                 }
             }
         },
-        "/tickets/verify-callback": {
+        "/v1/tickets/verify-callback": {
             "post": {
                 "description": "verify callback",
                 "consumes": [
@@ -603,7 +625,7 @@
                 }
             }
         },
-        "/tickets/{contractAddress}": {
+        "/v1/tickets/{contractAddress}": {
             "get": {
                 "description": "returns ticket",
                 "consumes": [
@@ -647,7 +669,7 @@
                 }
             }
         },
-        "/tickets/{contractAddress}/purchase-qr": {
+        "/v1/tickets/{contractAddress}/purchase-qr": {
             "get": {
                 "security": [
                     {
@@ -715,7 +737,7 @@
                 }
             }
         },
-        "/tickets/{contractAddress}/verify-qr": {
+        "/v1/tickets/{contractAddress}/verify-qr": {
             "get": {
                 "security": [
                     {
@@ -783,7 +805,7 @@
                 }
             }
         },
-        "/users/info": {
+        "/v1/users/info": {
             "get": {
                 "security": [
                     {
@@ -841,7 +863,7 @@
                 }
             }
         },
-        "/users/login-callback": {
+        "/v1/users/login-callback": {
             "post": {
                 "description": "processes login callback",
                 "consumes": [
@@ -894,7 +916,7 @@
                 }
             }
         },
-        "/users/login-qr": {
+        "/v1/users/login-qr": {
             "get": {
                 "description": "returns login qr code",
                 "consumes": [
@@ -950,7 +972,7 @@
                 }
             }
         },
-        "/users/refresh": {
+        "/v1/users/refresh": {
             "post": {
                 "description": "refreshes token pair",
                 "consumes": [
@@ -1008,7 +1030,7 @@
                 }
             }
         },
-        "/users/register/{accountAddress}": {
+        "/v1/users/register/{accountAddress}": {
             "post": {
                 "security": [
                     {

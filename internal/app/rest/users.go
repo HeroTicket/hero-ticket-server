@@ -65,7 +65,7 @@ func (c *UserCtrl) Handler() http.Handler {
 //	@Success		200			{object}	CommonResponse{data=protocol.AuthorizationRequestMessage}
 //	@Failure		400			{object}	CommonResponse
 //	@Failure		500			{object}	CommonResponse
-//	@Router			/users/login-qr [get]
+//	@Router			/v1/users/login-qr [get]
 func (c *UserCtrl) loginQR(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 
@@ -139,7 +139,7 @@ func (c *UserCtrl) loginQR(w http.ResponseWriter, r *http.Request) {
 //	@Success		200			{object}	CommonResponse
 //	@Failure		400			{object}	CommonResponse
 //	@Failure		500			{object}	CommonResponse
-//	@Router			/users/login-callback [post]
+//	@Router			/v1/users/login-callback [post]
 func (c *UserCtrl) loginCallback(w http.ResponseWriter, r *http.Request) {
 	// 1. get session id from query params
 	sessionId := r.URL.Query().Get("sessionId")
@@ -220,7 +220,7 @@ func (c *UserCtrl) loginCallback(w http.ResponseWriter, r *http.Request) {
 //	@Success		200			{object}	CommonResponse{data=jwt.TokenPair}
 //	@Failure		400			{object}	CommonResponse
 //	@Failure		500			{object}	CommonResponse
-//	@Router			/users/refresh [post]
+//	@Router			/v1/users/refresh [post]
 func (c *UserCtrl) refresh(w http.ResponseWriter, r *http.Request) {
 	// 1. read token from request body
 	tokenBytes, err := io.ReadAll(r.Body)
@@ -270,7 +270,7 @@ func (c *UserCtrl) refresh(w http.ResponseWriter, r *http.Request) {
 //	@Failure		404			{object}	CommonResponse
 //	@Failure		500			{object}	CommonResponse
 //	@Security 		BearerAuth
-//	@Router			/users/info [get]
+//	@Router			/v1/users/info [get]
 func (c *UserCtrl) info(w http.ResponseWriter, r *http.Request) {
 	// 1. get user from context
 	jwtUser, err := c.jwt.FromContext(r.Context())
@@ -313,7 +313,7 @@ func (c *UserCtrl) info(w http.ResponseWriter, r *http.Request) {
 //	@Failure		400		{object}	CommonResponse
 //	@Failure		500		{object}	CommonResponse
 //	@Security 		BearerAuth
-//	@Router			/users/register/{accountAddress} [post]
+//	@Router			/v1/users/register/{accountAddress} [post]
 func (c *UserCtrl) register(w http.ResponseWriter, r *http.Request) {
 	// 1. get user from context
 	jwtUser, err := c.jwt.FromContext(r.Context())
