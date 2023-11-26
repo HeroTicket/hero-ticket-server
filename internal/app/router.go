@@ -1,6 +1,7 @@
 package app
 
 import (
+	"embed"
 	"fmt"
 	"net/http"
 
@@ -9,6 +10,9 @@ import (
 	"github.com/go-chi/cors"
 	"github.com/heroticket/internal/app/ws"
 )
+
+//go:embed icon.png
+var res embed.FS
 
 type Controller interface {
 	Pattern() string
@@ -35,6 +39,7 @@ func newRouter(version string, ctrls ...Controller) *router {
 	})
 
 	r.Get("/status", statusHandler)
+	r.Get("/favicon.ico", faviconHandler)
 
 	r.HandleFunc("/ws", ws.Serve())
 
@@ -45,11 +50,32 @@ func newRouter(version string, ctrls ...Controller) *router {
 //
 // @Summary Get status
 // @Description returns status
-// @Tags status
+// @Tags common
 // @Accept plain
 // @Produce plain
 // @Success 200 {string} string "OK"
 // @Router /status [get]
-func statusHandler(w http.ResponseWriter, r *http.Request) {
+func statusHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Write([]byte("OK"))
+}
+
+// Favicon godoc
+//
+// @Summary Get favicon
+// @Description returns favicon
+// @Tags common
+// @Accept plain
+// @Produce plain
+// @Success 200
+// @Router /favicon.ico [get]
+func faviconHandler(w http.ResponseWriter, r *http.Request) {
+	f, err := res.ReadFile("icon.png")
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "image/png")
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write(f)
 }
