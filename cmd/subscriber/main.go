@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/heroticket/internal/app/shutdown"
+	"github.com/heroticket/internal/config"
 	"github.com/heroticket/internal/web3"
 	"github.com/heroticket/pkg/contracts/heroticket"
 )
@@ -16,12 +17,17 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	client, err := web3.NewClient(ctx, "http://localhost:8545")
+	cfg, err := config.NewSubscriberConfig("")
 	if err != nil {
 		panic(err)
 	}
 
-	hero, err := heroticket.NewHeroticket(common.HexToAddress("0x0"), client)
+	client, err := web3.NewClient(ctx, cfg.RpcUrl)
+	if err != nil {
+		panic(err)
+	}
+
+	hero, err := heroticket.NewHeroticket(common.HexToAddress(cfg.ContractAddress), client)
 	if err != nil {
 		panic(err)
 	}

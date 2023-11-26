@@ -43,7 +43,7 @@ func Run() {
 		configFile = "config.dev.json"
 	}
 
-	cfg, err := config.NewConfig(configFile)
+	cfg, err := config.NewServerConfig(configFile)
 	if err != nil {
 		panic(err)
 	}

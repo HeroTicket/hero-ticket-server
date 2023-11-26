@@ -42,7 +42,7 @@ type UserServiceConfig struct {
 	DbName string `mapstructure:"dbName"`
 }
 
-type Config struct {
+type ServerConfig struct {
 	Auth      AuthServiceConfig   `mapstructure:"auth"`
 	Did       DidServiceConfig    `mapstructure:"did"`
 	Ipfs      IpfsServiceConfig   `mapstructure:"ipfs"`
@@ -55,7 +55,7 @@ type Config struct {
 	ServerUrl string              `mapstructure:"serverUrl"`
 }
 
-func NewConfig(filename string) (*Config, error) {
+func NewServerConfig(filename string) (*ServerConfig, error) {
 	if filename == "" {
 		filename = "config.json"
 	}
@@ -66,7 +66,7 @@ func NewConfig(filename string) (*Config, error) {
 		return nil, err
 	}
 
-	var cfg Config
+	var cfg ServerConfig
 
 	if err := viper.Unmarshal(&cfg); err != nil {
 		return nil, err
