@@ -11,6 +11,7 @@ import (
 	"github.com/heroticket/internal/app/shutdown"
 	"github.com/heroticket/internal/config"
 	"github.com/heroticket/internal/logger"
+	"github.com/heroticket/internal/service/ticket"
 	"github.com/heroticket/internal/web3"
 	"github.com/heroticket/pkg/contracts/heroticket"
 )
@@ -51,12 +52,16 @@ func main() {
 		logger.Panic("failed to initialize filterer", "error", err)
 	}
 
-	mintedChan := make(chan *heroticket.HeroticketMinted)
+	soldChan := make(chan *heroticket.HeroticketTicketSold)
 
-	sub, err := filterer.WatchMinted(&bind.WatchOpts{}, mintedChan)
+	sub, err := filterer.WatchTicketSold(&bind.WatchOpts{}, soldChan, nil, nil)
 	if err != nil {
 		logger.Panic("failed to watch minted", "error", err)
 	}
+
+	// TODO: initialize database
+
+	// TODO: initialize worker pool
 
 	go func() {
 		for {
@@ -66,14 +71,30 @@ func main() {
 					logger.Error("failed to watch minted", "error", err)
 					return
 				}
-			case event := <-mintedChan:
-				println(event.TokenId.String())
+			case event := <-soldChan:
+				ticketAddress := event.TicketAddress.Hex()
+				buyer := event.Buyer.Hex()
+				ticketId := event.TicketId
+				blockNumber := event.Raw.BlockNumber
+				purchaseTime := time.Now().Unix()
+
+				params := ticket.SaveTicketParams{
+					Address:      ticketAddress,
+					OwnerAddress: buyer,
+					TokenID:      ticketId.Uint64(),
+					BlockNumber:  blockNumber,
+					PurchasedAt:  purchaseTime,
+				}
+
+				logger.Info("ticket sold", "params", params)
+
+				// TODO: save ticket to database
 			}
 		}
 	}()
 
 	<-shutdown.GracefulShutdown(func() {
 		sub.Unsubscribe()
-		close(mintedChan)
+		close(soldChan)
 	}, syscall.SIGINT, syscall.SIGTERM)
 }

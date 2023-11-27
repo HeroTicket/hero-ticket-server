@@ -31,7 +31,7 @@ var (
 
 // HeroticketMetaData contains all meta data concerning the Heroticket contract.
 var HeroticketMetaData = &bind.MetaData{
-	ABI: "[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"OwnableInvalidOwner\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"OwnableUnauthorizedAccount\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"minted\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"_tbaAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"_ticketAddresses\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"_tickets\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_ticketAddress\",\"type\":\"address\"}],\"name\":\"buyTicket\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_ticketAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"adminAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"ticketPrice\",\"type\":\"uint256\"}],\"name\":\"buyTicketByEther\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_tokenAddress\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"ticketName\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"ticketSymbol\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"ticketUri\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"initialOwner\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"ticketAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"ticketPrice\",\"type\":\"uint256\"}],\"name\":\"issueTicket\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"tokenURI\",\"type\":\"string\"}],\"name\":\"mint\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"ownedTicket\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"buyer\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"newTicketAddress\",\"type\":\"address\"}],\"name\":\"updateTicketAddresses\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_ticketAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"}],\"name\":\"updateWhiteList\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+	ABI: "[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"owner\",\"type\":\"address\"}],\"name\":\"OwnableInvalidOwner\",\"type\":\"error\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"account\",\"type\":\"address\"}],\"name\":\"OwnableUnauthorizedAccount\",\"type\":\"error\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"_ticketAddress\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"_owner\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"_ticketName\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"_ticketSymbol\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"string\",\"name\":\"_ticketUri\",\"type\":\"string\"},{\"indexed\":false,\"internalType\":\"address\",\"name\":\"_initialOwner\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_ticketAmount\",\"type\":\"uint256\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_ticketPrice\",\"type\":\"uint256\"}],\"name\":\"TicketCreated\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"_ticketAddress\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"_buyer\",\"type\":\"address\"},{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"_ticketId\",\"type\":\"uint256\"}],\"name\":\"TicketSold\",\"type\":\"event\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":false,\"internalType\":\"uint256\",\"name\":\"tokenId\",\"type\":\"uint256\"}],\"name\":\"minted\",\"type\":\"event\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"name\":\"_tbaAddress\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"_ticketAddresses\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"_tickets\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_ticketAddress\",\"type\":\"address\"}],\"name\":\"buyTicket\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_ticketAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"adminAddress\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"ticketPrice\",\"type\":\"uint256\"}],\"name\":\"buyTicketByEther\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_tokenAddress\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"ticketName\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"ticketSymbol\",\"type\":\"string\"},{\"internalType\":\"string\",\"name\":\"ticketUri\",\"type\":\"string\"},{\"internalType\":\"address\",\"name\":\"initialOwner\",\"type\":\"address\"},{\"internalType\":\"uint256\",\"name\":\"ticketAmount\",\"type\":\"uint256\"},{\"internalType\":\"uint256\",\"name\":\"ticketPrice\",\"type\":\"uint256\"}],\"name\":\"issueTicket\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"tokenURI\",\"type\":\"string\"}],\"name\":\"mint\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"payable\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"ownedTicket\",\"outputs\":[{\"internalType\":\"address[]\",\"name\":\"\",\"type\":\"address[]\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"buyer\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"newTicketAddress\",\"type\":\"address\"}],\"name\":\"updateTicketAddresses\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_ticketAddress\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"to\",\"type\":\"address\"}],\"name\":\"updateWhiteList\",\"outputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
 }
 
 // HeroticketABI is the input ABI used to generate the binding from.
@@ -650,6 +650,319 @@ func (_Heroticket *HeroticketFilterer) WatchOwnershipTransferred(opts *bind.Watc
 func (_Heroticket *HeroticketFilterer) ParseOwnershipTransferred(log types.Log) (*HeroticketOwnershipTransferred, error) {
 	event := new(HeroticketOwnershipTransferred)
 	if err := _Heroticket.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// HeroticketTicketCreatedIterator is returned from FilterTicketCreated and is used to iterate over the raw logs and unpacked data for TicketCreated events raised by the Heroticket contract.
+type HeroticketTicketCreatedIterator struct {
+	Event *HeroticketTicketCreated // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *HeroticketTicketCreatedIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(HeroticketTicketCreated)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(HeroticketTicketCreated)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *HeroticketTicketCreatedIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *HeroticketTicketCreatedIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// HeroticketTicketCreated represents a TicketCreated event raised by the Heroticket contract.
+type HeroticketTicketCreated struct {
+	TicketAddress common.Address
+	Owner         common.Address
+	TicketName    string
+	TicketSymbol  string
+	TicketUri     string
+	InitialOwner  common.Address
+	TicketAmount  *big.Int
+	TicketPrice   *big.Int
+	Raw           types.Log // Blockchain specific contextual infos
+}
+
+// FilterTicketCreated is a free log retrieval operation binding the contract event 0xc0c231e5ba4aa1b0a2e24aaebad3276799a7234d08e66b75ec88c19b278de42d.
+//
+// Solidity: event TicketCreated(address indexed _ticketAddress, address indexed _owner, string _ticketName, string _ticketSymbol, string _ticketUri, address _initialOwner, uint256 _ticketAmount, uint256 _ticketPrice)
+func (_Heroticket *HeroticketFilterer) FilterTicketCreated(opts *bind.FilterOpts, _ticketAddress []common.Address, _owner []common.Address) (*HeroticketTicketCreatedIterator, error) {
+
+	var _ticketAddressRule []interface{}
+	for _, _ticketAddressItem := range _ticketAddress {
+		_ticketAddressRule = append(_ticketAddressRule, _ticketAddressItem)
+	}
+	var _ownerRule []interface{}
+	for _, _ownerItem := range _owner {
+		_ownerRule = append(_ownerRule, _ownerItem)
+	}
+
+	logs, sub, err := _Heroticket.contract.FilterLogs(opts, "TicketCreated", _ticketAddressRule, _ownerRule)
+	if err != nil {
+		return nil, err
+	}
+	return &HeroticketTicketCreatedIterator{contract: _Heroticket.contract, event: "TicketCreated", logs: logs, sub: sub}, nil
+}
+
+// WatchTicketCreated is a free log subscription operation binding the contract event 0xc0c231e5ba4aa1b0a2e24aaebad3276799a7234d08e66b75ec88c19b278de42d.
+//
+// Solidity: event TicketCreated(address indexed _ticketAddress, address indexed _owner, string _ticketName, string _ticketSymbol, string _ticketUri, address _initialOwner, uint256 _ticketAmount, uint256 _ticketPrice)
+func (_Heroticket *HeroticketFilterer) WatchTicketCreated(opts *bind.WatchOpts, sink chan<- *HeroticketTicketCreated, _ticketAddress []common.Address, _owner []common.Address) (event.Subscription, error) {
+
+	var _ticketAddressRule []interface{}
+	for _, _ticketAddressItem := range _ticketAddress {
+		_ticketAddressRule = append(_ticketAddressRule, _ticketAddressItem)
+	}
+	var _ownerRule []interface{}
+	for _, _ownerItem := range _owner {
+		_ownerRule = append(_ownerRule, _ownerItem)
+	}
+
+	logs, sub, err := _Heroticket.contract.WatchLogs(opts, "TicketCreated", _ticketAddressRule, _ownerRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(HeroticketTicketCreated)
+				if err := _Heroticket.contract.UnpackLog(event, "TicketCreated", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseTicketCreated is a log parse operation binding the contract event 0xc0c231e5ba4aa1b0a2e24aaebad3276799a7234d08e66b75ec88c19b278de42d.
+//
+// Solidity: event TicketCreated(address indexed _ticketAddress, address indexed _owner, string _ticketName, string _ticketSymbol, string _ticketUri, address _initialOwner, uint256 _ticketAmount, uint256 _ticketPrice)
+func (_Heroticket *HeroticketFilterer) ParseTicketCreated(log types.Log) (*HeroticketTicketCreated, error) {
+	event := new(HeroticketTicketCreated)
+	if err := _Heroticket.contract.UnpackLog(event, "TicketCreated", log); err != nil {
+		return nil, err
+	}
+	event.Raw = log
+	return event, nil
+}
+
+// HeroticketTicketSoldIterator is returned from FilterTicketSold and is used to iterate over the raw logs and unpacked data for TicketSold events raised by the Heroticket contract.
+type HeroticketTicketSoldIterator struct {
+	Event *HeroticketTicketSold // Event containing the contract specifics and raw log
+
+	contract *bind.BoundContract // Generic contract to use for unpacking event data
+	event    string              // Event name to use for unpacking event data
+
+	logs chan types.Log        // Log channel receiving the found contract events
+	sub  ethereum.Subscription // Subscription for errors, completion and termination
+	done bool                  // Whether the subscription completed delivering logs
+	fail error                 // Occurred error to stop iteration
+}
+
+// Next advances the iterator to the subsequent event, returning whether there
+// are any more events found. In case of a retrieval or parsing error, false is
+// returned and Error() can be queried for the exact failure.
+func (it *HeroticketTicketSoldIterator) Next() bool {
+	// If the iterator failed, stop iterating
+	if it.fail != nil {
+		return false
+	}
+	// If the iterator completed, deliver directly whatever's available
+	if it.done {
+		select {
+		case log := <-it.logs:
+			it.Event = new(HeroticketTicketSold)
+			if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+				it.fail = err
+				return false
+			}
+			it.Event.Raw = log
+			return true
+
+		default:
+			return false
+		}
+	}
+	// Iterator still in progress, wait for either a data or an error event
+	select {
+	case log := <-it.logs:
+		it.Event = new(HeroticketTicketSold)
+		if err := it.contract.UnpackLog(it.Event, it.event, log); err != nil {
+			it.fail = err
+			return false
+		}
+		it.Event.Raw = log
+		return true
+
+	case err := <-it.sub.Err():
+		it.done = true
+		it.fail = err
+		return it.Next()
+	}
+}
+
+// Error returns any retrieval or parsing error occurred during filtering.
+func (it *HeroticketTicketSoldIterator) Error() error {
+	return it.fail
+}
+
+// Close terminates the iteration process, releasing any pending underlying
+// resources.
+func (it *HeroticketTicketSoldIterator) Close() error {
+	it.sub.Unsubscribe()
+	return nil
+}
+
+// HeroticketTicketSold represents a TicketSold event raised by the Heroticket contract.
+type HeroticketTicketSold struct {
+	TicketAddress common.Address
+	Buyer         common.Address
+	TicketId      *big.Int
+	Raw           types.Log // Blockchain specific contextual infos
+}
+
+// FilterTicketSold is a free log retrieval operation binding the contract event 0x2ff282dae7c1a7b99b722227f3a2079b905c78122b1553e37f8c0ce1e06f4f4b.
+//
+// Solidity: event TicketSold(address indexed _ticketAddress, address indexed _buyer, uint256 _ticketId)
+func (_Heroticket *HeroticketFilterer) FilterTicketSold(opts *bind.FilterOpts, _ticketAddress []common.Address, _buyer []common.Address) (*HeroticketTicketSoldIterator, error) {
+
+	var _ticketAddressRule []interface{}
+	for _, _ticketAddressItem := range _ticketAddress {
+		_ticketAddressRule = append(_ticketAddressRule, _ticketAddressItem)
+	}
+	var _buyerRule []interface{}
+	for _, _buyerItem := range _buyer {
+		_buyerRule = append(_buyerRule, _buyerItem)
+	}
+
+	logs, sub, err := _Heroticket.contract.FilterLogs(opts, "TicketSold", _ticketAddressRule, _buyerRule)
+	if err != nil {
+		return nil, err
+	}
+	return &HeroticketTicketSoldIterator{contract: _Heroticket.contract, event: "TicketSold", logs: logs, sub: sub}, nil
+}
+
+// WatchTicketSold is a free log subscription operation binding the contract event 0x2ff282dae7c1a7b99b722227f3a2079b905c78122b1553e37f8c0ce1e06f4f4b.
+//
+// Solidity: event TicketSold(address indexed _ticketAddress, address indexed _buyer, uint256 _ticketId)
+func (_Heroticket *HeroticketFilterer) WatchTicketSold(opts *bind.WatchOpts, sink chan<- *HeroticketTicketSold, _ticketAddress []common.Address, _buyer []common.Address) (event.Subscription, error) {
+
+	var _ticketAddressRule []interface{}
+	for _, _ticketAddressItem := range _ticketAddress {
+		_ticketAddressRule = append(_ticketAddressRule, _ticketAddressItem)
+	}
+	var _buyerRule []interface{}
+	for _, _buyerItem := range _buyer {
+		_buyerRule = append(_buyerRule, _buyerItem)
+	}
+
+	logs, sub, err := _Heroticket.contract.WatchLogs(opts, "TicketSold", _ticketAddressRule, _buyerRule)
+	if err != nil {
+		return nil, err
+	}
+	return event.NewSubscription(func(quit <-chan struct{}) error {
+		defer sub.Unsubscribe()
+		for {
+			select {
+			case log := <-logs:
+				// New log arrived, parse the event and forward to the user
+				event := new(HeroticketTicketSold)
+				if err := _Heroticket.contract.UnpackLog(event, "TicketSold", log); err != nil {
+					return err
+				}
+				event.Raw = log
+
+				select {
+				case sink <- event:
+				case err := <-sub.Err():
+					return err
+				case <-quit:
+					return nil
+				}
+			case err := <-sub.Err():
+				return err
+			case <-quit:
+				return nil
+			}
+		}
+	}), nil
+}
+
+// ParseTicketSold is a log parse operation binding the contract event 0x2ff282dae7c1a7b99b722227f3a2079b905c78122b1553e37f8c0ce1e06f4f4b.
+//
+// Solidity: event TicketSold(address indexed _ticketAddress, address indexed _buyer, uint256 _ticketId)
+func (_Heroticket *HeroticketFilterer) ParseTicketSold(log types.Log) (*HeroticketTicketSold, error) {
+	event := new(HeroticketTicketSold)
+	if err := _Heroticket.contract.UnpackLog(event, "TicketSold", log); err != nil {
 		return nil, err
 	}
 	event.Raw = log
