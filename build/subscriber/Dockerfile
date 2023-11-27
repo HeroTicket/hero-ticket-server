@@ -14,7 +14,7 @@ ENV GO_ENV=production
 
 RUN mkdir /app
 
-COPY --from=builder /app/swagger /app
+COPY --from=builder /app/subscriber /app
 
 WORKDIR /app
 
