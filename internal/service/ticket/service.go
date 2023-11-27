@@ -6,31 +6,80 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/heroticket/pkg/contracts/heroticket"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type Service interface {
-	UpdateWhitelist(ctx context.Context, contractAddress, to string) error
-	// CreateTBA
-	// CreateTicketCollection
+	UpdateWhitelist(ctx context.Context, contractAddress, to string) (*types.Transaction, error)
+	CreateTBA(ctx context.Context, to common.Address, tokenURI string) (*types.Transaction, error)
+	IssueTicket(ctx context.Context, tokenContractAddress common.Address, ticketName, ticketSymbol, ticketURI string, initialOwner common.Address, ticketAmount, ticketPrice int64) (*types.Transaction, error)
+	BuyTicket(ctx context.Context, contractAddress common.Address) (*types.Transaction, error)
+	BuyTicketByEther(ctx context.Context, TicketContractAddress, adminAddress common.Address, ticketPrice int64) (*types.Transaction, error)
 }
 
 type TicketService struct {
-	client *ethclient.Client
-	hero   *heroticket.Heroticket
-	pvk    *ecdsa.PrivateKey
-	repo   Repository
+	client      *ethclient.Client
+	hero        *heroticket.Heroticket
+	pvk         *ecdsa.PrivateKey
+	mongoClient *mongo.Client
 }
 
-func New(client *ethclient.Client, hero *heroticket.Heroticket, pvk *ecdsa.PrivateKey, repo Repository) *TicketService {
+func New(client *ethclient.Client, hero *heroticket.Heroticket, pvk *ecdsa.PrivateKey, mongoClient *mongo.Client) *TicketService {
 	return &TicketService{
-		client: client,
-		hero:   hero,
-		pvk:    pvk,
-		repo:   repo,
+		client:      client,
+		hero:        hero,
+		pvk:         pvk,
+		mongoClient: mongoClient,
 	}
+}
+
+func (s *TicketService) UpdateWhitelist(ctx context.Context, contractAddress, to common.Address, ticketPrice int64) (*types.Transaction, error) {
+	auth, err := s.txOpts(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.hero.UpdateWhiteList(auth, contractAddress, to)
+}
+
+func (s *TicketService) CreateTBA(ctx context.Context, to common.Address, tokenURI string) (*types.Transaction, error) {
+	auth, err := s.txOpts(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.hero.Mint(auth, to, tokenURI)
+}
+
+func (s *TicketService) IssueTicket(ctx context.Context, tokenContractAddress common.Address, ticketName, ticketSymbol, ticketURI string, initialOwner common.Address, ticketAmount, ticketPrice int64) (*types.Transaction, error) {
+	auth, err := s.txOpts(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.hero.IssueTicket(auth, tokenContractAddress, ticketName, ticketSymbol, ticketURI, initialOwner, big.NewInt(ticketAmount), big.NewInt(ticketPrice))
+}
+
+func (s *TicketService) BuyTicket(ctx context.Context, contractAddress common.Address) (*types.Transaction, error) {
+	auth, err := s.txOpts(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.hero.BuyTicket(auth, contractAddress)
+}
+
+func (s *TicketService) BuyTicketByEther(ctx context.Context, TicketContractAddress, adminAddress common.Address, ticketPrice int64) (*types.Transaction, error) {
+	auth, err := s.txOpts(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return s.hero.BuyTicketByEther(auth, TicketContractAddress, adminAddress, big.NewInt(ticketPrice))
 }
 
 func (s *TicketService) txOpts(ctx context.Context) (*bind.TransactOpts, error) {
