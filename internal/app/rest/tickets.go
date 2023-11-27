@@ -39,13 +39,14 @@ func (c *TicketCtrl) Handler() http.Handler {
 
 	r.Get("/", c.Tickets)
 	r.Get("/{contractAddress}", c.ticket)
-
-	r.Post("/purchase-callback", c.purchaseCallback)
+	r.Post("/{contractAddress}/whitelist-callback", c.whitelistCallback)
+	r.Post("/{contractAddress}/direct-purchase-callback", c.directPurchaseCallback)
 	r.Post("/verify-callback", c.verifyCallback)
 
 	r.Group(func(r chi.Router) {
 		r.Use(TokenRequired(c.jwt))
-		r.Get("/{contractAddress}/purchase-qr", c.purchaseQR)
+		r.Get("/{contractAddress}/whitelist-qr", c.whitelistQR)
+		r.Get("/{contractAddress}/direct-purchase-qr", c.directPurchaseQR)
 		r.Get("/{contractAddress}/verify-qr", c.verifyQR)
 		r.Post("/create", c.createTicket)
 	})
@@ -94,21 +95,21 @@ func (c *TicketCtrl) ticket(w http.ResponseWriter, r *http.Request) {
 	// 3. return ticket
 }
 
-// PurchaseQR godoc
+// WhitelistQR godoc
 //
 // @Tags			tickets
 // @Summary		returns purchase authorization qr code
 // @Description	returns purchase authorization qr code
 // @Accept			json
-// @Produce		json
+// @Produce			json
 // @Param			contractAddress	path	string	true	"contract address"
 // @Param			sessionId		query	string	true	"session id"
 // @Success		200			{object}	CommonResponse{data=protocol.AuthorizationRequestMessage}
 // @Failure		400			{object}	CommonResponse
 // @Failure		500			{object}	CommonResponse
 // @Security 		BearerAuth
-// @Router			/v1/tickets/{contractAddress}/purchase-qr [get]
-func (c *TicketCtrl) purchaseQR(w http.ResponseWriter, r *http.Request) {
+// @Router			/v1/tickets/{contractAddress}/whitelist-qr [get]
+func (c *TicketCtrl) whitelistQR(w http.ResponseWriter, r *http.Request) {
 	// 1. get jwt user from context
 
 	// 2. get contract address from path
@@ -126,13 +127,45 @@ func (c *TicketCtrl) purchaseQR(w http.ResponseWriter, r *http.Request) {
 	// 8. return qr code
 }
 
-// PurchaseCallback godoc
+// DirectPurchaseQR godoc
 //
 // @Tags			tickets
-// @Summary		purchase callback
-// @Description	purchase callback
+// @Summary		returns direct purchase authorization qr code
+// @Description	returns direct purchase authorization qr code
 // @Accept			json
-// @Produce		json
+// @Produce			json
+// @Param			contractAddress	path	string	true	"contract address"
+// @Param			sessionId		query	string	true	"session id"
+// @Success		200			{object}	CommonResponse{data=protocol.AuthorizationRequestMessage}
+// @Failure		400			{object}	CommonResponse
+// @Failure		500			{object}	CommonResponse
+// @Security 		BearerAuth
+// @Router			/v1/tickets/{contractAddress}/direct-purchase-qr [get]
+func (c *TicketCtrl) directPurchaseQR(w http.ResponseWriter, r *http.Request) {
+	// 1. get jwt user from context
+
+	// 2. get contract address from path
+
+	// 3. get session id from query
+
+	// 4. get user from db
+
+	// 5. check if ticket collection exists
+
+	// 6. check if user has ticket
+
+	// 7. create qr code
+
+	// 8. return qr code
+}
+
+// WhitelistCallback godoc
+//
+// @Tags			tickets
+// @Summary			whitelist callback
+// @Description		whitelist callback
+// @Accept			json
+// @Produce			json
 // @Param			contractAddress	path	string	true	"contract address"
 // @Param			accountAddress	query	string	true	"account address"
 // @Param			sessionId		query	string	true	"session id"
@@ -140,8 +173,8 @@ func (c *TicketCtrl) purchaseQR(w http.ResponseWriter, r *http.Request) {
 // @Success		200			{object}	CommonResponse
 // @Failure		400			{object}	CommonResponse
 // @Failure		500			{object}	CommonResponse
-// @Router			/v1/tickets/purchase-callback [post]
-func (c *TicketCtrl) purchaseCallback(w http.ResponseWriter, r *http.Request) {
+// @Router			/v1/tickets/{contractAddress}/whitelist-callback [post]
+func (c *TicketCtrl) whitelistCallback(w http.ResponseWriter, r *http.Request) {
 	// 1. get contract address from path
 
 	// 2. get account address from query
@@ -165,6 +198,25 @@ func (c *TicketCtrl) purchaseCallback(w http.ResponseWriter, r *http.Request) {
 	// 11. call contract to set user address on whitelist
 
 	// 12. return success response
+}
+
+// DirectPurchaseCallback godoc
+//
+// @Tags			tickets
+// @Summary			direct purchase callback
+// @Description		direct purchase callback
+// @Accept			json
+// @Produce			json
+// @Param			contractAddress	path	string	true	"contract address"
+// @Param			accountAddress	query	string	true	"account address"
+// @Param			sessionId		query	string	true	"session id"
+// @Param			token			body	string	true	"token"
+// @Success			200			{object}	CommonResponse
+// @Failure			400			{object}	CommonResponse
+// @Failure			500			{object}	CommonResponse
+// @Router			/v1/tickets/direct-purchase-callback [post]
+func (c *TicketCtrl) directPurchaseCallback(w http.ResponseWriter, r *http.Request) {
+
 }
 
 // VerifyQR godoc

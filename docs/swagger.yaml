@@ -1,4 +1,9 @@
 definitions:
+  did.CreateClaimResponse:
+    properties:
+      id:
+        type: string
+    type: object
   github_com_heroticket_internal_service_user.User:
     properties:
       accountAddress:
@@ -139,8 +144,6 @@ definitions:
     - 1000000000
     - 60000000000
     - 3600000000000
-    - -9223372036854775808
-    - 9223372036854775807
     - 1
     - 1000
     - 1000000
@@ -157,8 +160,6 @@ definitions:
     - Second
     - Minute
     - Hour
-    - minDuration
-    - maxDuration
     - Nanosecond
     - Microsecond
     - Millisecond
@@ -264,7 +265,12 @@ paths:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/rest.CommonResponse'
+            allOf:
+            - $ref: '#/definitions/rest.CommonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/did.CreateClaimResponse'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -447,11 +453,11 @@ paths:
       summary: returns ticket
       tags:
       - tickets
-  /v1/tickets/{contractAddress}/purchase-qr:
+  /v1/tickets/{contractAddress}/direct-purchase-qr:
     get:
       consumes:
       - application/json
-      description: returns purchase authorization qr code
+      description: returns direct purchase authorization qr code
       parameters:
       - description: contract address
         in: path
@@ -485,7 +491,7 @@ paths:
             $ref: '#/definitions/rest.CommonResponse'
       security:
       - BearerAuth: []
-      summary: returns purchase authorization qr code
+      summary: returns direct purchase authorization qr code
       tags:
       - tickets
   /v1/tickets/{contractAddress}/verify-qr:
@@ -527,6 +533,92 @@ paths:
       security:
       - BearerAuth: []
       summary: returns verify authorization qr code
+      tags:
+      - tickets
+  /v1/tickets/{contractAddress}/whitelist-callback:
+    post:
+      consumes:
+      - application/json
+      description: whitelist callback
+      parameters:
+      - description: contract address
+        in: path
+        name: contractAddress
+        required: true
+        type: string
+      - description: account address
+        in: query
+        name: accountAddress
+        required: true
+        type: string
+      - description: session id
+        in: query
+        name: sessionId
+        required: true
+        type: string
+      - description: token
+        in: body
+        name: token
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+      summary: whitelist callback
+      tags:
+      - tickets
+  /v1/tickets/{contractAddress}/whitelist-qr:
+    get:
+      consumes:
+      - application/json
+      description: returns purchase authorization qr code
+      parameters:
+      - description: contract address
+        in: path
+        name: contractAddress
+        required: true
+        type: string
+      - description: session id
+        in: query
+        name: sessionId
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/rest.CommonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/protocol.AuthorizationRequestMessage'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+      security:
+      - BearerAuth: []
+      summary: returns purchase authorization qr code
       tags:
       - tickets
   /v1/tickets/create:
@@ -605,11 +697,11 @@ paths:
       summary: creates ticket
       tags:
       - tickets
-  /v1/tickets/purchase-callback:
+  /v1/tickets/direct-purchase-callback:
     post:
       consumes:
       - application/json
-      description: purchase callback
+      description: direct purchase callback
       parameters:
       - description: contract address
         in: path
@@ -647,7 +739,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/rest.CommonResponse'
-      summary: purchase callback
+      summary: direct purchase callback
       tags:
       - tickets
   /v1/tickets/verify-callback:

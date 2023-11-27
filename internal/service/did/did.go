@@ -7,9 +7,10 @@ import (
 
 var (
 	ErrRequestNotFound = errors.New("request not found")
+	ErrClaimNotFound   = errors.New("claim not found")
 )
 
-var DefaultCacheExpiry = 10 * time.Minute
+var DefaultCacheExpiry = 1 * time.Hour
 
 type CreateIdentityRequest struct {
 	DidMetadata DidMetadata `json:"didMetadata"`
@@ -63,4 +64,18 @@ type GetClaimQrCodeResponse struct {
 	To   string `json:"to"`
 	Typ  string `json:"typ"`
 	Type string `json:"type"`
+}
+
+type SaveClaimParams struct {
+	ID              string
+	UserID          string
+	ContractAddress string
+}
+
+type Claim struct {
+	ID              string `json:"id" bson:"_id"`
+	UserID          string `json:"userId" bson:"userId"`
+	ContractAddress string `json:"contractAddress" bson:"contractAddress"`
+	CreatedAt       int64  `json:"createdAt" bson:"createdAt"`
+	UpdateAt        int64  `json:"updatedAt" bson:"updatedAt"`
 }

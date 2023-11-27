@@ -4,19 +4,22 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/heroticket/internal/logger"
 	"github.com/heroticket/internal/service/did"
 	"github.com/heroticket/internal/service/jwt"
 	"github.com/heroticket/internal/service/user"
 )
 
 type ClaimCtrl struct {
+	adminID string
+
 	did  did.Service
 	jwt  jwt.Service
 	user user.Service
 	// ticket ticket.Service
 }
 
-func NewClaimCtrl(did did.Service, jwt jwt.Service, user user.Service) *ClaimCtrl {
+func NewClaimCtrl(did did.Service, jwt jwt.Service, user user.Service, adminID string) *ClaimCtrl {
 	return &ClaimCtrl{
 		did:  did,
 		jwt:  jwt,
@@ -45,7 +48,7 @@ func (c *ClaimCtrl) Handler() http.Handler {
 // @Accept			json
 // @Produce			json
 // @Param			contractAddress	path	string	true	"contract address"
-// @Success			201	{object}	CommonResponse
+// @Success			201	{object}	CommonResponse{data=did.CreateClaimResponse}
 // @Failure			400	{object}	CommonResponse
 // @Failure			401	{object}	CommonResponse
 // @Failure			404	{object}	CommonResponse
@@ -54,16 +57,74 @@ func (c *ClaimCtrl) Handler() http.Handler {
 // @Router			/v1/claims/{contractAddress}	[post]
 func (c *ClaimCtrl) requestClaim(w http.ResponseWriter, r *http.Request) {
 	// 1. get jwt user from context
+	jwtUser, err := c.jwt.FromContext(r.Context())
+	if err != nil {
+		ErrorJSON(w, "user not found")
+		return
+	}
 
 	// 2. get contract address from path
+	contractAddress := chi.URLParam(r, "contractAddress")
 
 	// 3. check if user has claim
+	_, err = c.did.FindClaim(r.Context(), jwtUser.ID, contractAddress)
+	if err != nil {
+		if err != did.ErrClaimNotFound {
+			logger.Error("failed to find claim", "error", err)
+			ErrorJSON(w, "failed to find claim", http.StatusInternalServerError)
+			return
+		}
+	} else {
+		ErrorJSON(w, "claim already exists", http.StatusBadRequest)
+		return
+	}
+
+	// TODO: check if user has ticket
+
+	// TODO: create claim
 
 	// 4. if not, create claim
 
-	// 5. save claim in db
+	// 4.1 generate hash
 
-	// 6. return success response
+	// 4.2 request claim
+	claimResp, err := c.did.CreateClaim(r.Context(), c.adminID, did.CreateClaimRequest{
+		CredentialSchema: "",
+		CredentialSubject: map[string]interface{}{
+			"id":     jwtUser.ID,
+			"ticket": contractAddress,
+			"hash":   "",
+		},
+		Type: "",
+	})
+	if err != nil {
+		logger.Error("failed to create claim", "error", err)
+		ErrorJSON(w, "failed to create claim", http.StatusInternalServerError)
+		return
+	}
+
+	// 5. save claim in db
+	claim, err := c.did.SaveClaim(r.Context(), did.SaveClaimParams{
+		ID:              claimResp.ID,
+		UserID:          jwtUser.ID,
+		ContractAddress: contractAddress,
+	})
+	if err != nil {
+		logger.Error("failed to save claim", "error", err)
+		ErrorJSON(w, "failed to save claim", http.StatusInternalServerError)
+		return
+	}
+
+	// 6.update ticket status
+
+	// 7. return success response
+	resp := CommonResponse{
+		Status:  http.StatusCreated,
+		Message: "Successfully requested claim",
+		Data:    claim,
+	}
+
+	_ = WriteJSON(w, http.StatusCreated, resp)
 }
 
 // ClaimQR godoc
@@ -73,7 +134,7 @@ func (c *ClaimCtrl) requestClaim(w http.ResponseWriter, r *http.Request) {
 // @Accept			json
 // @Produce			json
 // @Param			contractAddress	path	string	true	"contract address"
-// @Success			200	{object}	CommonResponse
+// @Success			200	{object}	CommonResponse{did.GetClaimQrCodeResponse}
 // @Failure			400	{object}	CommonResponse
 // @Failure			401	{object}	CommonResponse
 // @Failure			404	{object}	CommonResponse
@@ -82,14 +143,37 @@ func (c *ClaimCtrl) requestClaim(w http.ResponseWriter, r *http.Request) {
 // @Router			/v1/claims/{contractAddress}	[get]
 func (c *ClaimCtrl) claimQR(w http.ResponseWriter, r *http.Request) {
 	// 1. get jwt user from context
+	jwtUser, err := c.jwt.FromContext(r.Context())
+	if err != nil {
+		ErrorJSON(w, "user not found")
+		return
+	}
 
 	// 2. get contract address from path
+	contractAddress := chi.URLParam(r, "contractAddress")
 
 	// 3. get claim from db
+	claim, err := c.did.FindClaim(r.Context(), jwtUser.ID, contractAddress)
+	if err != nil {
+		logger.Error("failed to find claim", "error", err)
+		ErrorJSON(w, "failed to find claim", http.StatusInternalServerError)
+		return
+	}
 
-	// 4. if not, return error
+	// 4. request qr code from did service
+	qrResp, err := c.did.GetClaimQrCode(r.Context(), c.adminID, claim.ID)
+	if err != nil {
+		logger.Error("failed to get claim qr code", "error", err)
+		ErrorJSON(w, "failed to get claim qr code", http.StatusInternalServerError)
+		return
+	}
 
-	// 5. request qr code from did service
+	// 5. return qr code
+	resp := CommonResponse{
+		Status:  http.StatusOK,
+		Message: "Successfully retrieved claim qr code",
+		Data:    qrResp,
+	}
 
-	// 6. return qr code
+	_ = WriteJSON(w, http.StatusOK, resp)
 }

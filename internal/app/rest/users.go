@@ -7,11 +7,11 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/heroticket/internal/app/ws"
+	"github.com/heroticket/internal/logger"
 	"github.com/heroticket/internal/service/auth"
 	"github.com/heroticket/internal/service/jwt"
 	"github.com/heroticket/internal/service/user"
 	"github.com/heroticket/internal/web3"
-	"go.uber.org/zap"
 )
 
 type UserCtrl struct {
@@ -91,7 +91,6 @@ func (c *UserCtrl) loginQR(w http.ResponseWriter, r *http.Request) {
 
 	callbackUrl := fmt.Sprintf("%s/v1/users/login-callback?sessionId=%s", c.serverUrl, sessionId)
 
-	// TODO: fetch audience from db
 	audience := c.adminID
 
 	// 3. create login request
@@ -103,7 +102,7 @@ func (c *UserCtrl) loginQR(w http.ResponseWriter, r *http.Request) {
 		Sender:      audience,
 	})
 	if err != nil {
-		zap.L().Error("failed to create login request", zap.Error(err))
+		logger.Error("failed to create login request", "error", err)
 		ErrorJSON(w, "failed to create login request", http.StatusInternalServerError)
 		return
 	}
@@ -155,7 +154,7 @@ func (c *UserCtrl) loginCallback(w http.ResponseWriter, r *http.Request) {
 	// 3. read token from request body
 	tokenBytes, err := io.ReadAll(r.Body)
 	if err != nil {
-		zap.L().Error("failed to read token", zap.Error(err))
+		logger.Error("failed to read token", "error", err)
 		ErrorJSON(w, "failed to read token", http.StatusInternalServerError)
 		return
 	}
@@ -173,7 +172,7 @@ func (c *UserCtrl) loginCallback(w http.ResponseWriter, r *http.Request) {
 	// 4. handle login callback
 	resp, err := c.auth.AuthorizationCallback(r.Context(), sessionId, string(tokenBytes))
 	if err != nil {
-		zap.L().Error("failed to handle login callback", zap.Error(err))
+		logger.Error("failed to handle login callback", "error", err)
 		ErrorJSON(w, "failed to handle login callback", http.StatusInternalServerError)
 		return
 	}
@@ -185,7 +184,7 @@ func (c *UserCtrl) loginCallback(w http.ResponseWriter, r *http.Request) {
 		ID: userID,
 	})
 	if err != nil {
-		zap.L().Error("failed to generate jwt token", zap.Error(err))
+		logger.Error("failed to generate jwt token", "error", err)
 		ErrorJSON(w, "failed to generate jwt token", http.StatusInternalServerError)
 		return
 	}
@@ -225,7 +224,7 @@ func (c *UserCtrl) refresh(w http.ResponseWriter, r *http.Request) {
 	// 1. read token from request body
 	tokenBytes, err := io.ReadAll(r.Body)
 	if err != nil {
-		zap.L().Error("failed to read token", zap.Error(err))
+		logger.Error("failed to read token", "error", err)
 		ErrorJSON(w, "failed to read token", http.StatusInternalServerError)
 		return
 	}
@@ -243,7 +242,7 @@ func (c *UserCtrl) refresh(w http.ResponseWriter, r *http.Request) {
 		ID: jwtUser.ID,
 	})
 	if err != nil {
-		zap.L().Error("failed to generate token pair", zap.Error(err))
+		logger.Error("failed to generate token pair", "error", err)
 		ErrorJSON(w, "failed to generate token pair", http.StatusInternalServerError)
 		return
 	}
@@ -275,7 +274,7 @@ func (c *UserCtrl) info(w http.ResponseWriter, r *http.Request) {
 	// 1. get user from context
 	jwtUser, err := c.jwt.FromContext(r.Context())
 	if err != nil {
-		zap.L().Error("failed to get user from context", zap.Error(err))
+		logger.Error("failed to get user from context", "error", err)
 		ErrorJSON(w, "user not found")
 		return
 	}
@@ -287,7 +286,7 @@ func (c *UserCtrl) info(w http.ResponseWriter, r *http.Request) {
 			ErrorJSON(w, "user not registered yet", http.StatusNotFound)
 			return
 		}
-		zap.L().Error("failed to find user", zap.Error(err))
+		logger.Error("failed to find user", "error", err)
 		ErrorJSON(w, "failed to find user", http.StatusInternalServerError)
 		return
 	}
@@ -318,7 +317,7 @@ func (c *UserCtrl) register(w http.ResponseWriter, r *http.Request) {
 	// 1. get user from context
 	jwtUser, err := c.jwt.FromContext(r.Context())
 	if err != nil {
-		zap.L().Error("failed to get user from context", zap.Error(err))
+		logger.Error("failed to get user from context", "error", err)
 		ErrorJSON(w, "user not found")
 		return
 	}
@@ -361,7 +360,7 @@ func (c *UserCtrl) register(w http.ResponseWriter, r *http.Request) {
 
 	u, err := c.user.CreateUser(r.Context(), params)
 	if err != nil {
-		zap.L().Error("failed to create user", zap.Error(err))
+		logger.Error("failed to create user", "error", err)
 		ErrorJSON(w, "failed to create user", http.StatusInternalServerError)
 		return
 	}

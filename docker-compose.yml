@@ -11,9 +11,21 @@ services:
     volumes:
       - ./configs/server/config.json:/app/config.json
     depends_on:
+      - subscriber
       - mongo
       - auth-redis
       - did-redis
+
+  subscriber:
+    container_name: subscriber
+    build:
+      context: .
+      dockerfile: ./build/subscriber/Dockerfile
+    restart: always
+    volumes:
+      - ./configs/subscriber/config.json:/app/config.json
+    depends_on:
+      - mongo
 
   swagger:
     container_name: swagger

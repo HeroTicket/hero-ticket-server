@@ -5,9 +5,9 @@ import (
 	"strconv"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/heroticket/internal/logger"
 	"github.com/heroticket/internal/service/notice"
 	"github.com/heroticket/internal/service/user"
-	"go.uber.org/zap"
 )
 
 type NoticeCtrl struct {
@@ -59,7 +59,7 @@ func (c *NoticeCtrl) Notices(w http.ResponseWriter, r *http.Request) {
 	} else {
 		pageInt, err := strconv.ParseInt(pageStr, 10, 64)
 		if err != nil {
-			zap.L().Error("invalid page", zap.Error(err))
+			logger.Error("invalid page", "error", err)
 			ErrorJSON(w, "invalid page")
 			return
 		}
@@ -72,7 +72,7 @@ func (c *NoticeCtrl) Notices(w http.ResponseWriter, r *http.Request) {
 	} else {
 		limitInt, err := strconv.ParseInt(limitStr, 10, 64)
 		if err != nil {
-			zap.L().Error("invalid limit", zap.Error(err))
+			logger.Error("invalid limit", "error", err)
 			ErrorJSON(w, "invalid limit")
 			return
 		}
@@ -82,7 +82,7 @@ func (c *NoticeCtrl) Notices(w http.ResponseWriter, r *http.Request) {
 
 	notices, err := c.notice.GetNotices(r.Context(), page, limit)
 	if err != nil {
-		zap.L().Error("failed to get notices", zap.Error(err))
+		logger.Error("failed to get notices", "error", err)
 		ErrorJSON(w, "failed to get notices", http.StatusInternalServerError)
 		return
 	}
@@ -113,7 +113,7 @@ func (c *NoticeCtrl) Notice(w http.ResponseWriter, r *http.Request) {
 
 	n, err := c.notice.GetNotice(r.Context(), id)
 	if err != nil {
-		zap.L().Error("failed to get notice", zap.Error(err))
+		logger.Error("failed to get notice", "error", err)
 		if err == notice.ErrNotFound {
 			ErrorJSON(w, "notice not found", http.StatusNotFound)
 		} else {

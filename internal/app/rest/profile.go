@@ -4,8 +4,8 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/heroticket/internal/logger"
 	"github.com/heroticket/internal/service/user"
-	"go.uber.org/zap"
 )
 
 type ProfileCtrl struct {
@@ -47,7 +47,7 @@ func (c *ProfileCtrl) profile(w http.ResponseWriter, r *http.Request) {
 	// 2. get user
 	_, err := c.user.FindUserByName(r.Context(), name)
 	if err != nil {
-		zap.L().Error("failed to find user", zap.Error(err))
+		logger.Error("failed to find user", "error", err)
 		if err == user.ErrUserNotFound {
 			ErrorJSON(w, "user not found", http.StatusBadRequest)
 		} else {

@@ -34,3 +34,13 @@ jobs:
         run: |
           docker build -t $ECR_REGISTRY/$SERVER_REPOSITORY:$SERVER_IMAGE_TAG . -f ./build/server/Dockerfile
           docker push $ECR_REGISTRY/$SERVER_REPOSITORY:$SERVER_IMAGE_TAG
+
+      - name: Build, tag, and push subscriber image to Amazon ECR
+        id: build-subscriber-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          SUBSCRIBER_REPOSITORY: ${{ secrets.SUBSCRIBER_REPOSITORY }}
+          SUBSCRIBER_IMAGE_TAG: ${{ secrets.SUBSCRIBER_IMAGE_TAG }}
+        run: |
+          docker build -t $ECR_REGISTRY/$SUBSCRIBER_REPOSITORY:$SUBSCRIBER_IMAGE_TAG . -f ./build/subscriber/Dockerfile
+          docker push $ECR_REGISTRY/$SUBSCRIBER_REPOSITORY:$SUBSCRIBER_IMAGE_TAG
