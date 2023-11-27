@@ -34,32 +34,33 @@ func main() {
 		panic(err)
 	}
 
-	hero, err := heroticket.NewHeroticket(common.HexToAddress(cfg.ContractAddress), client)
+	filterer, err := heroticket.NewHeroticketFilterer(common.HexToAddress(cfg.ContractAddress), client)
 	if err != nil {
 		panic(err)
 	}
 
 	mintedChan := make(chan *heroticket.HeroticketMinted)
 
-	sub, err := hero.WatchMinted(&bind.WatchOpts{}, mintedChan)
+	sub, err := filterer.WatchMinted(&bind.WatchOpts{}, mintedChan)
 	if err != nil {
 		panic(err)
 	}
-	defer func() {
-		sub.Unsubscribe()
-		close(mintedChan)
-	}()
 
 	go func() {
 		for {
 			select {
 			case err := <-sub.Err():
-				panic(err)
+				if err != nil {
+					panic(err)
+				}
 			case event := <-mintedChan:
 				println(event.TokenId.String())
 			}
 		}
 	}()
 
-	<-shutdown.GracefulShutdown(func() {}, syscall.SIGINT, syscall.SIGTERM)
+	<-shutdown.GracefulShutdown(func() {
+		sub.Unsubscribe()
+		close(mintedChan)
+	}, syscall.SIGINT, syscall.SIGTERM)
 }
