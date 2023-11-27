@@ -4,10 +4,10 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/heroticket/internal/logger"
 	"github.com/heroticket/internal/service/did"
 	"github.com/heroticket/internal/service/jwt"
 	"github.com/heroticket/internal/service/user"
-	"go.uber.org/zap"
 )
 
 type ClaimCtrl struct {
@@ -70,7 +70,7 @@ func (c *ClaimCtrl) requestClaim(w http.ResponseWriter, r *http.Request) {
 	_, err = c.did.FindClaim(r.Context(), jwtUser.ID, contractAddress)
 	if err != nil {
 		if err != did.ErrClaimNotFound {
-			zap.L().Error("failed to find claim", zap.Error(err))
+			logger.Error("failed to find claim", "error", err)
 			ErrorJSON(w, "failed to find claim", http.StatusInternalServerError)
 			return
 		}
@@ -98,7 +98,7 @@ func (c *ClaimCtrl) requestClaim(w http.ResponseWriter, r *http.Request) {
 		Type: "",
 	})
 	if err != nil {
-		zap.L().Error("failed to create claim", zap.Error(err))
+		logger.Error("failed to create claim", "error", err)
 		ErrorJSON(w, "failed to create claim", http.StatusInternalServerError)
 		return
 	}
@@ -110,7 +110,7 @@ func (c *ClaimCtrl) requestClaim(w http.ResponseWriter, r *http.Request) {
 		ContractAddress: contractAddress,
 	})
 	if err != nil {
-		zap.L().Error("failed to save claim", zap.Error(err))
+		logger.Error("failed to save claim", "error", err)
 		ErrorJSON(w, "failed to save claim", http.StatusInternalServerError)
 		return
 	}
@@ -155,7 +155,7 @@ func (c *ClaimCtrl) claimQR(w http.ResponseWriter, r *http.Request) {
 	// 3. get claim from db
 	claim, err := c.did.FindClaim(r.Context(), jwtUser.ID, contractAddress)
 	if err != nil {
-		zap.L().Error("failed to find claim", zap.Error(err))
+		logger.Error("failed to find claim", "error", err)
 		ErrorJSON(w, "failed to find claim", http.StatusInternalServerError)
 		return
 	}
@@ -163,7 +163,7 @@ func (c *ClaimCtrl) claimQR(w http.ResponseWriter, r *http.Request) {
 	// 4. request qr code from did service
 	qrResp, err := c.did.GetClaimQrCode(r.Context(), c.adminID, claim.ID)
 	if err != nil {
-		zap.L().Error("failed to get claim qr code", zap.Error(err))
+		logger.Error("failed to get claim qr code", "error", err)
 		ErrorJSON(w, "failed to get claim qr code", http.StatusInternalServerError)
 		return
 	}

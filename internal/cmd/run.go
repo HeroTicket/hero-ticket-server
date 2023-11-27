@@ -13,6 +13,7 @@ import (
 	"github.com/heroticket/internal/cache/redis"
 	"github.com/heroticket/internal/config"
 	"github.com/heroticket/internal/db/mongo"
+	"github.com/heroticket/internal/logger"
 	"github.com/heroticket/internal/service/auth"
 	"github.com/heroticket/internal/service/did"
 	"github.com/heroticket/internal/service/ipfs"
@@ -21,20 +22,17 @@ import (
 	nrepo "github.com/heroticket/internal/service/notice/repository/mongo"
 	"github.com/heroticket/internal/service/user"
 	urepo "github.com/heroticket/internal/service/user/repository/mongo"
-	"go.uber.org/zap"
 )
 
 func Run() {
-	logger, _ := zap.NewProduction(zap.Fields(zap.String("service", "heroticket")))
-	defer logger.Sync()
-
-	zap.ReplaceGlobals(logger)
-
 	defer func() {
 		if r := recover(); r != nil {
-			logger.Info("recovered from panic", zap.Any("r", r))
+			logger.Info("recovered from panic", "panic", r)
 		}
 	}()
+
+	err := logger.New(false, "service", "heroticket")
+	handleErr(err)
 
 	var configFile string
 
@@ -156,6 +154,8 @@ func Run() {
 		err = mongoClient.Disconnect(ctx)
 		handleErr(err)
 
+		err = logger.Sync()
+
 		logger.Info("Successfully shutdown server")
 	}, syscall.SIGINT, syscall.SIGTERM)
 
@@ -164,6 +164,6 @@ func Run() {
 
 func handleErr(err error) {
 	if err != nil {
-		panic(err)
+		logger.Panic(err.Error())
 	}
 }
