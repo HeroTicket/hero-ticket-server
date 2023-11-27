@@ -38,8 +38,7 @@ func Run() {
 
 	var configFile string
 
-	goEnv := os.Getenv("GO_ENV")
-	if goEnv == "" {
+	if os.Getenv("GO_ENV") != "production" {
 		configFile = "config.dev.json"
 	}
 
@@ -132,7 +131,7 @@ func Run() {
 		}
 	}
 
-	claimCtrl := rest.NewClaimCtrl(dids, jwts, users)
+	claimCtrl := rest.NewClaimCtrl(dids, jwts, users, admin.ID)
 	userCtrl := rest.NewUserCtrl(auths, jwts, users, cfg.ServerUrl, admin.ID)
 	noticeCtrl := rest.NewNoticeCtrl(notices, users)
 	ticketCtrl := rest.NewTicketCtrl(auths, ipfss, jwts, users, cfg.ServerUrl)

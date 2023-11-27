@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"os"
 	"syscall"
 	"time"
 
@@ -17,7 +18,13 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	cfg, err := config.NewSubscriberConfig("")
+	var configFile string
+
+	if os.Getenv("GO_ENV") != "production" {
+		configFile = "config.dev.json"
+	}
+
+	cfg, err := config.NewSubscriberConfig(configFile)
 	if err != nil {
 		panic(err)
 	}

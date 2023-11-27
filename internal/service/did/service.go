@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/heroticket/internal/cache"
 )
@@ -15,7 +14,9 @@ import (
 type Service interface {
 	CreateIdentity(ctx context.Context, identity CreateIdentityRequest) (*CreateIdentityResponse, error)
 	CreateClaim(ctx context.Context, identifier string, claim CreateClaimRequest) (*CreateClaimResponse, error)
+	FindClaim(ctx context.Context, userID, contractAddress string) (*Claim, error)
 	GetClaimQrCode(ctx context.Context, identifier string, claimId string) (*GetClaimQrCodeResponse, error)
+	SaveClaim(ctx context.Context, params SaveClaimParams) (*Claim, error)
 }
 
 type DidServiceConfig struct {
@@ -24,6 +25,7 @@ type DidServiceConfig struct {
 	Username  string
 	Password  string
 	QrCache   cache.Cache
+	Repo      Repository
 	Client    *http.Client
 }
 
@@ -34,6 +36,7 @@ type DidService struct {
 	password  string
 
 	qrCache cache.Cache
+	repo    Repository
 	client  *http.Client
 }
 
@@ -44,6 +47,7 @@ func New(cfg DidServiceConfig) Service {
 		username:  cfg.Username,
 		password:  cfg.Password,
 		qrCache:   cfg.QrCache,
+		repo:      cfg.Repo,
 		client:    http.DefaultClient,
 	}
 
@@ -128,6 +132,10 @@ func (s *DidService) CreateClaim(ctx context.Context, identifier string, claim C
 	return &createClaimResponse, nil
 }
 
+func (s *DidService) FindClaim(ctx context.Context, userID, contractAddress string) (*Claim, error) {
+	return s.repo.FindClaim(ctx, userID, contractAddress)
+}
+
 func (s *DidService) GetClaimQrCode(ctx context.Context, identifier string, claimId string) (*GetClaimQrCodeResponse, error) {
 	// check if qrcode exists in cache
 	var qrcode GetClaimQrCodeResponse
@@ -164,12 +172,16 @@ func (s *DidService) GetClaimQrCode(ctx context.Context, identifier string, clai
 	}
 
 	// save qrcode to cache
-	err = s.qrCache.Set(ctx, claimId, getClaimQrCodeResponse, time.Hour)
+	err = s.qrCache.Set(ctx, claimId, getClaimQrCodeResponse, DefaultCacheExpiry)
 	if err != nil {
 		return nil, err
 	}
 
 	return &getClaimQrCodeResponse, nil
+}
+
+func (s *DidService) SaveClaim(ctx context.Context, params SaveClaimParams) (*Claim, error) {
+	return s.repo.SaveClaim(ctx, params)
 }
 
 func (s *DidService) setAuthorizationHeader(req *http.Request) {
