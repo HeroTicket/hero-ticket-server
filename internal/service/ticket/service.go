@@ -10,6 +10,8 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+
+	// "github.com/heroticket/internal/service/ticket"
 	"github.com/heroticket/pkg/contracts/heroticket"
 )
 
@@ -61,7 +63,12 @@ func (s *TicketService) IssueTicket(ctx context.Context, tokenContractAddress co
 		return nil, err
 	}
 
-	return s.hero.IssueTicket(auth, tokenContractAddress, ticketName, ticketSymbol, ticketURI, initialOwner, big.NewInt(ticketAmount), big.NewInt(ticketPrice))
+	tx, err := s.hero.IssueTicket(auth, tokenContractAddress, ticketName, ticketSymbol, ticketURI, initialOwner, big.NewInt(ticketAmount), big.NewInt(ticketPrice))
+	if err != nil {
+		return nil, err
+	}
+
+	return tx, nil
 }
 
 func (s *TicketService) BuyTicket(ctx context.Context, contractAddress common.Address) (*types.Transaction, error) {

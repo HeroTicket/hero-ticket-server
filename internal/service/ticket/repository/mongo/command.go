@@ -98,22 +98,23 @@ func (c *MongoCommand) DeleteTicketCollection(ctx context.Context, id string) er
 	return nil
 }
 
-func (c *MongoCommand) SaveTicket(ctx context.Context, params ticket.SaveTicketParams) (*ticket.Ticket, error) {
+func (c *MongoCommand) CreateTBA(ctx context.Context, params ticket.TbaAddresses) (*ticket.TbaAddresses, error) {
 	coll := c.collection()
 
-	var t ticket.Ticket
+	var tba ticket.TbaAddresses
 
-	t.Address = params.Address
-	t.OwnerAddress = params.OwnerAddress
-	t.TokenID = params.TokenID
-	t.PurchasedAt = params.PurchasedAt
+	tba.ID = params.ID
+	tba.OwnerAddress = params.OwnerAddress
+	tba.TbaAddress = params.TbaAddress
+	tba.TokenID = params.TokenID
+	tba.Image = params.Image
 
-	_, err := coll.InsertOne(ctx, t)
+	_, err := coll.InsertOne(ctx, tba)
 	if err != nil {
 		return nil, err
 	}
 
-	return &t, nil
+	return &tba, nil
 }
 
 func (c *MongoCommand) collection() *mongo.Collection {
