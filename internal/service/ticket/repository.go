@@ -7,6 +7,7 @@ import (
 type Query interface {
 	FindTicketByAddress(ctx context.Context, address string) (*Ticket, error)
 	FindTicketByOwnerAddress(ctx context.Context, ownerAddress string) ([]*Ticket, error)
+	FindTbaAddress(ctx context.Context, address string) (*TbaAddresses, error)
 }
 
 type Command interface {

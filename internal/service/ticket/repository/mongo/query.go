@@ -62,6 +62,23 @@ func (q *MongoQuery) FindTicketByOwnerAddress(ctx context.Context, ownerAddress 
 	return tickets, nil
 }
 
+func (c *MongoQuery) FindTbaAddress(ctx context.Context, address string) (*ticket.TbaAddresses, error) {
+	coll := c.collection()
+
+	filter := bson.M{"address": address}
+
+	var t ticket.TbaAddresses
+
+	if err := coll.FindOne(ctx, filter).Decode(&t); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, ticket.ErrTicketNotFound
+		}
+		return nil, err
+	}
+
+	return &t, nil
+}
+
 func (q *MongoQuery) collection() *mongo.Collection {
 	return q.client.Database(q.dbname).Collection("tickets")
 }
