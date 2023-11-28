@@ -55,6 +55,8 @@ func (s *TicketService) CreateTBA(ctx context.Context, to common.Address, tokenU
 	}
 
 	return s.hero.Mint(auth, to, tokenURI)
+	// Todo: make params
+	// Todo: s.repo.CreateTBA
 }
 
 func (s *TicketService) IssueTicket(ctx context.Context, tokenContractAddress common.Address, ticketName, ticketSymbol, ticketURI string, initialOwner common.Address, ticketAmount, ticketPrice int64) (*types.Transaction, error) {
@@ -69,6 +71,8 @@ func (s *TicketService) IssueTicket(ctx context.Context, tokenContractAddress co
 	}
 
 	return tx, nil
+	// Todo: make params
+	// Todo: s.repo.CreateTicketCollection
 }
 
 func (s *TicketService) BuyTicket(ctx context.Context, contractAddress common.Address) (*types.Transaction, error) {
@@ -78,6 +82,8 @@ func (s *TicketService) BuyTicket(ctx context.Context, contractAddress common.Ad
 	}
 
 	return s.hero.BuyTicket(auth, contractAddress)
+	// Todo: make params
+	// Todo: s.repo.CreateTicket
 }
 
 func (s *TicketService) BuyTicketByEther(ctx context.Context, TicketContractAddress, adminAddress common.Address, ticketPrice int64) (*types.Transaction, error) {
@@ -86,6 +92,9 @@ func (s *TicketService) BuyTicketByEther(ctx context.Context, TicketContractAddr
 		return nil, err
 	}
 	return s.hero.BuyTicketByEther(auth, TicketContractAddress, adminAddress, big.NewInt(ticketPrice))
+
+	// Todo: make params
+	// Todo: s.repo.CreateTicket
 }
 
 func (s *TicketService) txOpts(ctx context.Context) (*bind.TransactOpts, error) {
