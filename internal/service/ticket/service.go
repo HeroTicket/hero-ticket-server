@@ -11,7 +11,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/heroticket/pkg/contracts/heroticket"
-	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type Service interface {
@@ -23,18 +22,18 @@ type Service interface {
 }
 
 type TicketService struct {
-	client      *ethclient.Client
-	hero        *heroticket.Heroticket
-	pvk         *ecdsa.PrivateKey
-	mongoClient *mongo.Client
+	client *ethclient.Client
+	hero   *heroticket.Heroticket
+	pvk    *ecdsa.PrivateKey
+	repo   Repository
 }
 
-func New(client *ethclient.Client, hero *heroticket.Heroticket, pvk *ecdsa.PrivateKey, mongoClient *mongo.Client) *TicketService {
+func New(client *ethclient.Client, hero *heroticket.Heroticket, pvk *ecdsa.PrivateKey, repo Repository) *TicketService {
 	return &TicketService{
-		client:      client,
-		hero:        hero,
-		pvk:         pvk,
-		mongoClient: mongoClient,
+		client: client,
+		hero:   hero,
+		pvk:    pvk,
+		repo:   repo,
 	}
 }
 
