@@ -46,3 +46,42 @@ func TokenRequired(jwtSvc jwt.Service) func(next http.Handler) http.Handler {
 		})
 	}
 }
+
+func TokenCheck(jwtSvc jwt.Service) func(next http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Add("Vary", "Authorization")
+
+			check := func(r *http.Request) {
+				authHeader := r.Header.Get("Authorization")
+
+				if authHeader == "" {
+					return
+				}
+
+				headerParts := strings.Split(authHeader, " ")
+				if len(headerParts) != 2 {
+					return
+				}
+
+				if headerParts[0] != "Bearer" {
+					return
+				}
+
+				token := headerParts[1]
+
+				jwtUser, err := jwtSvc.VerifyToken(token, jwt.TokenRoleAccess)
+				if err != nil {
+					zap.L().Error("failed to validate access token", zap.Error(err))
+					return
+				}
+
+				r = r.WithContext(jwtSvc.NewContext(r.Context(), *jwtUser))
+			}
+
+			check(r)
+
+			next.ServeHTTP(w, r)
+		})
+	}
+}

@@ -14,6 +14,8 @@ import (
 )
 
 type Service interface {
+	IsIssuedTicket(ctx context.Context, contractAddress common.Address) (bool, error)
+	HasTicket(ctx context.Context, contractAddress, owner common.Address) (bool, error)
 	TicketsByOwner(ctx context.Context, owner common.Address) ([]common.Address, error)
 	TokenBalanceOf(ctx context.Context, owner common.Address) (*big.Int, error)
 	UpdateWhitelist(ctx context.Context, contractAddress, to common.Address) error
@@ -38,6 +40,14 @@ func New(client *ethclient.Client, hero *heroticket.Heroticket, pvk *ecdsa.Priva
 		pvk:    pvk,
 		repo:   repo,
 	}
+}
+
+func (s *TicketService) IsIssuedTicket(ctx context.Context, contractAddress common.Address) (bool, error) {
+	return s.hero.IssuedTicket(&bind.CallOpts{Context: ctx}, contractAddress)
+}
+
+func (s *TicketService) HasTicket(ctx context.Context, contractAddress, owner common.Address) (bool, error) {
+	return s.hero.HasTicket(&bind.CallOpts{Context: ctx}, contractAddress, owner)
 }
 
 func (s *TicketService) TicketsByOwner(ctx context.Context, owner common.Address) ([]common.Address, error) {
