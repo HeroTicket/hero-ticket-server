@@ -7,20 +7,21 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 
-	// "github.com/heroticket/internal/service/ticket"
 	"github.com/heroticket/pkg/contracts/heroticket"
 )
 
 type Service interface {
-	UpdateWhitelist(ctx context.Context, contractAddress, to string) (*types.Transaction, error)
-	CreateTBA(ctx context.Context, to common.Address, tokenURI string) (*types.Transaction, error)
-	IssueTicket(ctx context.Context, tokenContractAddress common.Address, ticketName, ticketSymbol, ticketURI string, initialOwner common.Address, ticketAmount, ticketPrice int64) (*types.Transaction, error)
-	BuyTicket(ctx context.Context, contractAddress common.Address) (*types.Transaction, error)
-	BuyTicketByEther(ctx context.Context, TicketContractAddress, adminAddress common.Address, ticketPrice int64) (*types.Transaction, error)
+	TicketsByOwner(ctx context.Context, owner common.Address) ([]common.Address, error)
+	TokenBalanceOf(ctx context.Context, owner common.Address) (*big.Int, error)
+	UpdateWhitelist(ctx context.Context, contractAddress, to common.Address) error
+	CreateTBA(ctx context.Context, to common.Address, tokenURI string) (*heroticket.HeroticketTBACreated, error)
+	IssueTicket(ctx context.Context, params IssueTicketParams) (*heroticket.HeroticketTicketIssued, error)
+	BuyTicketByToken(ctx context.Context, contractAddress, buyerAddress common.Address) (*heroticket.HeroticketTicketSold, error)
+
+	// TODO: repo에 저장하는 메서드 추가
 }
 
 type TicketService struct {
@@ -30,7 +31,7 @@ type TicketService struct {
 	repo   Repository
 }
 
-func New(client *ethclient.Client, hero *heroticket.Heroticket, pvk *ecdsa.PrivateKey, repo Repository) *TicketService {
+func New(client *ethclient.Client, hero *heroticket.Heroticket, pvk *ecdsa.PrivateKey, repo Repository) Service {
 	return &TicketService{
 		client: client,
 		hero:   hero,
@@ -39,62 +40,133 @@ func New(client *ethclient.Client, hero *heroticket.Heroticket, pvk *ecdsa.Priva
 	}
 }
 
-func (s *TicketService) UpdateWhitelist(ctx context.Context, contractAddress, to common.Address, ticketPrice int64) (*types.Transaction, error) {
-	auth, err := s.txOpts(ctx)
+func (s *TicketService) TicketsByOwner(ctx context.Context, owner common.Address) ([]common.Address, error) {
+	ownedTickets, err := s.hero.TicketsByOwner(&bind.CallOpts{Context: ctx}, owner)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.hero.UpdateWhiteList(auth, contractAddress, to)
+	// TODO: repo에 저장된 콜렉션 정보와 합하여 반환
+
+	return ownedTickets, nil
 }
 
-func (s *TicketService) CreateTBA(ctx context.Context, to common.Address, tokenURI string) (*types.Transaction, error) {
-	auth, err := s.txOpts(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return s.hero.Mint(auth, to, tokenURI)
-	// Todo: make params
-	// Todo: s.repo.CreateTBA
+func (s *TicketService) TokenBalanceOf(ctx context.Context, owner common.Address) (*big.Int, error) {
+	return s.hero.TokenBalanceOf(&bind.CallOpts{Context: ctx}, owner)
 }
 
-func (s *TicketService) IssueTicket(ctx context.Context, tokenContractAddress common.Address, ticketName, ticketSymbol, ticketURI string, initialOwner common.Address, ticketAmount, ticketPrice int64) (*types.Transaction, error) {
+func (s *TicketService) UpdateWhitelist(ctx context.Context, contractAddress, to common.Address) error {
 	auth, err := s.txOpts(ctx)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	tx, err := s.hero.IssueTicket(auth, tokenContractAddress, ticketName, ticketSymbol, ticketURI, initialOwner, big.NewInt(ticketAmount), big.NewInt(ticketPrice))
+	tx, err := s.hero.UpdateWhiteList(auth, contractAddress, to)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return tx, nil
-	// Todo: make params
-	// Todo: s.repo.CreateTicketCollection
+	_, err = bind.WaitMined(ctx, s.client, tx)
+	return err
 }
 
-func (s *TicketService) BuyTicket(ctx context.Context, contractAddress common.Address) (*types.Transaction, error) {
+func (s *TicketService) CreateTBA(ctx context.Context, to common.Address, tokenURI string) (*heroticket.HeroticketTBACreated, error) {
 	auth, err := s.txOpts(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return s.hero.BuyTicket(auth, contractAddress)
-	// Todo: make params
-	// Todo: s.repo.CreateTicket
+	tx, err := s.hero.CreateTBA(auth, to, tokenURI)
+	if err != nil {
+		return nil, err
+	}
+
+	receipt, err := bind.WaitMined(ctx, s.client, tx)
+	if err != nil {
+		return nil, err
+	}
+
+	// 이 방법 안되면 filter 사용이나 tbaAddress를 직접 받아서 사용
+	var tbaCreated *heroticket.HeroticketTBACreated
+
+	for _, log := range receipt.Logs {
+
+		tbaCreated, err = s.hero.ParseTBACreated(*log)
+		if err == nil {
+			break
+		}
+	}
+
+	if tbaCreated == nil {
+		return nil, err
+	}
+
+	return tbaCreated, nil
 }
 
-func (s *TicketService) BuyTicketByEther(ctx context.Context, TicketContractAddress, adminAddress common.Address, ticketPrice int64) (*types.Transaction, error) {
+func (s *TicketService) IssueTicket(ctx context.Context, params IssueTicketParams) (*heroticket.HeroticketTicketIssued, error) {
 	auth, err := s.txOpts(ctx)
 	if err != nil {
 		return nil, err
 	}
-	return s.hero.BuyTicketByEther(auth, TicketContractAddress, adminAddress, big.NewInt(ticketPrice))
 
-	// Todo: make params
-	// Todo: s.repo.CreateTicket
+	tx, err := s.hero.IssueTicket(auth, params.TicketName, params.TicketSymbol, params.TicketUri, params.Issuer,
+		params.TicketAmount, params.TicketEthPrice, params.TicketTokenPrice, params.SaleDuration)
+	if err != nil {
+		return nil, err
+	}
+
+	receipt, err := bind.WaitMined(ctx, s.client, tx)
+	if err != nil {
+		return nil, err
+	}
+
+	var ticketIssued *heroticket.HeroticketTicketIssued
+
+	for _, log := range receipt.Logs {
+		ticketIssued, err = s.hero.ParseTicketIssued(*log)
+		if err == nil {
+			break
+		}
+	}
+
+	if ticketIssued == nil {
+		return nil, err
+	}
+
+	return ticketIssued, nil
+}
+
+func (s *TicketService) BuyTicketByToken(ctx context.Context, contractAddress, buyerAddress common.Address) (*heroticket.HeroticketTicketSold, error) {
+	auth, err := s.txOpts(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	tx, err := s.hero.BuyTicketByToken(auth, contractAddress, buyerAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	receipt, err := bind.WaitMined(ctx, s.client, tx)
+	if err != nil {
+		return nil, err
+	}
+
+	var ticketSold *heroticket.HeroticketTicketSold
+
+	for _, log := range receipt.Logs {
+		ticketSold, err = s.hero.ParseTicketSold(*log)
+		if err == nil {
+			break
+		}
+	}
+
+	if ticketSold == nil {
+		return nil, err
+	}
+
+	return ticketSold, nil
 }
 
 func (s *TicketService) txOpts(ctx context.Context) (*bind.TransactOpts, error) {

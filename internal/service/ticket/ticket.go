@@ -2,6 +2,9 @@ package ticket
 
 import (
 	"errors"
+	"math/big"
+
+	"github.com/ethereum/go-ethereum/common"
 )
 
 var (
@@ -44,4 +47,15 @@ type SaveTicketParams struct {
 	TokenID      uint64 `json:"tokenId" bson:"tokenId"`
 	BlockNumber  uint64 `json:"blockNumber" bson:"blockNumber"`
 	PurchasedAt  int64  `json:"purchasedAt" bson:"purchasedAt"`
+}
+
+type IssueTicketParams struct {
+	TicketName       string
+	TicketSymbol     string
+	TicketUri        string
+	Issuer           common.Address
+	TicketAmount     *big.Int
+	TicketEthPrice   *big.Int
+	TicketTokenPrice *big.Int
+	SaleDuration     *big.Int
 }
