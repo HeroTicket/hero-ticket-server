@@ -3,11 +3,14 @@ package rest
 import (
 	"fmt"
 	"io"
+	"math/big"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/heroticket/internal/app/ws"
 	"github.com/heroticket/internal/logger"
 	"github.com/heroticket/internal/service/auth"
@@ -15,6 +18,7 @@ import (
 	"github.com/heroticket/internal/service/jwt"
 	"github.com/heroticket/internal/service/ticket"
 	"github.com/heroticket/internal/service/user"
+	"github.com/heroticket/internal/web3"
 )
 
 type TicketCtrl struct {
@@ -47,13 +51,13 @@ func (c *TicketCtrl) Handler() http.Handler {
 	r.Get("/", c.tickets)
 	r.With(TokenCheck(c.jwt)).Get("/{contractAddress}", c.ticketByContractAddress)
 	r.Post("/{contractAddress}/whitelist-callback", c.whitelistCallback)
-	r.Post("/{contractAddress}/direct-purchase-callback", c.directPurchaseCallback)
+	r.Post("/{contractAddress}/token-purchase-callback", c.tokenPurchaseCallback)
 	r.Post("/verify-callback", c.verifyCallback)
 
 	r.Group(func(r chi.Router) {
 		r.Use(TokenRequired(c.jwt))
 		r.Get("/{contractAddress}/whitelist-qr", c.whitelistQR)
-		r.Get("/{contractAddress}/direct-purchase-qr", c.directPurchaseQR)
+		r.Get("/{contractAddress}/token-purchase-qr", c.tokenPurchaseQR)
 		r.Get("/{contractAddress}/verify-qr", c.verifyQR)
 		r.Post("/create", c.createTicket)
 	})
@@ -129,6 +133,7 @@ func (c *TicketCtrl) ticketByContractAddress(w http.ResponseWriter, r *http.Requ
 // @Param			contractAddress	path	string	true	"contract address"
 // @Param			sessionId		query	string	true	"session id"
 // @Success		200			{object}	CommonResponse{data=protocol.AuthorizationRequestMessage}
+// @Success		202			{object}	CommonResponse
 // @Failure		400			{object}	CommonResponse
 // @Failure		500			{object}	CommonResponse
 // @Security 		BearerAuth
@@ -164,16 +169,8 @@ func (c *TicketCtrl) whitelistQR(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 
-	// 4. get user from db
-	user, err := c.user.FindUserByID(r.Context(), jwtUser.ID)
-	if err != nil {
-		logger.Error("failed to find user by id", "error", err)
-		ErrorJSON(w, "failed to find user by id", http.StatusInternalServerError)
-		return
-	}
-
-	// 5. check if ticket collection exists
-	contractAddress := common.HexToAddress(rawContractAddress)
+	// 4. check if ticket collection exists
+	contractAddress := web3.HexToAddress(rawContractAddress)
 
 	ok, err := c.ticket.IsIssuedTicket(r.Context(), contractAddress)
 	if err != nil {
@@ -187,8 +184,200 @@ func (c *TicketCtrl) whitelistQR(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 6. check if user has ticket
-	tbaAddress := common.HexToAddress(user.TbaAddress)
+	// 5. get onchain ticket collection info
+	onchainTicket, err := c.ticket.OnChainTicketInfo(r.Context(), contractAddress)
+	if err != nil {
+		logger.Error("failed to get onchain ticket collection", "error", err)
+		ErrorJSON(w, "failed to get onchain ticket collection", http.StatusInternalServerError)
+		return
+	}
+
+	// 6. check if ticket is on sale
+	if onchainTicket.Remaining.Cmp(big.NewInt(0)) == 0 || onchainTicket.SaleEndAt.Int64() >= time.Now().Unix() {
+		ErrorJSON(w, "ticket is not on sale", http.StatusBadRequest)
+		return
+	}
+
+	// 7. get user from db
+	u, err := c.user.FindUserByID(r.Context(), jwtUser.ID)
+	if err != nil {
+		logger.Error("failed to find user by id", "error", err)
+		ErrorJSON(w, "failed to find user by id", http.StatusInternalServerError)
+		return
+	}
+
+	// 8. check if user has ticket
+	tbaAddress := web3.HexToAddress(u.TbaAddress)
+
+	ok, err = c.ticket.HasTicket(r.Context(), contractAddress, tbaAddress)
+	if err != nil {
+		logger.Error("failed to check if user has ticket", "error", err)
+		ErrorJSON(w, "failed to check if user has ticket", http.StatusInternalServerError)
+		return
+	}
+
+	if ok {
+		ErrorJSON(w, "user already has ticket", http.StatusBadRequest)
+		return
+	}
+
+	// 9. check if user is already on whitelist
+	accountAddress := web3.HexToAddress(u.AccountAddress)
+
+	ok, err = c.ticket.IsWhitelisted(r.Context(), contractAddress, accountAddress)
+	if err != nil {
+		logger.Error("failed to check if user is already on whitelist", "error", err)
+		ErrorJSON(w, "failed to check if user is already on whitelist", http.StatusInternalServerError)
+		return
+	}
+
+	if ok {
+		go ws.Send(ws.Message{
+			ID:   id,
+			Type: ws.EventMessage,
+			Event: ws.Event{
+				Name:   "whitelist-qr",
+				Status: ws.Done,
+				Data:   "User is already on whitelist",
+			},
+		})
+
+		resp := CommonResponse{
+			Status:  http.StatusAccepted,
+			Message: "User is already on whitelist",
+		}
+
+		_ = WriteJSON(w, http.StatusAccepted, resp)
+		return
+	}
+
+	// 10. get admin from db
+	admin, err := c.user.FindAdmin(r.Context())
+	if err != nil {
+		logger.Error("failed to find admin", "error", err)
+		ErrorJSON(w, "something went wrong", http.StatusInternalServerError)
+		return
+	}
+
+	callbackUrl := fmt.Sprintf("%s/v1/tickets/%s/whitelist-callback?sessionId=%s&accountAddress=%s", c.serverUrl, rawContractAddress, sessionId, u.AccountAddress)
+
+	// 11. create qr code
+	qrCode, err := c.auth.AuthorizationRequest(r.Context(), auth.AuthorizationRequestParams{
+		ID:          sessionId,
+		Reason:      "Update whitelist for purchase authentication",
+		Message:     "Scan the QR code to update whitelist for purchase authentication",
+		Sender:      admin.ID,
+		CallbackUrl: callbackUrl,
+	})
+	if err != nil {
+		logger.Error("failed to create authorization request", "error", err)
+		ErrorJSON(w, "failed to create authorization request", http.StatusInternalServerError)
+		return
+	}
+
+	go ws.Send(ws.Message{
+		ID:   id,
+		Type: ws.EventMessage,
+		Event: ws.Event{
+			Name:   "whitelist-qr",
+			Status: ws.Done,
+		},
+	})
+
+	// 12. return qr code
+	resp := CommonResponse{
+		Status:  http.StatusOK,
+		Message: "Successfully created authorization request",
+		Data:    qrCode,
+	}
+
+	_ = WriteJSON(w, http.StatusOK, resp)
+}
+
+// TokenPurchaseCallback godoc
+//
+// @Tags			tickets
+// @Summary		returns token purchase authorization qr code
+// @Description	returns token purchase authorization qr code
+// @Accept			json
+// @Produce			json
+// @Param			contractAddress	path	string	true	"contract address"
+// @Param			sessionId		query	string	true	"session id"
+// @Success		200			{object}	CommonResponse{data=protocol.AuthorizationRequestMessage}
+// @Failure		400			{object}	CommonResponse
+// @Failure		500			{object}	CommonResponse
+// @Security 		BearerAuth
+// @Router			/v1/tickets/{contractAddress}/token-purchase-qr [get]
+func (c *TicketCtrl) tokenPurchaseQR(w http.ResponseWriter, r *http.Request) {
+	// 1. get jwt user from context
+	jwtUser, err := c.jwt.FromContext(r.Context())
+	if err != nil {
+		logger.Error("failed to get jwt user from context", "error", err)
+		ErrorJSON(w, "failed to get jwt user from context", http.StatusInternalServerError)
+		return
+	}
+
+	// 2. get contract address from path
+	rawContractAddress := chi.URLParam(r, "contractAddress")
+
+	// 3. get session id from query
+	sessionId := r.URL.Query().Get("sessionId")
+
+	id := ws.ID(sessionId)
+
+	if !id.Valid() {
+		ErrorJSON(w, "invalid session id")
+		return
+	}
+
+	go ws.Send(ws.Message{
+		ID:   id,
+		Type: ws.EventMessage,
+		Event: ws.Event{
+			Name:   "token-purchase-qr",
+			Status: ws.InProgress,
+		},
+	})
+
+	// 4. check if ticket collection exists
+	contractAddress := web3.HexToAddress(rawContractAddress)
+
+	ok, err := c.ticket.IsIssuedTicket(r.Context(), contractAddress)
+	if err != nil {
+		logger.Error("failed to check if ticket collection exists", "error", err)
+		ErrorJSON(w, "failed to check if ticket collection exists", http.StatusInternalServerError)
+		return
+	}
+
+	if !ok {
+		ErrorJSON(w, "ticket collection does not exist", http.StatusBadRequest)
+		return
+	}
+
+	// 5. get onchain ticket collection info
+	onchainTicket, err := c.ticket.OnChainTicketInfo(r.Context(), contractAddress)
+	if err != nil {
+		logger.Error("failed to get onchain ticket collection", "error", err)
+		ErrorJSON(w, "failed to get onchain ticket collection", http.StatusInternalServerError)
+		return
+	}
+
+	// 6. check if ticket is on sale
+	if onchainTicket.Remaining.Cmp(big.NewInt(0)) == 0 || onchainTicket.SaleEndAt.Int64() >= time.Now().Unix() {
+		ErrorJSON(w, "ticket is not on sale", http.StatusBadRequest)
+		return
+	}
+
+	// 7. get user from db
+	u, err := c.user.FindUserByID(r.Context(), jwtUser.ID)
+	if err != nil {
+		logger.Error("failed to find user by id", "error", err)
+		ErrorJSON(w, "failed to find user by id", http.StatusInternalServerError)
+		return
+	}
+
+	// 8. check if user has ticket
+	tbaAddress := web3.HexToAddress(u.TbaAddress)
 
 	ok, err = c.ticket.HasTicket(r.Context(), contractAddress, tbaAddress)
 	if err != nil {
@@ -209,13 +398,13 @@ func (c *TicketCtrl) whitelistQR(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	callbackUrl := fmt.Sprintf("%s/v1/tickets/%s/whitelist-callback?sessionId=%s&accountAddress=%s", c.serverUrl, rawContractAddress, sessionId, user.AccountAddress)
+	callbackUrl := fmt.Sprintf("%s/v1/tickets/%s/token-purchase-callback?sessionId=%s&accountAddress=%s", c.serverUrl, rawContractAddress, sessionId, u.AccountAddress)
 
-	// 7. create qr code
+	// 9. create qr code
 	qrCode, err := c.auth.AuthorizationRequest(r.Context(), auth.AuthorizationRequestParams{
 		ID:          sessionId,
-		Reason:      "Update whitelist for purchase authorization",
-		Message:     "Scan the QR code to update whitelist for purchase authorization",
+		Reason:      "Ticket purchase authorization",
+		Message:     fmt.Sprintf("Scan the QR code to authenticate ticket purchase for %s", rawContractAddress),
 		Sender:      admin.ID,
 		CallbackUrl: callbackUrl,
 	})
@@ -225,16 +414,7 @@ func (c *TicketCtrl) whitelistQR(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go ws.Send(ws.Message{
-		ID:   id,
-		Type: ws.EventMessage,
-		Event: ws.Event{
-			Name:   "whitelist-qr",
-			Status: ws.Done,
-		},
-	})
-
-	// 8. return qr code
+	// 10. return qr code
 	resp := CommonResponse{
 		Status:  http.StatusOK,
 		Message: "Successfully created authorization request",
@@ -242,38 +422,6 @@ func (c *TicketCtrl) whitelistQR(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_ = WriteJSON(w, http.StatusOK, resp)
-}
-
-// DirectPurchaseQR godoc
-//
-// @Tags			tickets
-// @Summary		returns direct purchase authorization qr code
-// @Description	returns direct purchase authorization qr code
-// @Accept			json
-// @Produce			json
-// @Param			contractAddress	path	string	true	"contract address"
-// @Param			sessionId		query	string	true	"session id"
-// @Success		200			{object}	CommonResponse{data=protocol.AuthorizationRequestMessage}
-// @Failure		400			{object}	CommonResponse
-// @Failure		500			{object}	CommonResponse
-// @Security 		BearerAuth
-// @Router			/v1/tickets/{contractAddress}/direct-purchase-qr [get]
-func (c *TicketCtrl) directPurchaseQR(w http.ResponseWriter, r *http.Request) {
-	// 1. get jwt user from context
-
-	// 2. get contract address from path
-
-	// 3. get session id from query
-
-	// 4. get user from db
-
-	// 5. check if ticket collection exists
-
-	// 6. check if user has ticket
-
-	// 7. create qr code
-
-	// 8. return qr code
 }
 
 // WhitelistCallback godoc
@@ -308,7 +456,7 @@ func (c *TicketCtrl) whitelistCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 4. get token from body
-	token, err := io.ReadAll(r.Body)
+	tokenBytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		logger.Error("failed to read token from body", "error", err)
 		ErrorJSON(w, "failed to read token from body", http.StatusInternalServerError)
@@ -334,7 +482,7 @@ func (c *TicketCtrl) whitelistCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 6. check if ticket collection exists
-	contractAddress := common.HexToAddress(rawContractAddress)
+	contractAddress := web3.HexToAddress(rawContractAddress)
 
 	ok, err := c.ticket.IsIssuedTicket(r.Context(), contractAddress)
 	if err != nil {
@@ -349,7 +497,7 @@ func (c *TicketCtrl) whitelistCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 7. check if user has ticket
-	tbaAddress := common.HexToAddress(user.TbaAddress)
+	tbaAddress := web3.HexToAddress(user.TbaAddress)
 
 	ok, err = c.ticket.HasTicket(r.Context(), contractAddress, tbaAddress)
 	if err != nil {
@@ -364,7 +512,7 @@ func (c *TicketCtrl) whitelistCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 8. verify token
-	resp, err := c.auth.AuthorizationCallback(r.Context(), sessionId, string(token))
+	resp, err := c.auth.AuthorizationCallback(r.Context(), sessionId, string(tokenBytes))
 	if err != nil {
 		logger.Error("failed to handle whitelist callback", "error", err)
 		ErrorJSON(w, "failed to handle whitelist callback", http.StatusInternalServerError)
@@ -381,7 +529,7 @@ func (c *TicketCtrl) whitelistCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 11. call contract to set user address on whitelist
-	accountAddress := common.HexToAddress(rawAccountAddress)
+	accountAddress := web3.HexToAddress(rawAccountAddress)
 
 	err = c.ticket.UpdateWhitelist(r.Context(), contractAddress, accountAddress)
 	if err != nil {
@@ -409,11 +557,11 @@ func (c *TicketCtrl) whitelistCallback(w http.ResponseWriter, r *http.Request) {
 	_ = WriteJSON(w, http.StatusOK, response)
 }
 
-// DirectPurchaseCallback godoc
+// TokenPurchaseCallback godoc
 //
 // @Tags			tickets
-// @Summary			direct purchase callback
-// @Description		direct purchase callback
+// @Summary			token purchase callback
+// @Description		token purchase callback
 // @Accept			json
 // @Produce			json
 // @Param			contractAddress	path	string	true	"contract address"
@@ -423,9 +571,123 @@ func (c *TicketCtrl) whitelistCallback(w http.ResponseWriter, r *http.Request) {
 // @Success			200			{object}	CommonResponse
 // @Failure			400			{object}	CommonResponse
 // @Failure			500			{object}	CommonResponse
-// @Router			/v1/tickets/direct-purchase-callback [post]
-func (c *TicketCtrl) directPurchaseCallback(w http.ResponseWriter, r *http.Request) {
+// @Router			/v1/tickets/token-purchase-callback [post]
+func (c *TicketCtrl) tokenPurchaseCallback(w http.ResponseWriter, r *http.Request) {
+	// 1. get contract address from path
+	rawContractAddress := strings.ToLower(chi.URLParam(r, "contractAddress"))
 
+	// 2. get account address from query
+	rawAccountAddress := strings.ToLower(r.URL.Query().Get("accountAddress"))
+
+	// 3. get session id from query
+	sessionId := r.URL.Query().Get("sessionId")
+
+	id := ws.ID(sessionId)
+	if !id.Valid() {
+		ErrorJSON(w, "invalid session id")
+		return
+	}
+
+	// 4. get token from body
+	tokenBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		logger.Error("failed to read token from body", "error", err)
+		ErrorJSON(w, "failed to read token from body", http.StatusInternalServerError)
+		return
+	}
+	defer r.Body.Close()
+
+	go ws.Send(ws.Message{
+		ID:   id,
+		Type: ws.EventMessage,
+		Event: ws.Event{
+			Name:   "token-purchase-callback",
+			Status: ws.InProgress,
+		},
+	})
+
+	// 5. get user from db
+	user, err := c.user.FindUserByAccountAddress(r.Context(), rawAccountAddress)
+	if err != nil {
+		logger.Error("failed to find user by account address", "error", err)
+		ErrorJSON(w, "failed to find user by account address", http.StatusInternalServerError)
+		return
+	}
+
+	// 6. check if ticket collection exists
+	contractAddress := web3.HexToAddress(rawContractAddress)
+
+	ok, err := c.ticket.IsIssuedTicket(r.Context(), contractAddress)
+	if err != nil {
+		logger.Error("failed to check if ticket collection exists", "error", err)
+		ErrorJSON(w, "failed to check if ticket collection exists", http.StatusInternalServerError)
+		return
+	}
+
+	if !ok {
+		ErrorJSON(w, "ticket collection does not exist", http.StatusBadRequest)
+		return
+	}
+
+	// 7. check if user has ticket
+	tbaAddress := web3.HexToAddress(user.TbaAddress)
+
+	ok, err = c.ticket.HasTicket(r.Context(), contractAddress, tbaAddress)
+	if err != nil {
+		logger.Error("failed to check if user has ticket", "error", err)
+		ErrorJSON(w, "failed to check if user has ticket", http.StatusInternalServerError)
+		return
+	}
+
+	if ok {
+		ErrorJSON(w, "user already has ticket", http.StatusBadRequest)
+		return
+	}
+
+	// 8. verify token
+	resp, err := c.auth.AuthorizationCallback(r.Context(), sessionId, string(tokenBytes))
+	if err != nil {
+		logger.Error("failed to handle token purchase callback", "error", err)
+		ErrorJSON(w, "failed to handle token purchase callback", http.StatusInternalServerError)
+		return
+	}
+
+	// 9. get user id from verification response
+	userID := resp.From
+
+	// 10. check if user id matches user id from db
+	if userID != user.ID {
+		ErrorJSON(w, "user id does not match", http.StatusBadRequest)
+		return
+	}
+
+	// 11. call contract to mint token
+	accountAddress := web3.HexToAddress(rawAccountAddress)
+
+	_, err = c.ticket.BuyTicketByToken(r.Context(), contractAddress, accountAddress)
+	if err != nil {
+		logger.Error("failed to buy ticket by token", "error", err)
+		ErrorJSON(w, "failed to buy ticket by token", http.StatusInternalServerError)
+		return
+	}
+
+	go ws.Send(ws.Message{
+		ID:   id,
+		Type: ws.EventMessage,
+		Event: ws.Event{
+			Name:   "token-purchase-callback",
+			Status: ws.Done,
+			Data:   "Successfully purchased ticket",
+		},
+	})
+
+	// 12. return success response
+	response := CommonResponse{
+		Status:  http.StatusOK,
+		Message: fmt.Sprintf("Successfully purchased ticket for user with ID %s", userID),
+	}
+
+	_ = WriteJSON(w, http.StatusOK, response)
 }
 
 // VerifyQR godoc
@@ -444,20 +706,100 @@ func (c *TicketCtrl) directPurchaseCallback(w http.ResponseWriter, r *http.Reque
 // @Router			/v1/tickets/{contractAddress}/verify-qr [get]
 func (c *TicketCtrl) verifyQR(w http.ResponseWriter, r *http.Request) {
 	// 1. get jwt user from context
+	jwtUser, err := c.jwt.FromContext(r.Context())
+	if err != nil {
+		logger.Error("failed to get jwt user from context", "error", err)
+		ErrorJSON(w, "failed to get jwt user from context", http.StatusInternalServerError)
+		return
+	}
 
 	// 2. get contract address from path
+	rawContractAddress := chi.URLParam(r, "contractAddress")
 
 	// 3. get session id from query
+	sessionId := r.URL.Query().Get("sessionId")
 
-	// 4. get user from db
+	id := ws.ID(sessionId)
 
-	// 5. check if ticket collection exists
+	if !id.Valid() {
+		ErrorJSON(w, "invalid session id")
+		return
+	}
 
-	// 6. check if user is owner of ticket collection
+	go ws.Send(ws.Message{
+		ID:   id,
+		Type: ws.EventMessage,
+		Event: ws.Event{
+			Name:   "verify-qr",
+			Status: ws.InProgress,
+		},
+	})
 
-	// 7. create qr code
+	// 4. check if ticket collection exists
+	contractAddress := web3.HexToAddress(rawContractAddress)
+
+	ok, err := c.ticket.IsIssuedTicket(r.Context(), contractAddress)
+	if err != nil {
+		logger.Error("failed to check if ticket collection exists", "error", err)
+		ErrorJSON(w, "failed to check if ticket collection exists", http.StatusInternalServerError)
+		return
+	}
+
+	if !ok {
+		ErrorJSON(w, "ticket collection does not exist", http.StatusBadRequest)
+		return
+	}
+
+	// 5. get onchain ticket collection
+	onchainTicket, err := c.ticket.OnChainTicketInfo(r.Context(), contractAddress)
+	if err != nil {
+		logger.Error("failed to get onchain ticket collection", "error", err)
+		ErrorJSON(w, "failed to get onchain ticket collection", http.StatusInternalServerError)
+		return
+	}
+
+	// 6. get user from db
+	u, err := c.user.FindUserByID(r.Context(), jwtUser.ID)
+	if err != nil {
+		logger.Error("failed to find user by id", "error", err)
+		ErrorJSON(w, "failed to find user by id", http.StatusInternalServerError)
+		return
+	}
+
+	// 7. check if user is owner of ticket collection
+	accountAddress := web3.HexToAddress(u.AccountAddress)
+
+	if onchainTicket.Issuer.Big().Cmp(accountAddress.Big()) != 0 {
+		ErrorJSON(w, "user is not owner of ticket collection", http.StatusBadRequest)
+		return
+	}
+
+	// 8. create qr code
+	// TODO: add params
+	qrCode, err := c.auth.AuthorizationRequest(r.Context(), auth.AuthorizationRequestParams{})
+	if err != nil {
+		logger.Error("failed to create authorization request", "error", err)
+		ErrorJSON(w, "failed to create authorization request", http.StatusInternalServerError)
+		return
+	}
+
+	go ws.Send(ws.Message{
+		ID:   id,
+		Type: ws.EventMessage,
+		Event: ws.Event{
+			Name:   "verify-qr",
+			Status: ws.Done,
+		},
+	})
 
 	// 8. return qr code
+	resp := CommonResponse{
+		Status:  http.StatusOK,
+		Message: "Successfully created authorization request",
+		Data:    qrCode,
+	}
+
+	_ = WriteJSON(w, http.StatusOK, resp)
 }
 
 // VerifyCallback godoc
@@ -475,12 +817,60 @@ func (c *TicketCtrl) verifyQR(w http.ResponseWriter, r *http.Request) {
 // @Router			/v1/tickets/verify-callback [post]
 func (c *TicketCtrl) verifyCallback(w http.ResponseWriter, r *http.Request) {
 	// 1. get session id from query
+	sessionId := r.URL.Query().Get("sessionId")
+
+	id := ws.ID(sessionId)
+
+	if !id.Valid() {
+		ErrorJSON(w, "invalid session id")
+		return
+	}
 
 	// 2. get token from body
+	tokenBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		logger.Error("failed to read token from body", "error", err)
+		ErrorJSON(w, "failed to read token from body", http.StatusInternalServerError)
+		return
+	}
+
+	go ws.Send(ws.Message{
+		ID:   id,
+		Type: ws.EventMessage,
+		Event: ws.Event{
+			Name:   "verify-callback",
+			Status: ws.InProgress,
+		},
+	})
 
 	// 3. verify token
+	resp, err := c.auth.AuthorizationCallback(r.Context(), sessionId, string(tokenBytes))
+	if err != nil {
+		logger.Error("failed to handle verify callback", "error", err)
+		ErrorJSON(w, "failed to handle verify callback", http.StatusInternalServerError)
+		return
+	}
 
-	// 4. return success response
+	// 4. get user id from verification response
+	userID := resp.From
+
+	go ws.Send(ws.Message{
+		ID:   id,
+		Type: ws.EventMessage,
+		Event: ws.Event{
+			Name:   "verify-callback",
+			Status: ws.Done,
+			Data:   "Successfully verified ticket ownership",
+		},
+	})
+
+	// 5. return success response
+	response := CommonResponse{
+		Status:  http.StatusOK,
+		Message: fmt.Sprintf("Successfully verified ticket ownership for user with ID %s", userID),
+	}
+
+	_ = WriteJSON(w, http.StatusOK, response)
 }
 
 // CreateTicket godoc
@@ -490,29 +880,164 @@ func (c *TicketCtrl) verifyCallback(w http.ResponseWriter, r *http.Request) {
 // @Description	creates ticket
 // @Accept			json
 // @Produce		json
-// @Param			name		formData	string	true	"ticket name"
-// @Param			symbol		formData	string	true	"ticket symbol"
-// @Param			description	formData	string	true	"ticket description"
-// @Param			organizer	formData	string	true	"ticket organizer"
-// @Param			location	formData	string	true	"ticket location"
-// @Param			date		formData	string	true	"ticket date"
-// @Param			bannerImage	formData	file	true	"ticket banner image"
-// @Param			ticketImage	formData	file	true	"ticket image"
-// @Param			price		formData	int64	true	"ticket price"
-// @Param			totalSupply	formData	int64	true	"ticket total supply"
-// @Success		201			{object}	CommonResponse
+// @Param			name			formData	string	true	"ticket name"
+// @Param			symbol			formData	string	true	"ticket symbol"
+// @Param			description		formData	string	true	"ticket description"
+// @Param			organizer		formData	string	true	"ticket organizer"
+// @Param			location		formData	string	true	"ticket location"
+// @Param			date			formData	string	true	"ticket date"
+// @Param			bannerImage		formData	file	true	"ticket banner image"
+// @Param			ticketUri		formData	string	true	"ticket uri"
+// @Param			ethPrice		formData	int64	true	"ticket eth price"
+// @Param			tokenPrice		formData	int64	true	"ticket token price"
+// @Param			totalSupply		formData	int64	true	"ticket total supply"
+// @Param			saleDuration	formData	int64	false	"ticket sale duration"
+// @Success		201			{object}	CommonResponse{data=ticket.TicketCollection}
 // @Failure		400			{object}	CommonResponse
 // @Failure		500			{object}	CommonResponse
 // @Security 		BearerAuth
 // @Router			/v1/tickets/create [post]
 func (c *TicketCtrl) createTicket(w http.ResponseWriter, r *http.Request) {
 	// 1. get jwt user from context
+	jwtUser, err := c.jwt.FromContext(r.Context())
+	if err != nil {
+		logger.Error("failed to get jwt user from context", "error", err)
+		ErrorJSON(w, "failed to get jwt user from context", http.StatusInternalServerError)
+		return
+	}
 
-	// 2. get params from form data
+	// 2. get user from db
+	u, err := c.user.FindUserByID(r.Context(), jwtUser.ID)
+	if err != nil {
+		logger.Error("failed to find user by id", "error", err)
+		ErrorJSON(w, "failed to find user by id", http.StatusInternalServerError)
+		return
+	}
 
-	// 3. call contract to create new ticket collection
+	// 3. get params from form data
+	name := r.FormValue("name")
+	symbol := r.FormValue("symbol")
+	description := r.FormValue("description")
+	organizer := r.FormValue("organizer")
+	location := r.FormValue("location")
+	date := r.FormValue("date")
 
-	// 4. save ticket collection to db
+	bannerImage, imgHeader, err := r.FormFile("bannerImage")
+	if err != nil {
+		logger.Error("failed to get banner image from form data", "error", err)
+		ErrorJSON(w, "failed to get banner image from form data", http.StatusInternalServerError)
+		return
+	}
+	defer bannerImage.Close()
 
-	// 5. return success response
+	ticketUri := r.FormValue("ticketUri")
+	ethPrice := r.FormValue("ethPrice")
+	tokenPrice := r.FormValue("tokenPrice")
+	totalSupply := r.FormValue("totalSupply")
+	saleDuration := r.FormValue("saleDuration")
+
+	// TODO: validate params
+
+	ethPriceInt, err := strconv.ParseUint(ethPrice, 10, 64)
+	if err != nil {
+		logger.Error("failed to parse eth price", "error", err)
+		ErrorJSON(w, "failed to parse eth price", http.StatusInternalServerError)
+		return
+	}
+
+	tokenPriceInt, err := strconv.ParseUint(tokenPrice, 10, 64)
+	if err != nil {
+		logger.Error("failed to parse token price", "error", err)
+		ErrorJSON(w, "failed to parse token price", http.StatusInternalServerError)
+		return
+	}
+
+	totalSupplyInt, err := strconv.ParseUint(totalSupply, 10, 64)
+	if err != nil {
+		logger.Error("failed to parse total supply", "error", err)
+		ErrorJSON(w, "failed to parse total supply", http.StatusInternalServerError)
+		return
+	}
+
+	saleDurationInt, err := strconv.ParseUint(saleDuration, 10, 64)
+	if err != nil {
+		logger.Error("failed to parse sale duration", "error", err)
+		ErrorJSON(w, "failed to parse sale duration", http.StatusInternalServerError)
+		return
+	}
+
+	// 4. upload banner image to ipfs
+	pinResp, err := c.ipfs.PinFile(r.Context(), bannerImage, fmt.Sprintf("%s_%s", uuid.New().String(), imgHeader.Filename))
+	if err != nil {
+		logger.Error("failed to pin file to ipfs", "error", err)
+		ErrorJSON(w, "failed to pin file to ipfs", http.StatusInternalServerError)
+		return
+	}
+
+	bannerUrl := fmt.Sprintf("https://ipfs.io/ipfs/%s", pinResp.IpfsHash)
+
+	if !strings.HasPrefix(ticketUri, "https://ipfs.io/ipfs/") {
+		ticketUri = fmt.Sprintf("https://ipfs.io/ipfs/%s", ticketUri)
+	}
+
+	// 5. call contract to create new ticket collection
+	ticketIssued, err := c.ticket.IssueTicket(r.Context(), ticket.IssueTicketParams{
+		TicketName:       name,
+		TicketSymbol:     symbol,
+		TicketUri:        ticketUri,
+		Issuer:           web3.HexToAddress(u.AccountAddress),
+		TicketAmount:     big.NewInt(0).SetUint64(totalSupplyInt),
+		TicketEthPrice:   big.NewInt(0).SetUint64(ethPriceInt),
+		TicketTokenPrice: big.NewInt(0).SetUint64(tokenPriceInt),
+		SaleDuration:     big.NewInt(0).SetUint64(saleDurationInt),
+	})
+	if err != nil {
+		logger.Error("failed to issue ticket", "error", err)
+		ErrorJSON(w, "failed to issue ticket", http.StatusInternalServerError)
+		return
+	}
+
+	// 4. get onchain ticket collection data
+	onchainTicket, err := c.ticket.OnChainTicketInfo(r.Context(), ticketIssued.TicketAddress)
+	if err != nil {
+		logger.Error("failed to get onchain ticket collection data", "error", err)
+		ErrorJSON(w, "failed to get onchain ticket collection data", http.StatusInternalServerError)
+		return
+	}
+
+	// 5. save ticket collection to db
+	params := ticket.CreateTicketCollectionParams{
+		ContractAddress: strings.ToLower(ticketIssued.TicketAddress.Hex()),
+		IssuerAddress:   strings.ToLower(u.AccountAddress),
+		Name:            name,
+		Symbol:          symbol,
+		Description:     description,
+		Organizer:       organizer,
+		Location:        location,
+		Date:            date,
+		BannerUrl:       bannerUrl,
+		TicketUrl:       ticketUri,
+		EthPrice:        ethPriceInt,
+		TokenPrice:      tokenPriceInt,
+		TotalSupply:     totalSupplyInt,
+		Remaining:       totalSupplyInt,
+		SaleStartAt:     onchainTicket.SaleStartAt.Int64(),
+		SaleEndAt:       onchainTicket.SaleEndAt.Int64(),
+	}
+
+	ticketCollection, err := c.ticket.CreateTicketCollection(r.Context(), params)
+	if err != nil {
+		logger.Error("failed to save ticket collection", "error", err)
+		ErrorJSON(w, "failed to save ticket collection", http.StatusInternalServerError)
+		return
+	}
+
+	// 6. return success response
+	resp := CommonResponse{
+		Status:  http.StatusCreated,
+		Message: "Successfully created ticket collection",
+		Data:    ticketCollection,
+	}
+
+	_ = WriteJSON(w, http.StatusCreated, resp)
 }

@@ -21,6 +21,7 @@ import (
 	"github.com/heroticket/internal/service/notice"
 	nrepo "github.com/heroticket/internal/service/notice/repository/mongo"
 	"github.com/heroticket/internal/service/ticket"
+	trepo "github.com/heroticket/internal/service/ticket/repository/mongo"
 	"github.com/heroticket/internal/service/user"
 	urepo "github.com/heroticket/internal/service/user/repository/mongo"
 	"github.com/heroticket/internal/web3"
@@ -108,8 +109,10 @@ func Run() {
 	handleErr(err)
 
 	// TODO: add ticket repo
+	ticketRepo, err := trepo.New(ctx, mongoClient, cfg.Ticket.DbName)
+	handleErr(err)
 
-	tickets := ticket.New(ethclient, heroticketContract, pvk, nil)
+	tickets := ticket.New(ethclient, heroticketContract, pvk, ticketRepo)
 
 	userRepo, err := urepo.New(ctx, mongoClient, cfg.User.DbName)
 	handleErr(err)

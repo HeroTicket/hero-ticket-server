@@ -13,7 +13,7 @@ type Query interface {
 type Command interface {
 	CreateTicket(ctx context.Context, params Ticket) (*Ticket, error)
 	DeleteTicket(ctx context.Context, id string) error
-	CreateTicketCollection(ctx context.Context, params TicketCollection) (*TicketCollection, error)
+	CreateTicketCollection(ctx context.Context, params CreateTicketCollectionParams) (*TicketCollection, error)
 	// CreateTBA(ctx context.Context, params TbaAddresses) (*TbaAddresses, error)
 }
 

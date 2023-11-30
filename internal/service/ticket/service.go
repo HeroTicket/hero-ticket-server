@@ -16,6 +16,8 @@ import (
 type Service interface {
 	IsIssuedTicket(ctx context.Context, contractAddress common.Address) (bool, error)
 	HasTicket(ctx context.Context, contractAddress, owner common.Address) (bool, error)
+	IsWhitelisted(ctx context.Context, contractAddress, to common.Address) (bool, error)
+	OnChainTicketInfo(ctx context.Context, contractAddress common.Address) (*OnchainTicketInfo, error)
 	TicketsByOwner(ctx context.Context, owner common.Address) ([]common.Address, error)
 	TokenBalanceOf(ctx context.Context, owner common.Address) (*big.Int, error)
 	UpdateWhitelist(ctx context.Context, contractAddress, to common.Address) error
@@ -24,6 +26,7 @@ type Service interface {
 	BuyTicketByToken(ctx context.Context, contractAddress, buyerAddress common.Address) (*heroticket.HeroticketTicketSold, error)
 
 	// TODO: repo에 저장하는 메서드 추가
+	CreateTicketCollection(ctx context.Context, params CreateTicketCollectionParams) (*TicketCollection, error)
 }
 
 type TicketService struct {
@@ -48,6 +51,27 @@ func (s *TicketService) IsIssuedTicket(ctx context.Context, contractAddress comm
 
 func (s *TicketService) HasTicket(ctx context.Context, contractAddress, owner common.Address) (bool, error) {
 	return s.hero.HasTicket(&bind.CallOpts{Context: ctx}, contractAddress, owner)
+}
+
+func (s *TicketService) IsWhitelisted(ctx context.Context, contractAddress, to common.Address) (bool, error) {
+	return s.hero.IsWhiteListed(&bind.CallOpts{Context: ctx}, contractAddress, to)
+}
+
+func (s *TicketService) OnChainTicketInfo(ctx context.Context, contractAddress common.Address) (*OnchainTicketInfo, error) {
+	issuer, remain, ethPrice, tokenPrice, saleStartAt, saleEndAt, err := s.hero.TicketInfo(&bind.CallOpts{Context: ctx}, contractAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	return &OnchainTicketInfo{
+		ContractAddress: contractAddress,
+		Issuer:          issuer,
+		Remaining:       remain,
+		EthPrice:        ethPrice,
+		TokenPrice:      tokenPrice,
+		SaleStartAt:     saleStartAt,
+		SaleEndAt:       saleEndAt,
+	}, nil
 }
 
 func (s *TicketService) TicketsByOwner(ctx context.Context, owner common.Address) ([]common.Address, error) {
@@ -207,4 +231,8 @@ func (s *TicketService) txOpts(ctx context.Context) (*bind.TransactOpts, error) 
 	auth.GasLimit = 3000000
 
 	return auth, nil
+}
+
+func (s *TicketService) CreateTicketCollection(ctx context.Context, params CreateTicketCollectionParams) (*TicketCollection, error) {
+	return s.repo.CreateTicketCollection(ctx, params)
 }

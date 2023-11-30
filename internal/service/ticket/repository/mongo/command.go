@@ -2,6 +2,7 @@ package mongo
 
 import (
 	"context"
+	"time"
 
 	"github.com/heroticket/internal/service/ticket"
 	"go.mongodb.org/mongo-driver/bson"
@@ -55,27 +56,29 @@ func (c *MongoCommand) DeleteTicket(ctx context.Context, id string) error {
 	return nil
 }
 
-func (c *MongoCommand) CreateTicketCollection(ctx context.Context, params ticket.TicketCollection) (*ticket.TicketCollection, error) {
+func (c *MongoCommand) CreateTicketCollection(ctx context.Context, params ticket.CreateTicketCollectionParams) (*ticket.TicketCollection, error) {
 	coll := c.collection()
 
 	var tc ticket.TicketCollection
 
-	tc.ID = params.ID
-	tc.CreatorID = params.CreatorID
-	tc.Address = params.Address
+	tc.IssuerAddress = params.IssuerAddress
+	tc.ContractAddress = params.ContractAddress
 	tc.Name = params.Name
 	tc.Symbol = params.Symbol
 	tc.Description = params.Description
 	tc.Organizer = params.Organizer
 	tc.Location = params.Location
 	tc.Date = params.Date
-	tc.BannerImage = params.BannerImage
-	tc.TicketImage = params.TicketImage
-	tc.Price = params.Price
+	tc.BannerUrl = params.BannerUrl
+	tc.TicketUrl = params.TicketUrl
+	tc.EthPrice = params.EthPrice
+	tc.TokenPrice = params.TokenPrice
 	tc.TotalSupply = params.TotalSupply
 	tc.Remaining = params.Remaining
-	tc.CreatedAt = params.CreatedAt
-	tc.UpdatedAt = params.UpdatedAt
+	tc.SaleStartAt = params.SaleStartAt
+	tc.SaleEndAt = params.SaleEndAt
+	tc.CreatedAt = time.Now().Unix()
+	tc.UpdatedAt = time.Now().Unix()
 
 	_, err := coll.InsertOne(ctx, tc)
 	if err != nil {
