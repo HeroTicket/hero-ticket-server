@@ -481,16 +481,23 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "file",
-                        "description": "ticket image",
-                        "name": "ticketImage",
+                        "type": "string",
+                        "description": "ticket uri",
+                        "name": "ticketUri",
                         "in": "formData",
                         "required": true
                     },
                     {
                         "type": "integer",
-                        "description": "ticket price",
-                        "name": "price",
+                        "description": "ticket eth price",
+                        "name": "ethPrice",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ticket token price",
+                        "name": "tokenPrice",
                         "in": "formData",
                         "required": true
                     },
@@ -500,13 +507,31 @@ const docTemplate = `{
                         "name": "totalSupply",
                         "in": "formData",
                         "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "ticket sale duration",
+                        "name": "saleDuration",
+                        "in": "formData"
                     }
                 ],
                 "responses": {
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/rest.CommonResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/rest.CommonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/ticket.TicketCollection"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -524,9 +549,9 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/tickets/direct-purchase-callback": {
+        "/v1/tickets/token-purchase-callback": {
             "post": {
-                "description": "direct purchase callback",
+                "description": "token purchase callback",
                 "consumes": [
                     "application/json"
                 ],
@@ -536,7 +561,7 @@ const docTemplate = `{
                 "tags": [
                     "tickets"
                 ],
-                "summary": "direct purchase callback",
+                "summary": "token purchase callback",
                 "parameters": [
                     {
                         "type": "string",
@@ -688,14 +713,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/tickets/{contractAddress}/direct-purchase-qr": {
+        "/v1/tickets/{contractAddress}/token-purchase-qr": {
             "get": {
                 "security": [
                     {
                         "BearerAuth": []
                     }
                 ],
-                "description": "returns direct purchase authorization qr code",
+                "description": "returns token purchase authorization qr code",
                 "consumes": [
                     "application/json"
                 ],
@@ -705,7 +730,7 @@ const docTemplate = `{
                 "tags": [
                     "tickets"
                 ],
-                "summary": "returns direct purchase authorization qr code",
+                "summary": "returns token purchase authorization qr code",
                 "parameters": [
                     {
                         "type": "string",
@@ -942,6 +967,12 @@ const docTemplate = `{
                                     }
                                 }
                             ]
+                        }
+                    },
+                    "202": {
+                        "description": "Accepted",
+                        "schema": {
+                            "$ref": "#/definitions/rest.CommonResponse"
                         }
                     },
                     "400": {
@@ -1292,6 +1323,9 @@ const docTemplate = `{
                 "tbaAddress": {
                     "type": "string"
                 },
+                "tbaTokenBalance": {
+                    "type": "string"
+                },
                 "updatedAt": {
                     "type": "integer"
                 }
@@ -1460,6 +1494,68 @@ const docTemplate = `{
                 }
             }
         },
+        "ticket.TicketCollection": {
+            "type": "object",
+            "properties": {
+                "bannerUrl": {
+                    "type": "string"
+                },
+                "contractAddress": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "ethPrice": {
+                    "type": "integer"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "issuerAddress": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "organizer": {
+                    "type": "string"
+                },
+                "remaining": {
+                    "type": "integer"
+                },
+                "saleEndAt": {
+                    "type": "integer"
+                },
+                "saleStartAt": {
+                    "type": "integer"
+                },
+                "symbol": {
+                    "type": "string"
+                },
+                "ticketUrl": {
+                    "type": "string"
+                },
+                "tokenPrice": {
+                    "type": "integer"
+                },
+                "totalSupply": {
+                    "type": "integer"
+                },
+                "updatedAt": {
+                    "type": "integer"
+                }
+            }
+        },
         "time.Duration": {
             "type": "integer",
             "enum": [
@@ -1471,6 +1567,8 @@ const docTemplate = `{
                 1000000000,
                 60000000000,
                 3600000000000,
+                -9223372036854775808,
+                9223372036854775807,
                 1,
                 1000,
                 1000000,
@@ -1487,6 +1585,8 @@ const docTemplate = `{
                 "Second",
                 "Minute",
                 "Hour",
+                "minDuration",
+                "maxDuration",
                 "Nanosecond",
                 "Microsecond",
                 "Millisecond",

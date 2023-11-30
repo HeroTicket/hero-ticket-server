@@ -4,32 +4,34 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/heroticket/internal/app/ws"
 	"github.com/heroticket/internal/logger"
 	"github.com/heroticket/internal/service/auth"
 	"github.com/heroticket/internal/service/jwt"
+	"github.com/heroticket/internal/service/ticket"
 	"github.com/heroticket/internal/service/user"
 	"github.com/heroticket/internal/web3"
 )
 
 type UserCtrl struct {
 	serverUrl string
-	adminID   string
 
-	auth auth.Service
-	jwt  jwt.Service
-	user user.Service
+	auth   auth.Service
+	jwt    jwt.Service
+	user   user.Service
+	ticket ticket.Service
 }
 
-func NewUserCtrl(auth auth.Service, jwt jwt.Service, user user.Service, serverUrl, adminID string) *UserCtrl {
+func NewUserCtrl(auth auth.Service, jwt jwt.Service, user user.Service, ticket ticket.Service, serverUrl string) *UserCtrl {
 	return &UserCtrl{
 		serverUrl: serverUrl,
-		adminID:   adminID,
 		auth:      auth,
 		jwt:       jwt,
 		user:      user,
+		ticket:    ticket,
 	}
 }
 
@@ -46,7 +48,6 @@ func (c *UserCtrl) Handler() http.Handler {
 
 	r.Group(func(r chi.Router) {
 		r.Use(TokenRequired(c.jwt))
-		// 사용자 정보 조회
 		r.Get("/info", c.info)
 		r.Post("/register/{accountAddress}", c.register)
 	})
@@ -89,9 +90,14 @@ func (c *UserCtrl) loginQR(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 
-	callbackUrl := fmt.Sprintf("%s/v1/users/login-callback?sessionId=%s", c.serverUrl, sessionId)
+	admin, err := c.user.FindAdmin(r.Context())
+	if err != nil {
+		logger.Error("failed to find admin", "error", err)
+		ErrorJSON(w, "something went wrong", http.StatusInternalServerError)
+		return
+	}
 
-	audience := c.adminID
+	callbackUrl := fmt.Sprintf("%s/v1/users/login-callback?sessionId=%s", c.serverUrl, sessionId)
 
 	// 3. create login request
 	req, err := c.auth.AuthorizationRequest(r.Context(), auth.AuthorizationRequestParams{
@@ -99,7 +105,7 @@ func (c *UserCtrl) loginQR(w http.ResponseWriter, r *http.Request) {
 		Reason:      "Login to Hero Ticket",
 		Message:     "Scan the QR code to login to Hero Ticket",
 		CallbackUrl: callbackUrl,
-		Sender:      audience,
+		Sender:      admin.ID,
 	})
 	if err != nil {
 		logger.Error("failed to create login request", "error", err)
@@ -221,6 +227,8 @@ func (c *UserCtrl) loginCallback(w http.ResponseWriter, r *http.Request) {
 //	@Failure		500			{object}	CommonResponse
 //	@Router			/v1/users/refresh [post]
 func (c *UserCtrl) refresh(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 1024*1024) // 1MB
+
 	// 1. read token from request body
 	tokenBytes, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -291,7 +299,22 @@ func (c *UserCtrl) info(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 3. return user as json response
+	tbaAddress := web3.HexToAddress(u.TbaAddress)
+
+	// 3. get token balance
+	var balanceStr string
+
+	balance, err := c.ticket.TokenBalanceOf(r.Context(), tbaAddress)
+	if err != nil {
+		logger.Error("failed to get token balance", "error", err)
+		balanceStr = "0"
+	} else {
+		balanceStr = balance.String()
+	}
+
+	u.TbaTokenBalance = balanceStr
+
+	// 4. return user as json response
 	resp := CommonResponse{
 		Status:  http.StatusOK,
 		Message: "Successfully fetched user info",
@@ -323,10 +346,10 @@ func (c *UserCtrl) register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 2. get account address from path params
-	accountAddress := chi.URLParam(r, "accountAddress")
+	rawAccountAddress := strings.ToLower(chi.URLParam(r, "accountAddress"))
 
 	// 3. validate account address
-	if !web3.IsAddressValid(accountAddress) {
+	if !web3.IsAddressValid(rawAccountAddress) {
 		ErrorJSON(w, "invalid account address", http.StatusInternalServerError)
 		return
 	}
@@ -343,18 +366,27 @@ func (c *UserCtrl) register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	accountAddress := web3.HexToAddress(rawAccountAddress)
+
+	// TODO: uri should be dynamic
+	uri := "https://gold-cool-goat-213.mypinata.cloud/ipfs/QmfFbvLH37DebBqmVBm7V8ecfzgjFPnPeHRYiYk1PNoW84/2level.png"
+
 	// 5. create user tba
+	tbaCreated, err := c.ticket.CreateTBA(r.Context(), accountAddress, uri)
+	if err != nil {
+		logger.Error("failed to create tba", "error", err)
+		ErrorJSON(w, "failed to create tba", http.StatusInternalServerError)
+		return
+	}
 
-	// TODO: call contract to create user tba
-
-	tempTbaAddress := "0x1234567890"
+	tbaAddress := strings.ToLower(tbaCreated.Account.Hex())
 
 	// 6. create user
 	params := user.CreateUserParams{
 		ID:             jwtUser.ID,
-		AccountAddress: accountAddress,
-		TbaAddress:     tempTbaAddress,
-		Name:           accountAddress,
+		AccountAddress: rawAccountAddress,
+		TbaAddress:     tbaAddress,
+		Name:           rawAccountAddress,
 		IsAdmin:        false,
 	}
 

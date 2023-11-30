@@ -20,8 +20,12 @@ import (
 	"github.com/heroticket/internal/service/jwt"
 	"github.com/heroticket/internal/service/notice"
 	nrepo "github.com/heroticket/internal/service/notice/repository/mongo"
+	"github.com/heroticket/internal/service/ticket"
+	trepo "github.com/heroticket/internal/service/ticket/repository/mongo"
 	"github.com/heroticket/internal/service/user"
 	urepo "github.com/heroticket/internal/service/user/repository/mongo"
+	"github.com/heroticket/internal/web3"
+	"github.com/heroticket/pkg/contracts/heroticket"
 )
 
 func Run() {
@@ -95,7 +99,21 @@ func Run() {
 
 	notices := notice.New(nrepo.New(mongoClient, cfg.Notice.DbName))
 
-	// TODO: add ticket service
+	ethclient, err := web3.NewClient(ctx, cfg.RpcUrl)
+	handleErr(err)
+
+	heroticketContract, err := heroticket.NewHeroticket(web3.HexToAddress(cfg.Ticket.ContractAddress), ethclient)
+	handleErr(err)
+
+	pvk, err := web3.ParsePrivateKey(cfg.Ticket.PrivateKey)
+	handleErr(err)
+
+	// TODO: add ticket repo
+	ticketRepo, err := trepo.New(ctx, mongoClient, cfg.Ticket.DbName)
+	handleErr(err)
+
+	tickets := ticket.New(ethclient, heroticketContract, pvk, ticketRepo)
+
 	userRepo, err := urepo.New(ctx, mongoClient, cfg.User.DbName)
 	handleErr(err)
 
@@ -130,9 +148,9 @@ func Run() {
 	}
 
 	claimCtrl := rest.NewClaimCtrl(dids, jwts, users, admin.ID)
-	userCtrl := rest.NewUserCtrl(auths, jwts, users, cfg.ServerUrl, admin.ID)
+	userCtrl := rest.NewUserCtrl(auths, jwts, users, tickets, cfg.ServerUrl)
 	noticeCtrl := rest.NewNoticeCtrl(notices, users)
-	ticketCtrl := rest.NewTicketCtrl(auths, ipfss, jwts, users, cfg.ServerUrl)
+	ticketCtrl := rest.NewTicketCtrl(auths, ipfss, jwts, users, tickets, cfg.ServerUrl)
 
 	srv := app.New(app.DefaultConfig(), claimCtrl, userCtrl, noticeCtrl, ticketCtrl)
 
@@ -154,7 +172,7 @@ func Run() {
 		err = mongoClient.Disconnect(ctx)
 		handleErr(err)
 
-		err = logger.Sync()
+		logger.Sync()
 
 		logger.Info("Successfully shutdown server")
 	}, syscall.SIGINT, syscall.SIGTERM)

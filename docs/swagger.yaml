@@ -24,6 +24,8 @@ definitions:
         type: string
       tbaAddress:
         type: string
+      tbaTokenBalance:
+        type: string
       updatedAt:
         type: integer
     type: object
@@ -134,6 +136,47 @@ definitions:
       status:
         type: integer
     type: object
+  ticket.TicketCollection:
+    properties:
+      bannerUrl:
+        type: string
+      contractAddress:
+        type: string
+      createdAt:
+        type: integer
+      date:
+        type: string
+      description:
+        type: string
+      ethPrice:
+        type: integer
+      id:
+        type: string
+      issuerAddress:
+        type: string
+      location:
+        type: string
+      name:
+        type: string
+      organizer:
+        type: string
+      remaining:
+        type: integer
+      saleEndAt:
+        type: integer
+      saleStartAt:
+        type: integer
+      symbol:
+        type: string
+      ticketUrl:
+        type: string
+      tokenPrice:
+        type: integer
+      totalSupply:
+        type: integer
+      updatedAt:
+        type: integer
+    type: object
   time.Duration:
     enum:
     - -9223372036854775808
@@ -144,6 +187,8 @@ definitions:
     - 1000000000
     - 60000000000
     - 3600000000000
+    - -9223372036854775808
+    - 9223372036854775807
     - 1
     - 1000
     - 1000000
@@ -160,6 +205,8 @@ definitions:
     - Second
     - Minute
     - Hour
+    - minDuration
+    - maxDuration
     - Nanosecond
     - Microsecond
     - Millisecond
@@ -453,11 +500,11 @@ paths:
       summary: returns ticket
       tags:
       - tickets
-  /v1/tickets/{contractAddress}/direct-purchase-qr:
+  /v1/tickets/{contractAddress}/token-purchase-qr:
     get:
       consumes:
       - application/json
-      description: returns direct purchase authorization qr code
+      description: returns token purchase authorization qr code
       parameters:
       - description: contract address
         in: path
@@ -491,7 +538,7 @@ paths:
             $ref: '#/definitions/rest.CommonResponse'
       security:
       - BearerAuth: []
-      summary: returns direct purchase authorization qr code
+      summary: returns token purchase authorization qr code
       tags:
       - tickets
   /v1/tickets/{contractAddress}/verify-qr:
@@ -608,6 +655,10 @@ paths:
                 data:
                   $ref: '#/definitions/protocol.AuthorizationRequestMessage'
               type: object
+        "202":
+          description: Accepted
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
         "400":
           description: Bad Request
           schema:
@@ -662,14 +713,19 @@ paths:
         name: bannerImage
         required: true
         type: file
-      - description: ticket image
+      - description: ticket uri
         in: formData
-        name: ticketImage
+        name: ticketUri
         required: true
-        type: file
-      - description: ticket price
+        type: string
+      - description: ticket eth price
         in: formData
-        name: price
+        name: ethPrice
+        required: true
+        type: integer
+      - description: ticket token price
+        in: formData
+        name: tokenPrice
         required: true
         type: integer
       - description: ticket total supply
@@ -677,13 +733,22 @@ paths:
         name: totalSupply
         required: true
         type: integer
+      - description: ticket sale duration
+        in: formData
+        name: saleDuration
+        type: integer
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/rest.CommonResponse'
+            allOf:
+            - $ref: '#/definitions/rest.CommonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ticket.TicketCollection'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -697,11 +762,11 @@ paths:
       summary: creates ticket
       tags:
       - tickets
-  /v1/tickets/direct-purchase-callback:
+  /v1/tickets/token-purchase-callback:
     post:
       consumes:
       - application/json
-      description: direct purchase callback
+      description: token purchase callback
       parameters:
       - description: contract address
         in: path
@@ -739,7 +804,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/rest.CommonResponse'
-      summary: direct purchase callback
+      summary: token purchase callback
       tags:
       - tickets
   /v1/tickets/verify-callback:

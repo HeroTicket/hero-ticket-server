@@ -36,6 +36,9 @@ type NoticeServiceConfig struct {
 }
 
 type TicketServiceConfig struct {
+	DbName          string `mapstructure:"dbName"`
+	ContractAddress string `mapstructure:"contractAddress"`
+	PrivateKey      string `mapstructure:"privateKey"`
 }
 
 type UserServiceConfig struct {

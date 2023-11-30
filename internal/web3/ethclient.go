@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"regexp"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
@@ -21,4 +22,8 @@ func ParsePrivateKey(rawPrivateKey string) (*ecdsa.PrivateKey, error) {
 
 func IsAddressValid(address string) bool {
 	return AddressRegex.MatchString(address)
+}
+
+func HexToAddress(s string) common.Address {
+	return common.HexToAddress(s)
 }
