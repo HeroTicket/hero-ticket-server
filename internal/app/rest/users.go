@@ -48,7 +48,6 @@ func (c *UserCtrl) Handler() http.Handler {
 
 	r.Group(func(r chi.Router) {
 		r.Use(TokenRequired(c.jwt))
-		// 사용자 정보 조회
 		r.Get("/info", c.info)
 		r.Post("/register/{accountAddress}", c.register)
 	})
@@ -228,6 +227,8 @@ func (c *UserCtrl) loginCallback(w http.ResponseWriter, r *http.Request) {
 //	@Failure		500			{object}	CommonResponse
 //	@Router			/v1/users/refresh [post]
 func (c *UserCtrl) refresh(w http.ResponseWriter, r *http.Request) {
+	r.Body = http.MaxBytesReader(w, r.Body, 1024*1024) // 1MB
+
 	// 1. read token from request body
 	tokenBytes, err := io.ReadAll(r.Body)
 	if err != nil {
@@ -298,7 +299,22 @@ func (c *UserCtrl) info(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 3. return user as json response
+	tbaAddress := web3.HexToAddress(u.TbaAddress)
+
+	// 3. get token balance
+	var balanceStr string
+
+	balance, err := c.ticket.TokenBalanceOf(r.Context(), tbaAddress)
+	if err != nil {
+		logger.Error("failed to get token balance", "error", err)
+		balanceStr = "0"
+	} else {
+		balanceStr = balance.String()
+	}
+
+	u.TbaTokenBalance = balanceStr
+
+	// 4. return user as json response
 	resp := CommonResponse{
 		Status:  http.StatusOK,
 		Message: "Successfully fetched user info",
