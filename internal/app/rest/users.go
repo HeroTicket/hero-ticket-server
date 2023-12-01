@@ -368,18 +368,30 @@ func (c *UserCtrl) register(w http.ResponseWriter, r *http.Request) {
 
 	accountAddress := web3.HexToAddress(rawAccountAddress)
 
-	// TODO: uri should be dynamic
-	uri := "https://gold-cool-goat-213.mypinata.cloud/ipfs/QmfFbvLH37DebBqmVBm7V8ecfzgjFPnPeHRYiYk1PNoW84/2level.png"
-
-	// 5. create user tba
-	tbaCreated, err := c.ticket.CreateTBA(r.Context(), accountAddress, uri)
+	// 5. check if account address has tba or not
+	tba, err := c.ticket.TbaByAddress(r.Context(), accountAddress)
 	if err != nil {
-		logger.Error("failed to create tba", "error", err)
-		ErrorJSON(w, "failed to create tba", http.StatusInternalServerError)
+		logger.Error("failed to get tba by address", "error", err)
+		ErrorJSON(w, "failed to get tba by address", http.StatusInternalServerError)
 		return
 	}
 
-	tbaAddress := strings.ToLower(tbaCreated.Account.Hex())
+	// TODO: uri should be dynamic
+	uri := "https://ipfs.io/ipfs/QmfFbvLH37DebBqmVBm7V8ecfzgjFPnPeHRYiYk1PNoW84/2level.png"
+
+	if tba == nil {
+		// 5-1. if tba does not exist, create tba
+		tbaCreated, err := c.ticket.CreateTBA(r.Context(), accountAddress, uri)
+		if err != nil {
+			logger.Error("failed to create tba", "error", err)
+			ErrorJSON(w, "failed to create tba", http.StatusInternalServerError)
+			return
+		}
+
+		tba = &tbaCreated.Account
+	}
+
+	tbaAddress := strings.ToLower(tba.Hex())
 
 	// 6. create user
 	params := user.CreateUserParams{
@@ -387,6 +399,7 @@ func (c *UserCtrl) register(w http.ResponseWriter, r *http.Request) {
 		AccountAddress: rawAccountAddress,
 		TbaAddress:     tbaAddress,
 		Name:           rawAccountAddress,
+		Avatar:         uri,
 		IsAdmin:        false,
 	}
 

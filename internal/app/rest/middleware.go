@@ -52,7 +52,7 @@ func TokenCheck(jwtSvc jwt.Service) func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Add("Vary", "Authorization")
 
-			check := func(r *http.Request) {
+			check := func() {
 				authHeader := r.Header.Get("Authorization")
 
 				if authHeader == "" {
@@ -79,7 +79,7 @@ func TokenCheck(jwtSvc jwt.Service) func(next http.Handler) http.Handler {
 				r = r.WithContext(jwtSvc.NewContext(r.Context(), *jwtUser))
 			}
 
-			check(r)
+			check()
 
 			next.ServeHTTP(w, r)
 		})

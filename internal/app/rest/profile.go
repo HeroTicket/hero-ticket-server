@@ -5,15 +5,20 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/heroticket/internal/logger"
+	"github.com/heroticket/internal/service/ticket"
 	"github.com/heroticket/internal/service/user"
 )
 
 type ProfileCtrl struct {
-	user user.Service
+	ticket ticket.Service
+	user   user.Service
 }
 
-func NewProfileCtrl() *ProfileCtrl {
-	return &ProfileCtrl{}
+func NewProfileCtrl(ticket ticket.Service, user user.Service) *ProfileCtrl {
+	return &ProfileCtrl{
+		ticket: ticket,
+		user:   user,
+	}
 }
 
 func (c *ProfileCtrl) Pattern() string {
@@ -45,7 +50,7 @@ func (c *ProfileCtrl) profile(w http.ResponseWriter, r *http.Request) {
 	name := chi.URLParam(r, "name")
 
 	// 2. get user
-	_, err := c.user.FindUserByName(r.Context(), name)
+	u, err := c.user.FindUserByName(r.Context(), name)
 	if err != nil {
 		logger.Error("failed to find user", "error", err)
 		if err == user.ErrUserNotFound {
@@ -56,7 +61,15 @@ func (c *ProfileCtrl) profile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// TODO: get user profile
 	// 3. get purchased tickets and issued tickets from db
 
 	// 4. return user profile
+	resp := CommonResponse{
+		Status:  http.StatusOK,
+		Message: "Successfully get user profile",
+		Data:    u,
+	}
+
+	_ = WriteJSON(w, http.StatusOK, resp)
 }

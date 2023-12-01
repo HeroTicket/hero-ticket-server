@@ -121,5 +121,5 @@ func (c *MongoCommand) DeleteTicketCollection(ctx context.Context, id string) er
 // }
 
 func (c *MongoCommand) collection() *mongo.Collection {
-	return c.client.Database(c.dbname).Collection("users")
+	return c.client.Database(c.dbname).Collection("tickets")
 }
