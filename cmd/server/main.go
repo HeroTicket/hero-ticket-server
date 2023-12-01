@@ -1,8 +1,6 @@
 package main
 
-import (
-	"github.com/heroticket/internal/cmd"
-)
+import "github.com/heroticket/internal/cmd"
 
 //	@title			Hero Ticket API
 //	@version		1.0

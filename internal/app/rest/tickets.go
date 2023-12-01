@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"math/big"
@@ -27,15 +28,16 @@ type TicketCtrl struct {
 	auth   auth.Service
 	ipfs   ipfs.Service
 	jwt    jwt.Service
-	user   user.Service
 	ticket ticket.Service
+	user   user.Service
 }
 
-func NewTicketCtrl(auth auth.Service, ipfs ipfs.Service, jwt jwt.Service, user user.Service, ticket ticket.Service, serverUrl string) *TicketCtrl {
+func NewTicketCtrl(auth auth.Service, ipfs ipfs.Service, jwt jwt.Service, ticket ticket.Service, user user.Service, serverUrl string) *TicketCtrl {
 	return &TicketCtrl{
 		auth:      auth,
 		ipfs:      ipfs,
 		jwt:       jwt,
+		ticket:    ticket,
 		user:      user,
 		serverUrl: serverUrl,
 	}
@@ -74,16 +76,37 @@ func (c *TicketCtrl) Handler() http.Handler {
 // @Produce		json
 // @Param			page	query	int	false	"page number"
 // @Param			limit	query	int	false	"page size"
-// @Success		200			{object}	CommonResponse
+// @Success		200			{object}	CommonResponse{data=[]ticket.TicketCollection}
 // @Failure		400			{object}	CommonResponse
 // @Failure		500			{object}	CommonResponse
 // @Router			/v1/tickets [get]
 func (c *TicketCtrl) tickets(w http.ResponseWriter, r *http.Request) {
 	// 1. get page and limit from query
 
-	// 2. get tickets from db
+	// TODO: add pagination
+
+	// 2. get ticket collections from db
+	collections, err := c.ticket.FindTicketCollections(r.Context(), ticket.TicketCollectionFilter{})
+	if err != nil {
+		logger.Error("failed to find ticket collections", "error", err)
+		ErrorJSON(w, "failed to find ticket collections", http.StatusInternalServerError)
+		return
+	}
 
 	// 3. return tickets
+	resp := CommonResponse{
+		Status: http.StatusOK,
+	}
+
+	if len(collections) > 0 {
+		resp.Message = "Successfully retrieved ticket collections"
+		resp.Data = collections
+	} else {
+		resp.Message = "No ticket collections found"
+		resp.Data = []ticket.TicketCollection{}
+	}
+
+	_ = WriteJSON(w, http.StatusOK, resp)
 }
 
 // Ticket godoc
@@ -94,33 +117,68 @@ func (c *TicketCtrl) tickets(w http.ResponseWriter, r *http.Request) {
 // @Accept		json
 // @Produce		json
 // @Param			contractAddress	path	string	true	"contract address"
-// @Success		200			{object}	CommonResponse
+// @Success		200			{object}	CommonResponse{data=ticket.TicketCollectionDetail}
 // @Failure		400			{object}	CommonResponse
 // @Failure		500			{object}	CommonResponse
 // @Router			/v1/tickets/{contractAddress} [get]
 func (c *TicketCtrl) ticketByContractAddress(w http.ResponseWriter, r *http.Request) {
-	// // 1. get contract address from path
-	// contractAddress := chi.URLParam(r, "contractAddress")
+	// 1. get contract address from path
+	rawContractAddress := strings.ToLower(chi.URLParam(r, "contractAddress"))
 
-	// // 2. get ticket from db, if user is logged in, also get user ticket ownership
+	// 2. get ticket from db, if user is logged in, also get user ticket ownership
 
-	// jwtUser, err := c.jwt.FromContext(r.Context())
-	// if err != nil {
-	// 	// user is not logged in
-	// 	ticketCollection, err = c.ticket.TicketByContractAddress(r.Context(), contractAddress)
-	// } else {
-	// 	// user is logged in
-	// 	ticketCollection, err = c.ticket.TicketByContractAddress(r.Context(), contractAddress, jwtUser.ID)
-	// }
+	var userHasTicket bool
 
-	// // 3. return ticket
-	// resp := CommonResponse{
-	// 	Status:  http.StatusOK,
-	// 	Message: "",
-	// 	Data:    ticketCollection,
-	// }
+	jwtUser, err := c.jwt.FromContext(r.Context())
+	if err == nil {
+		u, err := c.user.FindUserByID(r.Context(), jwtUser.ID)
+		if err != nil {
+			logger.Error("failed to find user by id", "error", err)
+			ErrorJSON(w, "failed to find user by id", http.StatusInternalServerError)
+			return
+		}
 
-	// _ = WriteJSON(w, http.StatusOK, resp)
+		contractAddress := web3.HexToAddress(rawContractAddress)
+
+		tbaAddress := web3.HexToAddress(u.TbaAddress)
+
+		// user is not logged in
+		ok, err := c.ticket.HasTicket(r.Context(), contractAddress, tbaAddress)
+		if err != nil {
+			logger.Error("failed to check if user has ticket", "error", err)
+			ErrorJSON(w, "failed to check if user has ticket", http.StatusInternalServerError)
+			return
+		}
+
+		userHasTicket = ok
+	}
+
+	// 3. find ticket collection by contract address
+	collection, err := c.ticket.FindTicketCollectionByContractAddress(r.Context(), rawContractAddress)
+	if err != nil {
+		if err == ticket.ErrTicketCollectionNotFound {
+			ErrorJSON(w, "ticket collection not found", http.StatusBadRequest)
+			return
+		}
+
+		logger.Error("failed to find ticket collection by contract address", "error", err)
+		ErrorJSON(w, "failed to find ticket collection by contract address", http.StatusInternalServerError)
+		return
+	}
+
+	var detail ticket.TicketCollectionDetail
+
+	// 4. get onchain ticket collection info
+	detail.TicketCollection = *collection
+	detail.UserHasTicket = userHasTicket
+
+	resp := CommonResponse{
+		Status:  http.StatusOK,
+		Message: "Successfully retrieved ticket collection",
+		Data:    detail,
+	}
+
+	_ = WriteJSON(w, http.StatusOK, resp)
 }
 
 // WhitelistQR godoc
@@ -571,7 +629,7 @@ func (c *TicketCtrl) whitelistCallback(w http.ResponseWriter, r *http.Request) {
 // @Success			200			{object}	CommonResponse
 // @Failure			400			{object}	CommonResponse
 // @Failure			500			{object}	CommonResponse
-// @Router			/v1/tickets/token-purchase-callback [post]
+// @Router			/v1/tickets/{contractAddress}/token-purchase-callback [post]
 func (c *TicketCtrl) tokenPurchaseCallback(w http.ResponseWriter, r *http.Request) {
 	// 1. get contract address from path
 	rawContractAddress := strings.ToLower(chi.URLParam(r, "contractAddress"))
@@ -607,7 +665,7 @@ func (c *TicketCtrl) tokenPurchaseCallback(w http.ResponseWriter, r *http.Reques
 	})
 
 	// 5. get user from db
-	user, err := c.user.FindUserByAccountAddress(r.Context(), rawAccountAddress)
+	u, err := c.user.FindUserByAccountAddress(r.Context(), rawAccountAddress)
 	if err != nil {
 		logger.Error("failed to find user by account address", "error", err)
 		ErrorJSON(w, "failed to find user by account address", http.StatusInternalServerError)
@@ -630,7 +688,7 @@ func (c *TicketCtrl) tokenPurchaseCallback(w http.ResponseWriter, r *http.Reques
 	}
 
 	// 7. check if user has ticket
-	tbaAddress := web3.HexToAddress(user.TbaAddress)
+	tbaAddress := web3.HexToAddress(u.TbaAddress)
 
 	ok, err = c.ticket.HasTicket(r.Context(), contractAddress, tbaAddress)
 	if err != nil {
@@ -656,7 +714,7 @@ func (c *TicketCtrl) tokenPurchaseCallback(w http.ResponseWriter, r *http.Reques
 	userID := resp.From
 
 	// 10. check if user id matches user id from db
-	if userID != user.ID {
+	if userID != u.ID {
 		ErrorJSON(w, "user id does not match", http.StatusBadRequest)
 		return
 	}
@@ -680,6 +738,8 @@ func (c *TicketCtrl) tokenPurchaseCallback(w http.ResponseWriter, r *http.Reques
 			Data:   "Successfully purchased ticket",
 		},
 	})
+
+	go c.updateTbaTokenBalance(u.ID, u.TbaAddress)
 
 	// 12. return success response
 	response := CommonResponse{
@@ -885,13 +945,13 @@ func (c *TicketCtrl) verifyCallback(w http.ResponseWriter, r *http.Request) {
 // @Param			description		formData	string	true	"ticket description"
 // @Param			organizer		formData	string	true	"ticket organizer"
 // @Param			location		formData	string	true	"ticket location"
-// @Param			date			formData	string	true	"ticket date"
-// @Param			bannerImage		formData	file	true	"ticket banner image"
-// @Param			ticketUri		formData	string	true	"ticket uri"
-// @Param			ethPrice		formData	int64	true	"ticket eth price"
-// @Param			tokenPrice		formData	int64	true	"ticket token price"
-// @Param			totalSupply		formData	int64	true	"ticket total supply"
-// @Param			saleDuration	formData	int64	false	"ticket sale duration"
+// @Param			date			formData	string	true	"ticket usage date "
+// @Param			bannerImage		formData	file	true	"ticket banner image file"
+// @Param			ticketUri		formData	string	true	"ticket uri (ipfs hash)"
+// @Param			ethPrice		formData	int64	true	"ticket eth price (min 1 gwei = 1e9)"
+// @Param			tokenPrice		formData	int64	true	"ticket token price (min 1 token)"
+// @Param			totalSupply		formData	int64	true	"ticket total supply (min 1 ticket)"
+// @Param			saleDuration	formData	int64	true	"ticket sale duration in days (min 1 day)"
 // @Success		201			{object}	CommonResponse{data=ticket.TicketCollection}
 // @Failure		400			{object}	CommonResponse
 // @Failure		500			{object}	CommonResponse
@@ -937,25 +997,66 @@ func (c *TicketCtrl) createTicket(w http.ResponseWriter, r *http.Request) {
 	saleDuration := r.FormValue("saleDuration")
 
 	// TODO: validate params
+	if name == "" {
+		ErrorJSON(w, "name is required", http.StatusBadRequest)
+		return
+	}
 
-	ethPriceInt, err := strconv.ParseUint(ethPrice, 10, 64)
-	if err != nil {
-		logger.Error("failed to parse eth price", "error", err)
+	if symbol == "" {
+		ErrorJSON(w, "symbol is required", http.StatusBadRequest)
+		return
+	}
+
+	if description == "" {
+		ErrorJSON(w, "description is required", http.StatusBadRequest)
+		return
+	}
+
+	if organizer == "" {
+		ErrorJSON(w, "organizer is required", http.StatusBadRequest)
+		return
+	}
+
+	if location == "" {
+		ErrorJSON(w, "location is required", http.StatusBadRequest)
+		return
+	}
+
+	if date == "" {
+		ErrorJSON(w, "date is required", http.StatusBadRequest)
+		return
+	}
+
+	ethPriceBigInt, ok := big.NewInt(0).SetString(ethPrice, 10)
+	if !ok {
 		ErrorJSON(w, "failed to parse eth price", http.StatusInternalServerError)
 		return
 	}
 
-	tokenPriceInt, err := strconv.ParseUint(tokenPrice, 10, 64)
-	if err != nil {
-		logger.Error("failed to parse token price", "error", err)
+	if ethPriceBigInt.Cmp(big.NewInt(1e9)) == -1 {
+		ErrorJSON(w, "eth price must be greater than 1 gwei", http.StatusBadRequest)
+		return
+	}
+
+	tokenPriceBigInt, ok := big.NewInt(0).SetString(tokenPrice, 10)
+	if !ok {
 		ErrorJSON(w, "failed to parse token price", http.StatusInternalServerError)
 		return
 	}
 
-	totalSupplyInt, err := strconv.ParseUint(totalSupply, 10, 64)
-	if err != nil {
-		logger.Error("failed to parse total supply", "error", err)
+	if tokenPriceBigInt.Cmp(big.NewInt(1)) == -1 {
+		ErrorJSON(w, "token price must be greater than 1 token", http.StatusBadRequest)
+		return
+	}
+
+	totalSupplyBigInt, ok := big.NewInt(0).SetString(totalSupply, 10)
+	if !ok {
 		ErrorJSON(w, "failed to parse total supply", http.StatusInternalServerError)
+		return
+	}
+
+	if totalSupplyBigInt.Cmp(big.NewInt(1)) == -1 {
+		ErrorJSON(w, "total supply must be greater than 1 ticket", http.StatusBadRequest)
 		return
 	}
 
@@ -963,6 +1064,11 @@ func (c *TicketCtrl) createTicket(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("failed to parse sale duration", "error", err)
 		ErrorJSON(w, "failed to parse sale duration", http.StatusInternalServerError)
+		return
+	}
+
+	if saleDurationInt < 1 {
+		ErrorJSON(w, "sale duration must be greater than 1 day", http.StatusBadRequest)
 		return
 	}
 
@@ -986,10 +1092,10 @@ func (c *TicketCtrl) createTicket(w http.ResponseWriter, r *http.Request) {
 		TicketSymbol:     symbol,
 		TicketUri:        ticketUri,
 		Issuer:           web3.HexToAddress(u.AccountAddress),
-		TicketAmount:     big.NewInt(0).SetUint64(totalSupplyInt),
-		TicketEthPrice:   big.NewInt(0).SetUint64(ethPriceInt),
-		TicketTokenPrice: big.NewInt(0).SetUint64(tokenPriceInt),
-		SaleDuration:     big.NewInt(0).SetUint64(saleDurationInt),
+		TicketAmount:     totalSupplyBigInt,
+		TicketEthPrice:   ethPriceBigInt,
+		TicketTokenPrice: tokenPriceBigInt,
+		SaleDuration:     big.NewInt(0).Mul(big.NewInt(int64(saleDurationInt)), big.NewInt(86400)),
 	})
 	if err != nil {
 		logger.Error("failed to issue ticket", "error", err)
@@ -1017,10 +1123,10 @@ func (c *TicketCtrl) createTicket(w http.ResponseWriter, r *http.Request) {
 		Date:            date,
 		BannerUrl:       bannerUrl,
 		TicketUrl:       ticketUri,
-		EthPrice:        ethPriceInt,
-		TokenPrice:      tokenPriceInt,
-		TotalSupply:     totalSupplyInt,
-		Remaining:       totalSupplyInt,
+		EthPrice:        ethPriceBigInt.String(),
+		TokenPrice:      tokenPriceBigInt.String(),
+		TotalSupply:     totalSupplyBigInt.String(),
+		Remaining:       totalSupplyBigInt.String(),
 		SaleStartAt:     onchainTicket.SaleStartAt.Int64(),
 		SaleEndAt:       onchainTicket.SaleEndAt.Int64(),
 	}
@@ -1032,6 +1138,8 @@ func (c *TicketCtrl) createTicket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	go c.updateTbaTokenBalance(u.ID, u.TbaAddress)
+
 	// 6. return success response
 	resp := CommonResponse{
 		Status:  http.StatusCreated,
@@ -1040,4 +1148,26 @@ func (c *TicketCtrl) createTicket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_ = WriteJSON(w, http.StatusCreated, resp)
+}
+
+func (c *TicketCtrl) updateTbaTokenBalance(id, tbaAddress string) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	// 1. get tba token balance
+	balance, err := c.ticket.TokenBalanceOf(ctx, web3.HexToAddress(tbaAddress))
+	if err != nil {
+		logger.Error("failed to get tba token balance", "error", err)
+		return
+	}
+
+	// 3. update tba token balance
+	err = c.user.UpdateUser(ctx, user.UpdateUserParams{
+		ID:              id,
+		TBATokenBalance: balance.String(),
+	})
+	if err != nil {
+		logger.Error("failed to update tba token balance", "error", err)
+		return
+	}
 }

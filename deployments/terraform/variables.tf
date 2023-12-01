@@ -28,12 +28,6 @@ variable "ecr_repos" {
       scan_on_push         = true
       name_tag             = "Hero Ticket Issuer Node"
     }
-    "hero-ticket-subscriber" = {
-      name                 = "hero-ticket-subscriber"
-      image_tag_mutability = "MUTABLE"
-      scan_on_push         = true
-      name_tag             = "Hero Ticket Subscriber"
-    }
   }
 }
 

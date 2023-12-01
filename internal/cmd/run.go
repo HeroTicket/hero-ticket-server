@@ -4,9 +4,11 @@ import (
 	"context"
 	"net/http"
 	"os"
+	"strings"
 	"syscall"
 	"time"
 
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/heroticket/internal/app"
 	"github.com/heroticket/internal/app/rest"
 	"github.com/heroticket/internal/app/shutdown"
@@ -108,7 +110,6 @@ func Run() {
 	pvk, err := web3.ParsePrivateKey(cfg.Ticket.PrivateKey)
 	handleErr(err)
 
-	// TODO: add ticket repo
 	ticketRepo, err := trepo.New(ctx, mongoClient, cfg.Ticket.DbName)
 	handleErr(err)
 
@@ -137,10 +138,13 @@ func Run() {
 			})
 			handleErr(err)
 
+			adminAddress := crypto.PubkeyToAddress(pvk.PublicKey)
+
 			admin, err = users.CreateUser(ctx, user.CreateUserParams{
 				ID:             resp.Identifier,
-				AccountAddress: resp.Address,
+				AccountAddress: strings.ToLower(adminAddress.Hex()),
 				Name:           "admin",
+				Avatar:         "https://ipfs.io/ipfs/QmfFbvLH37DebBqmVBm7V8ecfzgjFPnPeHRYiYk1PNoW84/6level.png",
 				IsAdmin:        true,
 			})
 			handleErr(err)
@@ -148,11 +152,12 @@ func Run() {
 	}
 
 	claimCtrl := rest.NewClaimCtrl(dids, jwts, users, admin.ID)
-	userCtrl := rest.NewUserCtrl(auths, jwts, users, tickets, cfg.ServerUrl)
 	noticeCtrl := rest.NewNoticeCtrl(notices, users)
-	ticketCtrl := rest.NewTicketCtrl(auths, ipfss, jwts, users, tickets, cfg.ServerUrl)
+	profileCtrl := rest.NewProfileCtrl(tickets, users)
+	ticketCtrl := rest.NewTicketCtrl(auths, ipfss, jwts, tickets, users, cfg.ServerUrl)
+	userCtrl := rest.NewUserCtrl(auths, jwts, users, tickets, cfg.ServerUrl)
 
-	srv := app.New(app.DefaultConfig(), claimCtrl, userCtrl, noticeCtrl, ticketCtrl)
+	srv := app.New(app.DefaultConfig(), claimCtrl, noticeCtrl, profileCtrl, ticketCtrl, userCtrl)
 
 	logger.Info("Starting server")
 
@@ -169,12 +174,14 @@ func Run() {
 		err := srv.Shutdown(ctx)
 		handleErr(err)
 
+		logger.Info("Successfully shutdown server")
+
 		err = mongoClient.Disconnect(ctx)
 		handleErr(err)
 
-		logger.Sync()
+		logger.Info("Successfully disconnected from MongoDB")
 
-		logger.Info("Successfully shutdown server")
+		logger.Sync()
 	}, syscall.SIGINT, syscall.SIGTERM)
 
 	<-stop

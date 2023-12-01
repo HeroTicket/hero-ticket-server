@@ -50,6 +50,7 @@ func (c *UserCtrl) Handler() http.Handler {
 		r.Use(TokenRequired(c.jwt))
 		r.Get("/info", c.info)
 		r.Post("/register/{accountAddress}", c.register)
+		r.Post("/update-token-balance", c.updateTokenBalance)
 	})
 
 	return r
@@ -368,26 +369,47 @@ func (c *UserCtrl) register(w http.ResponseWriter, r *http.Request) {
 
 	accountAddress := web3.HexToAddress(rawAccountAddress)
 
-	// TODO: uri should be dynamic
-	uri := "https://gold-cool-goat-213.mypinata.cloud/ipfs/QmfFbvLH37DebBqmVBm7V8ecfzgjFPnPeHRYiYk1PNoW84/2level.png"
-
-	// 5. create user tba
-	tbaCreated, err := c.ticket.CreateTBA(r.Context(), accountAddress, uri)
+	// 5. check if account address has tba or not
+	tba, err := c.ticket.TbaByAddress(r.Context(), accountAddress)
 	if err != nil {
-		logger.Error("failed to create tba", "error", err)
-		ErrorJSON(w, "failed to create tba", http.StatusInternalServerError)
+		logger.Error("failed to get tba by address", "error", err)
+		ErrorJSON(w, "failed to get tba by address", http.StatusInternalServerError)
 		return
 	}
 
-	tbaAddress := strings.ToLower(tbaCreated.Account.Hex())
+	// TODO: uri should be dynamic
+	uri := "https://ipfs.io/ipfs/QmfFbvLH37DebBqmVBm7V8ecfzgjFPnPeHRYiYk1PNoW84/2level.png"
+
+	if tba == nil {
+		// 5-1. if tba does not exist, create tba
+		tbaCreated, err := c.ticket.CreateTBA(r.Context(), accountAddress, uri)
+		if err != nil {
+			logger.Error("failed to create tba", "error", err)
+			ErrorJSON(w, "failed to create tba", http.StatusInternalServerError)
+			return
+		}
+
+		tba = &tbaCreated.Account
+	}
+
+	tokenBalance, err := c.ticket.TokenBalanceOf(r.Context(), *tba)
+	if err != nil {
+		logger.Error("failed to get token balance", "error", err)
+		ErrorJSON(w, "failed to get token balance", http.StatusInternalServerError)
+		return
+	}
+
+	tbaAddress := strings.ToLower(tba.Hex())
 
 	// 6. create user
 	params := user.CreateUserParams{
-		ID:             jwtUser.ID,
-		AccountAddress: rawAccountAddress,
-		TbaAddress:     tbaAddress,
-		Name:           rawAccountAddress,
-		IsAdmin:        false,
+		ID:              jwtUser.ID,
+		AccountAddress:  rawAccountAddress,
+		TbaAddress:      tbaAddress,
+		Name:            rawAccountAddress,
+		Avatar:          uri,
+		TbaTokenBalance: tokenBalance.String(),
+		IsAdmin:         false,
 	}
 
 	u, err := c.user.CreateUser(r.Context(), params)
@@ -402,6 +424,71 @@ func (c *UserCtrl) register(w http.ResponseWriter, r *http.Request) {
 		Status:  http.StatusCreated,
 		Message: "Successfully created user",
 		Data:    u,
+	}
+
+	_ = WriteJSON(w, http.StatusCreated, resp)
+}
+
+// UpdateTokenBalance godoc
+//
+//	@Tags			users
+//	@Summary		updates token balance
+//	@Description	updates token balance
+//	@Produce		json
+//	@Success		201		{object}	CommonResponse{data=string}
+//	@Failure		400		{object}	CommonResponse
+//	@Failure		500		{object}	CommonResponse
+//	@Security 		BearerAuth
+//	@Router			/v1/users/update-token-balance [post]
+func (c *UserCtrl) updateTokenBalance(w http.ResponseWriter, r *http.Request) {
+	// 1. get user from context
+	jwtUser, err := c.jwt.FromContext(r.Context())
+	if err != nil {
+		logger.Error("failed to get user from context", "error", err)
+		ErrorJSON(w, "user not found")
+		return
+	}
+
+	// 2. get user from db
+	u, err := c.user.FindUserByID(r.Context(), jwtUser.ID)
+	if err != nil {
+		if err == user.ErrUserNotFound {
+			ErrorJSON(w, "user not registered yet", http.StatusNotFound)
+			return
+		}
+		logger.Error("failed to find user", "error", err)
+		ErrorJSON(w, "failed to find user", http.StatusInternalServerError)
+		return
+	}
+
+	tbaAddress := web3.HexToAddress(u.TbaAddress)
+
+	// 3. get token balance
+	balance, err := c.ticket.TokenBalanceOf(r.Context(), tbaAddress)
+	if err != nil {
+		logger.Error("failed to get token balance", "error", err)
+		ErrorJSON(w, "failed to get token balance", http.StatusInternalServerError)
+		return
+	}
+
+	// 4. update user
+	u.TbaTokenBalance = balance.String()
+
+	err = c.user.UpdateUser(r.Context(), user.UpdateUserParams{
+		ID:              u.ID,
+		TBATokenBalance: balance.String(),
+	})
+	if err != nil {
+		logger.Error("failed to update user", "error", err)
+		ErrorJSON(w, "failed to update user", http.StatusInternalServerError)
+		return
+	}
+
+	// 5. return token balance as json response
+	resp := CommonResponse{
+		Status:  http.StatusCreated,
+		Message: "Successfully updated token balance",
+		Data:    balance.String(),
 	}
 
 	_ = WriteJSON(w, http.StatusCreated, resp)

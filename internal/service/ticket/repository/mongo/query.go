@@ -62,22 +62,49 @@ func (q *MongoQuery) FindTicketByOwnerAddress(ctx context.Context, ownerAddress 
 	return tickets, nil
 }
 
-// func (c *MongoQuery) FindTbaAddress(ctx context.Context, address string) (*ticket.TbaAddresses, error) {
-// 	coll := c.collection()
+func (q *MongoQuery) FindTicketCollectionByContractAddress(ctx context.Context, contractAddress string) (*ticket.TicketCollection, error) {
+	coll := q.collection()
 
-// 	filter := bson.M{"address": address}
+	filter := bson.M{"contractAddress": contractAddress}
 
-// 	var t ticket.TbaAddresses
+	var tc ticket.TicketCollection
 
-// 	if err := coll.FindOne(ctx, filter).Decode(&t); err != nil {
-// 		if err == mongo.ErrNoDocuments {
-// 			return nil, ticket.ErrTicketNotFound
-// 		}
-// 		return nil, err
-// 	}
+	if err := coll.FindOne(ctx, filter).Decode(&tc); err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, ticket.ErrTicketCollectionNotFound
+		}
+		return nil, err
+	}
 
-// 	return &t, nil
-// }
+	return &tc, nil
+}
+
+func (q *MongoQuery) FindTicketCollections(ctx context.Context, filter ticket.TicketCollectionFilter) ([]*ticket.TicketCollection, error) {
+	coll := q.collection()
+
+	var query bson.M
+
+	// TODO: add filter
+
+	cur, err := coll.Find(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	var tcs []*ticket.TicketCollection
+
+	for cur.Next(ctx) {
+		var tc ticket.TicketCollection
+
+		if err := cur.Decode(&tc); err != nil {
+			return nil, err
+		}
+
+		tcs = append(tcs, &tc)
+	}
+
+	return tcs, nil
+}
 
 func (q *MongoQuery) collection() *mongo.Collection {
 	return q.client.Database(q.dbname).Collection("tickets")

@@ -14,6 +14,7 @@ import (
 )
 
 type Service interface {
+	TbaByAddress(ctx context.Context, owner common.Address) (*common.Address, error)
 	IsIssuedTicket(ctx context.Context, contractAddress common.Address) (bool, error)
 	HasTicket(ctx context.Context, contractAddress, owner common.Address) (bool, error)
 	IsWhitelisted(ctx context.Context, contractAddress, to common.Address) (bool, error)
@@ -27,6 +28,8 @@ type Service interface {
 
 	// TODO: repo에 저장하는 메서드 추가
 	CreateTicketCollection(ctx context.Context, params CreateTicketCollectionParams) (*TicketCollection, error)
+	FindTicketCollections(ctx context.Context, filter TicketCollectionFilter) ([]*TicketCollection, error)
+	FindTicketCollectionByContractAddress(ctx context.Context, contractAddress string) (*TicketCollection, error)
 }
 
 type TicketService struct {
@@ -43,6 +46,16 @@ func New(client *ethclient.Client, hero *heroticket.Heroticket, pvk *ecdsa.Priva
 		pvk:    pvk,
 		repo:   repo,
 	}
+}
+
+func (s *TicketService) TbaByAddress(ctx context.Context, owner common.Address) (*common.Address, error) {
+	tba, err := s.hero.TbaAddress(&bind.CallOpts{Context: ctx}, owner)
+	if err != nil {
+		return nil, err
+	}
+
+	return &tba, nil
+
 }
 
 func (s *TicketService) IsIssuedTicket(ctx context.Context, contractAddress common.Address) (bool, error) {
@@ -235,4 +248,12 @@ func (s *TicketService) txOpts(ctx context.Context) (*bind.TransactOpts, error) 
 
 func (s *TicketService) CreateTicketCollection(ctx context.Context, params CreateTicketCollectionParams) (*TicketCollection, error) {
 	return s.repo.CreateTicketCollection(ctx, params)
+}
+
+func (s *TicketService) FindTicketCollections(ctx context.Context, filter TicketCollectionFilter) ([]*TicketCollection, error) {
+	return s.repo.FindTicketCollections(ctx, filter)
+}
+
+func (s *TicketService) FindTicketCollectionByContractAddress(ctx context.Context, contractAddress string) (*TicketCollection, error) {
+	return s.repo.FindTicketCollectionByContractAddress(ctx, contractAddress)
 }

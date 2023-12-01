@@ -26,22 +26,22 @@ type User struct {
 }
 
 type CreateUserParams struct {
-	ID             string
-	AccountAddress string
-	TbaAddress     string
-	Name           string
-	Avatar         string
-	IsAdmin        bool
+	ID              string
+	AccountAddress  string
+	TbaAddress      string
+	Name            string
+	Avatar          string
+	TbaTokenBalance string
+	IsAdmin         bool
 }
 
 type UpdateUserParams struct {
-	ID             string
-	AccountAddress string
-	TBAAddress     string
-	Name           string
-	Bio            string
-	Avatar         string
-	Banner         string
-	IsAdmin        bool
-	Verified       bool
+	ID              string
+	AccountAddress  string
+	TBAAddress      string
+	Name            string
+	Bio             string
+	Avatar          string
+	TBATokenBalance string
+	Banner          string
 }

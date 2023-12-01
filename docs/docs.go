@@ -394,7 +394,22 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/rest.CommonResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/rest.CommonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/definitions/ticket.TicketCollection"
+                                            }
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -468,51 +483,52 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "ticket date",
+                        "description": "ticket usage date ",
                         "name": "date",
                         "in": "formData",
                         "required": true
                     },
                     {
                         "type": "file",
-                        "description": "ticket banner image",
+                        "description": "ticket banner image file",
                         "name": "bannerImage",
                         "in": "formData",
                         "required": true
                     },
                     {
                         "type": "string",
-                        "description": "ticket uri",
+                        "description": "ticket uri (ipfs hash)",
                         "name": "ticketUri",
                         "in": "formData",
                         "required": true
                     },
                     {
                         "type": "integer",
-                        "description": "ticket eth price",
+                        "description": "ticket eth price (min 1 gwei = 1e9)",
                         "name": "ethPrice",
                         "in": "formData",
                         "required": true
                     },
                     {
                         "type": "integer",
-                        "description": "ticket token price",
+                        "description": "ticket token price (min 1 token)",
                         "name": "tokenPrice",
                         "in": "formData",
                         "required": true
                     },
                     {
                         "type": "integer",
-                        "description": "ticket total supply",
+                        "description": "ticket total supply (min 1 ticket)",
                         "name": "totalSupply",
                         "in": "formData",
                         "required": true
                     },
                     {
                         "type": "integer",
-                        "description": "ticket sale duration",
+                        "description": "ticket sale duration in days (min 1 day)",
                         "name": "saleDuration",
-                        "in": "formData"
+                        "in": "formData",
+                        "required": true
                     }
                 ],
                 "responses": {
@@ -532,73 +548,6 @@ const docTemplate = `{
                                     }
                                 }
                             ]
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/rest.CommonResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/rest.CommonResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/tickets/token-purchase-callback": {
-            "post": {
-                "description": "token purchase callback",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "tickets"
-                ],
-                "summary": "token purchase callback",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "contract address",
-                        "name": "contractAddress",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "account address",
-                        "name": "accountAddress",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "description": "session id",
-                        "name": "sessionId",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "description": "token",
-                        "name": "token",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/rest.CommonResponse"
                         }
                     },
                     "400": {
@@ -689,6 +638,85 @@ const docTemplate = `{
                         "name": "contractAddress",
                         "in": "path",
                         "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/rest.CommonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/ticket.TicketCollectionDetail"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/rest.CommonResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rest.CommonResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/tickets/{contractAddress}/token-purchase-callback": {
+            "post": {
+                "description": "token purchase callback",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "tickets"
+                ],
+                "summary": "token purchase callback",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "contract address",
+                        "name": "contractAddress",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "account address",
+                        "name": "accountAddress",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "session id",
+                        "name": "sessionId",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "description": "token",
+                        "name": "token",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
                     }
                 ],
                 "responses": {
@@ -1273,6 +1301,55 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/users/update-token-balance": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "updates token balance",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "updates token balance",
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/rest.CommonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/rest.CommonResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/rest.CommonResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/ws": {
             "get": {
                 "description": "returns websocket connection",
@@ -1513,7 +1590,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "ethPrice": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "id": {
                     "type": "string"
@@ -1531,7 +1608,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "remaining": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "saleEndAt": {
                     "type": "integer"
@@ -1546,13 +1623,78 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "tokenPrice": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "totalSupply": {
-                    "type": "integer"
+                    "type": "string"
                 },
                 "updatedAt": {
                     "type": "integer"
+                }
+            }
+        },
+        "ticket.TicketCollectionDetail": {
+            "type": "object",
+            "properties": {
+                "bannerUrl": {
+                    "type": "string"
+                },
+                "contractAddress": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "integer"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "ethPrice": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "issuerAddress": {
+                    "type": "string"
+                },
+                "location": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "organizer": {
+                    "type": "string"
+                },
+                "remaining": {
+                    "type": "string"
+                },
+                "saleEndAt": {
+                    "type": "integer"
+                },
+                "saleStartAt": {
+                    "type": "integer"
+                },
+                "symbol": {
+                    "type": "string"
+                },
+                "ticketUrl": {
+                    "type": "string"
+                },
+                "tokenPrice": {
+                    "type": "string"
+                },
+                "totalSupply": {
+                    "type": "string"
+                },
+                "updatedAt": {
+                    "type": "integer"
+                },
+                "userHasTicket": {
+                    "type": "boolean"
                 }
             }
         },
@@ -1567,14 +1709,10 @@ const docTemplate = `{
                 1000000000,
                 60000000000,
                 3600000000000,
-                -9223372036854775808,
-                9223372036854775807,
                 1,
                 1000,
                 1000000,
-                1000000000,
-                60000000000,
-                3600000000000
+                1000000000
             ],
             "x-enum-varnames": [
                 "minDuration",
@@ -1585,14 +1723,10 @@ const docTemplate = `{
                 "Second",
                 "Minute",
                 "Hour",
-                "minDuration",
-                "maxDuration",
                 "Nanosecond",
                 "Microsecond",
                 "Millisecond",
-                "Second",
-                "Minute",
-                "Hour"
+                "Second"
             ]
         }
     },
