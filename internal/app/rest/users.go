@@ -245,8 +245,6 @@ func (c *UserCtrl) refresh(w http.ResponseWriter, r *http.Request) {
 
 	defer r.Body.Close()
 
-	fmt.Println(req)
-
 	// 2. validate token
 	jwtUser, err := c.jwt.VerifyToken(req.RefreshToken, jwt.TokenRoleRefresh)
 	if err != nil {

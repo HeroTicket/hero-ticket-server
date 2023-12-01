@@ -342,7 +342,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/profile/{name}": {
+        "/v1/profile/{accountAddress}": {
             "get": {
                 "description": "returns user profile",
                 "consumes": [
@@ -358,8 +358,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "user name",
-                        "name": "name",
+                        "description": "account address",
+                        "name": "accountAddress",
                         "in": "path",
                         "required": true
                     }
@@ -368,7 +368,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/rest.CommonResponse"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/rest.CommonResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/rest.ProfileResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
@@ -1212,7 +1224,7 @@ const docTemplate = `{
             "post": {
                 "description": "refreshes token pair",
                 "consumes": [
-                    "text/plain"
+                    "application/json"
                 ],
                 "produces": [
                     "application/json"
@@ -1223,12 +1235,12 @@ const docTemplate = `{
                 "summary": "refreshes token pair",
                 "parameters": [
                     {
-                        "description": "refresh token",
-                        "name": "refreshToken",
+                        "description": "refresh token request",
+                        "name": "body",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/rest.RefreshTokenRequest"
                         }
                     }
                 ],
@@ -1594,6 +1606,54 @@ const docTemplate = `{
                 }
             }
         },
+        "rest.ProfileResponse": {
+            "type": "object",
+            "properties": {
+                "issuedTickets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ticket.TicketCollection"
+                    }
+                },
+                "ownedTickets": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ticket.NFT"
+                    }
+                },
+                "userInfo": {
+                    "$ref": "#/definitions/github_com_heroticket_internal_service_user.User"
+                }
+            }
+        },
+        "rest.RefreshTokenRequest": {
+            "type": "object",
+            "properties": {
+                "refreshToken": {
+                    "type": "string"
+                }
+            }
+        },
+        "ticket.NFT": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "symbol": {
+                    "type": "string"
+                },
+                "token_address": {
+                    "type": "string"
+                },
+                "token_id": {
+                    "type": "string"
+                },
+                "token_uri": {
+                    "type": "string"
+                }
+            }
+        },
         "ticket.TicketCollection": {
             "type": "object",
             "properties": {
@@ -1732,11 +1792,14 @@ const docTemplate = `{
                 1000000000,
                 60000000000,
                 3600000000000,
+                -9223372036854775808,
+                9223372036854775807,
                 1,
                 1000,
                 1000000,
                 1000000000,
-                60000000000
+                60000000000,
+                3600000000000
             ],
             "x-enum-varnames": [
                 "minDuration",
@@ -1747,11 +1810,14 @@ const docTemplate = `{
                 "Second",
                 "Minute",
                 "Hour",
+                "minDuration",
+                "maxDuration",
                 "Nanosecond",
                 "Microsecond",
                 "Millisecond",
                 "Second",
-                "Minute"
+                "Minute",
+                "Hour"
             ]
         }
     },
