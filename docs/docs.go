@@ -24,6 +24,29 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/": {
+            "get": {
+                "description": "returns name",
+                "consumes": [
+                    "text/plain"
+                ],
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "common"
+                ],
+                "summary": "Get name",
+                "responses": {
+                    "200": {
+                        "description": "Hero Ticket",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/favicon.ico": {
             "get": {
                 "description": "returns favicon",
@@ -1712,7 +1735,8 @@ const docTemplate = `{
                 1,
                 1000,
                 1000000,
-                1000000000
+                1000000000,
+                60000000000
             ],
             "x-enum-varnames": [
                 "minDuration",
@@ -1726,7 +1750,8 @@ const docTemplate = `{
                 "Nanosecond",
                 "Microsecond",
                 "Millisecond",
-                "Second"
+                "Second",
+                "Minute"
             ]
         }
     },
