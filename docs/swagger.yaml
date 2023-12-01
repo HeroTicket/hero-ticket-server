@@ -234,6 +234,7 @@ definitions:
     - 1000
     - 1000000
     - 1000000000
+    - 60000000000
     type: integer
     x-enum-varnames:
     - minDuration
@@ -248,6 +249,7 @@ definitions:
     - Microsecond
     - Millisecond
     - Second
+    - Minute
 host: api.heroticket.xyz
 info:
   contact:
@@ -262,6 +264,21 @@ info:
   title: Hero Ticket API
   version: "1.0"
 paths:
+  /:
+    get:
+      consumes:
+      - text/plain
+      description: returns name
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: Hero Ticket
+          schema:
+            type: string
+      summary: Get name
+      tags:
+      - common
   /favicon.ico:
     get:
       consumes:

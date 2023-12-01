@@ -38,12 +38,26 @@ func newRouter(version string, ctrls ...Controller) *router {
 		}
 	})
 
+	r.Get("/", nameHandler)
 	r.Get("/status", statusHandler)
 	r.Get("/favicon.ico", faviconHandler)
 
 	r.HandleFunc("/ws", ws.Serve())
 
 	return &router{r}
+}
+
+// Name godoc
+//
+// @Summary Get name
+// @Description returns name
+// @Tags common
+// @Accept plain
+// @Produce plain
+// @Success 200 {string} string "Hero Ticket"
+// @Router / [get]
+func nameHandler(w http.ResponseWriter, _ *http.Request) {
+	w.Write([]byte("Hero Ticket"))
 }
 
 // Status godoc
