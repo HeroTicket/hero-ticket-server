@@ -41,38 +41,17 @@ type TicketService struct {
 	hero   *heroticket.Heroticket
 	pvk    *ecdsa.PrivateKey
 	repo   Repository
+
+	moralisApiKey string
 }
 
-type OwnedNFT struct {
-	Status string `json:"status"`
-	NFTs   []NFT  `json:"nfts`
-}
-
-type NFT struct {
-	tokenId      string `json:"token_id"`
-	tokenAddress string `json:"token_address"`
-	name         string `json:"name"`
-	symbol       string `json:"symbol"`
-	tokenUri     string `json:"token_uri"`
-}
-
-type OwnedNFTResponse struct {
-	Status string `json:"status"`
-	Result []struct {
-		TokenId      string `json:"token_id"`
-		TokenAddress string `json:"token_address"`
-		Name         string `json:"name"`
-		Symbol       string `json:"symbol"`
-		TokenURI     string `json:"token_uri"`
-	} `json:"result"`
-}
-
-func New(client *ethclient.Client, hero *heroticket.Heroticket, pvk *ecdsa.PrivateKey, repo Repository) Service {
+func New(client *ethclient.Client, hero *heroticket.Heroticket, pvk *ecdsa.PrivateKey, repo Repository, moralisApiKey string) Service {
 	return &TicketService{
-		client: client,
-		hero:   hero,
-		pvk:    pvk,
-		repo:   repo,
+		client:        client,
+		hero:          hero,
+		pvk:           pvk,
+		repo:          repo,
+		moralisApiKey: moralisApiKey,
 	}
 }
 
@@ -255,11 +234,15 @@ func (s *TicketService) GetOwnedNFT(ctx context.Context, owner common.Address) (
 	req, _ := http.NewRequest("GET", url, nil)
 
 	req.Header.Add("Accept", "application/json")
-	req.Header.Add("X-API-Key", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6IjEzNGNhN2Y2LTNkODMtNGIxZC1iOGIwLWE0NmVhMTllNmM4NiIsIm9yZ0lkIjoiMzY2NDMzIiwidXNlcklkIjoiMzc2NTk0IiwidHlwZUlkIjoiYTRmNGMzNTQtM2Y3Zi00YmU5LWI4ZjItZDkzOTM1MmJjZmVkIiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3MDEzNDMxOTYsImV4cCI6NDg1NzEwMzE5Nn0.KxfO8preWRqP1BvMTkW_FvPzH6cuQSTwzxz8DvBhZjc")
+	req.Header.Add("X-API-Key", s.moralisApiKey)
 
 	res, err := http.DefaultClient.Do(req)
-	if err != nil || res.StatusCode != 200 {
+	if err != nil {
 		return OwnedNFT{}, err
+	}
+
+	if res.StatusCode != http.StatusOK {
+		return OwnedNFT{}, fmt.Errorf("failed to get owned nft, status code: %d", res.StatusCode)
 	}
 	defer res.Body.Close()
 
@@ -276,11 +259,11 @@ func (s *TicketService) GetOwnedNFT(ctx context.Context, owner common.Address) (
 
 	for i, nft := range result.Result {
 		ownedNFT.NFTs[i] = NFT{
-			tokenId:      nft.TokenId,
-			tokenAddress: nft.TokenAddress,
-			name:         nft.Name,
-			symbol:       nft.Symbol,
-			tokenUri:     nft.TokenURI,
+			TokenId:      nft.TokenId,
+			TokenAddress: nft.TokenAddress,
+			Name:         nft.Name,
+			Symbol:       nft.Symbol,
+			TokenUri:     nft.TokenURI,
 		}
 	}
 

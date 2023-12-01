@@ -113,7 +113,7 @@ func Run() {
 	ticketRepo, err := trepo.New(ctx, mongoClient, cfg.Ticket.DbName)
 	handleErr(err)
 
-	tickets := ticket.New(ethclient, heroticketContract, pvk, ticketRepo)
+	tickets := ticket.New(ethclient, heroticketContract, pvk, ticketRepo, cfg.Ticket.MoralisApiKey)
 
 	userRepo, err := urepo.New(ctx, mongoClient, cfg.User.DbName)
 	handleErr(err)
