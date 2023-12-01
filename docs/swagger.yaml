@@ -149,7 +149,7 @@ definitions:
       description:
         type: string
       ethPrice:
-        type: integer
+        type: string
       id:
         type: string
       issuerAddress:
@@ -161,7 +161,7 @@ definitions:
       organizer:
         type: string
       remaining:
-        type: integer
+        type: string
       saleEndAt:
         type: integer
       saleStartAt:
@@ -171,11 +171,54 @@ definitions:
       ticketUrl:
         type: string
       tokenPrice:
-        type: integer
+        type: string
       totalSupply:
-        type: integer
+        type: string
       updatedAt:
         type: integer
+    type: object
+  ticket.TicketCollectionDetail:
+    properties:
+      bannerUrl:
+        type: string
+      contractAddress:
+        type: string
+      createdAt:
+        type: integer
+      date:
+        type: string
+      description:
+        type: string
+      ethPrice:
+        type: string
+      id:
+        type: string
+      issuerAddress:
+        type: string
+      location:
+        type: string
+      name:
+        type: string
+      organizer:
+        type: string
+      remaining:
+        type: string
+      saleEndAt:
+        type: integer
+      saleStartAt:
+        type: integer
+      symbol:
+        type: string
+      ticketUrl:
+        type: string
+      tokenPrice:
+        type: string
+      totalSupply:
+        type: string
+      updatedAt:
+        type: integer
+      userHasTicket:
+        type: boolean
     type: object
   time.Duration:
     enum:
@@ -187,14 +230,10 @@ definitions:
     - 1000000000
     - 60000000000
     - 3600000000000
-    - -9223372036854775808
-    - 9223372036854775807
     - 1
     - 1000
     - 1000000
     - 1000000000
-    - 60000000000
-    - 3600000000000
     type: integer
     x-enum-varnames:
     - minDuration
@@ -205,14 +244,10 @@ definitions:
     - Second
     - Minute
     - Hour
-    - minDuration
-    - maxDuration
     - Nanosecond
     - Microsecond
     - Millisecond
     - Second
-    - Minute
-    - Hour
 host: api.heroticket.xyz
 info:
   contact:
@@ -459,7 +494,14 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/rest.CommonResponse'
+            allOf:
+            - $ref: '#/definitions/rest.CommonResponse'
+            - properties:
+                data:
+                  items:
+                    $ref: '#/definitions/ticket.TicketCollection'
+                  type: array
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -488,7 +530,12 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/rest.CommonResponse'
+            allOf:
+            - $ref: '#/definitions/rest.CommonResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/ticket.TicketCollectionDetail'
+              type: object
         "400":
           description: Bad Request
           schema:
@@ -498,6 +545,51 @@ paths:
           schema:
             $ref: '#/definitions/rest.CommonResponse'
       summary: returns ticket
+      tags:
+      - tickets
+  /v1/tickets/{contractAddress}/token-purchase-callback:
+    post:
+      consumes:
+      - application/json
+      description: token purchase callback
+      parameters:
+      - description: contract address
+        in: path
+        name: contractAddress
+        required: true
+        type: string
+      - description: account address
+        in: query
+        name: accountAddress
+        required: true
+        type: string
+      - description: session id
+        in: query
+        name: sessionId
+        required: true
+        type: string
+      - description: token
+        in: body
+        name: token
+        required: true
+        schema:
+          type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+      summary: token purchase callback
       tags:
       - tickets
   /v1/tickets/{contractAddress}/token-purchase-qr:
@@ -703,39 +795,40 @@ paths:
         name: location
         required: true
         type: string
-      - description: ticket date
+      - description: 'ticket usage date '
         in: formData
         name: date
         required: true
         type: string
-      - description: ticket banner image
+      - description: ticket banner image file
         in: formData
         name: bannerImage
         required: true
         type: file
-      - description: ticket uri
+      - description: ticket uri (ipfs hash)
         in: formData
         name: ticketUri
         required: true
         type: string
-      - description: ticket eth price
+      - description: ticket eth price (min 1 gwei = 1e9)
         in: formData
         name: ethPrice
         required: true
         type: integer
-      - description: ticket token price
+      - description: ticket token price (min 1 token)
         in: formData
         name: tokenPrice
         required: true
         type: integer
-      - description: ticket total supply
+      - description: ticket total supply (min 1 ticket)
         in: formData
         name: totalSupply
         required: true
         type: integer
-      - description: ticket sale duration
+      - description: ticket sale duration in days (min 1 day)
         in: formData
         name: saleDuration
+        required: true
         type: integer
       produces:
       - application/json
@@ -760,51 +853,6 @@ paths:
       security:
       - BearerAuth: []
       summary: creates ticket
-      tags:
-      - tickets
-  /v1/tickets/token-purchase-callback:
-    post:
-      consumes:
-      - application/json
-      description: token purchase callback
-      parameters:
-      - description: contract address
-        in: path
-        name: contractAddress
-        required: true
-        type: string
-      - description: account address
-        in: query
-        name: accountAddress
-        required: true
-        type: string
-      - description: session id
-        in: query
-        name: sessionId
-        required: true
-        type: string
-      - description: token
-        in: body
-        name: token
-        required: true
-        schema:
-          type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/rest.CommonResponse'
-        "400":
-          description: Bad Request
-          schema:
-            $ref: '#/definitions/rest.CommonResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/rest.CommonResponse'
-      summary: token purchase callback
       tags:
       - tickets
   /v1/tickets/verify-callback:
@@ -1012,6 +1060,34 @@ paths:
       security:
       - BearerAuth: []
       summary: registers user
+      tags:
+      - users
+  /v1/users/update-token-balance:
+    post:
+      description: updates token balance
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            allOf:
+            - $ref: '#/definitions/rest.CommonResponse'
+            - properties:
+                data:
+                  type: string
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/rest.CommonResponse'
+      security:
+      - BearerAuth: []
+      summary: updates token balance
       tags:
       - users
   /ws:

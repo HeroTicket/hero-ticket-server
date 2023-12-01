@@ -28,7 +28,7 @@ func (c *ProfileCtrl) Pattern() string {
 func (c *ProfileCtrl) Handler() http.Handler {
 	r := chi.NewRouter()
 
-	r.Get("/profile/{name}", c.profile)
+	r.Get("/{name}", c.profile)
 
 	return r
 }

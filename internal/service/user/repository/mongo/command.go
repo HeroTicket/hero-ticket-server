@@ -31,6 +31,11 @@ func (c *MongoCommand) CreateUser(ctx context.Context, params user.CreateUserPar
 	u.TbaAddress = params.TbaAddress
 	u.Name = params.Name
 	u.Avatar = params.Avatar
+	if params.TbaTokenBalance != "" {
+		u.TbaTokenBalance = params.TbaTokenBalance
+	} else {
+		u.TbaTokenBalance = "0"
+	}
 	u.IsAdmin = params.IsAdmin
 	u.CreatedAt = time.Now().Unix()
 	u.UpdatedAt = time.Now().Unix()
@@ -81,6 +86,22 @@ func (c *MongoCommand) UpdateUser(ctx context.Context, params user.UpdateUserPar
 
 	if params.TBAAddress != "" {
 		value = append(value, bson.E{Key: "tbaAddress", Value: params.TBAAddress})
+	}
+
+	if params.Bio != "" {
+		value = append(value, bson.E{Key: "bio", Value: params.Bio})
+	}
+
+	if params.Avatar != "" {
+		value = append(value, bson.E{Key: "avatar", Value: params.Avatar})
+	}
+
+	if params.Banner != "" {
+		value = append(value, bson.E{Key: "banner", Value: params.Banner})
+	}
+
+	if params.TBATokenBalance != "" {
+		value = append(value, bson.E{Key: "tbaTokenBalance", Value: params.TBATokenBalance})
 	}
 
 	value = append(value, bson.E{Key: "updated_at", Value: time.Now().Unix()})

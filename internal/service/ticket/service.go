@@ -28,6 +28,8 @@ type Service interface {
 
 	// TODO: repo에 저장하는 메서드 추가
 	CreateTicketCollection(ctx context.Context, params CreateTicketCollectionParams) (*TicketCollection, error)
+	FindTicketCollections(ctx context.Context, filter TicketCollectionFilter) ([]*TicketCollection, error)
+	FindTicketCollectionByContractAddress(ctx context.Context, contractAddress string) (*TicketCollection, error)
 }
 
 type TicketService struct {
@@ -246,4 +248,12 @@ func (s *TicketService) txOpts(ctx context.Context) (*bind.TransactOpts, error) 
 
 func (s *TicketService) CreateTicketCollection(ctx context.Context, params CreateTicketCollectionParams) (*TicketCollection, error) {
 	return s.repo.CreateTicketCollection(ctx, params)
+}
+
+func (s *TicketService) FindTicketCollections(ctx context.Context, filter TicketCollectionFilter) ([]*TicketCollection, error) {
+	return s.repo.FindTicketCollections(ctx, filter)
+}
+
+func (s *TicketService) FindTicketCollectionByContractAddress(ctx context.Context, contractAddress string) (*TicketCollection, error) {
+	return s.repo.FindTicketCollectionByContractAddress(ctx, contractAddress)
 }

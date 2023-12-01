@@ -154,7 +154,7 @@ func Run() {
 	claimCtrl := rest.NewClaimCtrl(dids, jwts, users, admin.ID)
 	noticeCtrl := rest.NewNoticeCtrl(notices, users)
 	profileCtrl := rest.NewProfileCtrl(tickets, users)
-	ticketCtrl := rest.NewTicketCtrl(auths, ipfss, jwts, users, tickets, cfg.ServerUrl)
+	ticketCtrl := rest.NewTicketCtrl(auths, ipfss, jwts, tickets, users, cfg.ServerUrl)
 	userCtrl := rest.NewUserCtrl(auths, jwts, users, tickets, cfg.ServerUrl)
 
 	srv := app.New(app.DefaultConfig(), claimCtrl, noticeCtrl, profileCtrl, ticketCtrl, userCtrl)

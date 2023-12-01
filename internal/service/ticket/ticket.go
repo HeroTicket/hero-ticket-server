@@ -8,7 +8,8 @@ import (
 )
 
 var (
-	ErrTicketNotFound = errors.New("ticket not found")
+	ErrTicketNotFound           = errors.New("ticket not found")
+	ErrTicketCollectionNotFound = errors.New("ticket collection not found")
 )
 
 type TicketCollection struct {
@@ -23,14 +24,19 @@ type TicketCollection struct {
 	Date            string `json:"date" bson:"date"`
 	BannerUrl       string `json:"bannerUrl" bson:"bannerUrl"`
 	TicketUrl       string `json:"ticketUrl" bson:"ticketUrl"`
-	EthPrice        uint64 `json:"ethPrice" bson:"ethPrice"`
-	TokenPrice      uint64 `json:"tokenPrice" bson:"tokenPrice"`
-	TotalSupply     uint64 `json:"totalSupply" bson:"totalSupply"`
-	Remaining       uint64 `json:"remaining" bson:"remaining"`
+	EthPrice        string `json:"ethPrice" bson:"ethPrice"`
+	TokenPrice      string `json:"tokenPrice" bson:"tokenPrice"`
+	TotalSupply     string `json:"totalSupply" bson:"totalSupply"`
+	Remaining       string `json:"remaining" bson:"remaining"`
 	SaleStartAt     int64  `json:"saleStartAt" bson:"saleStartAt"`
 	SaleEndAt       int64  `json:"saleEndAt" bson:"saleEndAt"`
 	CreatedAt       int64  `json:"createdAt" bson:"createdAt"`
 	UpdatedAt       int64  `json:"updatedAt" bson:"updatedAt"`
+}
+
+type TicketCollectionDetail struct {
+	TicketCollection
+	UserHasTicket bool `json:"userHasTicket"`
 }
 
 type Ticket struct {
@@ -65,10 +71,10 @@ type CreateTicketCollectionParams struct {
 	Date            string
 	BannerUrl       string
 	TicketUrl       string
-	EthPrice        uint64
-	TokenPrice      uint64
-	TotalSupply     uint64
-	Remaining       uint64
+	EthPrice        string
+	TokenPrice      string
+	TotalSupply     string
+	Remaining       string
 	SaleStartAt     int64
 	SaleEndAt       int64
 }
@@ -90,4 +96,8 @@ type IssueTicketParams struct {
 	TicketEthPrice   *big.Int
 	TicketTokenPrice *big.Int
 	SaleDuration     *big.Int
+}
+
+type TicketCollectionFilter struct {
+	// TODO: add filter options
 }
