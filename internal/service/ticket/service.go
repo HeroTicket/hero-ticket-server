@@ -3,7 +3,10 @@ package ticket
 import (
 	"context"
 	"crypto/ecdsa"
+	"encoding/json"
+	"fmt"
 	"math/big"
+	"net/http"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -28,8 +31,9 @@ type Service interface {
 
 	// TODO: repo에 저장하는 메서드 추가
 	CreateTicketCollection(ctx context.Context, params CreateTicketCollectionParams) (*TicketCollection, error)
-	FindTicketCollections(ctx context.Context, filter TicketCollectionFilter) ([]*TicketCollection, error)
+	GetOwnedNFT(ctx context.Context, owner common.Address) (OwnedNFT, error)
 	FindTicketCollectionByContractAddress(ctx context.Context, contractAddress string) (*TicketCollection, error)
+	FindTicketCollections(ctx context.Context, filter TicketCollectionFilter) ([]*TicketCollection, error)
 }
 
 type TicketService struct {
@@ -37,6 +41,30 @@ type TicketService struct {
 	hero   *heroticket.Heroticket
 	pvk    *ecdsa.PrivateKey
 	repo   Repository
+}
+
+type OwnedNFT struct {
+	status string `json:"status"`
+	NFTs   []NFT  `json:"nfts`
+}
+
+type NFT struct {
+	token_id      string `json:"token_id"`
+	token_address string `json:"token_address"`
+	name          string `json:"name"`
+	symbol        string `json:"symbol"`
+	token_uri     string `json:"token_uri"`
+}
+
+type OwnedNFTResponse struct {
+	Status string `json:"status"`
+	Result []struct {
+		TokenId      string `json:"token_id"`
+		TokenAddress string `json:"token_address"`
+		Name         string `json:"name"`
+		Symbol       string `json:"symbol"`
+		TokenURI     string `json:"token_uri"`
+	} `json:"result"`
 }
 
 func New(client *ethclient.Client, hero *heroticket.Heroticket, pvk *ecdsa.PrivateKey, repo Repository) Service {
@@ -214,6 +242,49 @@ func (s *TicketService) BuyTicketByToken(ctx context.Context, contractAddress, b
 	}
 
 	return ticketSold, nil
+}
+
+func (s *TicketService) GetOwnedNFT(ctx context.Context, owner common.Address) (OwnedNFT, error) {
+	tbaAddress, err := s.hero.TbaAddress(&bind.CallOpts{Context: ctx}, owner)
+	if err != nil {
+		return OwnedNFT{}, err
+	}
+
+	url := fmt.Sprintf("https://deep-index.moralis.io/api/v2.2/%s/nft?chain=mumbai&format=decimal&media_items=false", tbaAddress.String())
+
+	req, _ := http.NewRequest("GET", url, nil)
+
+	req.Header.Add("Accept", "application/json")
+	req.Header.Add("X-API-Key", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6IjEzNGNhN2Y2LTNkODMtNGIxZC1iOGIwLWE0NmVhMTllNmM4NiIsIm9yZ0lkIjoiMzY2NDMzIiwidXNlcklkIjoiMzc2NTk0IiwidHlwZUlkIjoiYTRmNGMzNTQtM2Y3Zi00YmU5LWI4ZjItZDkzOTM1MmJjZmVkIiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3MDEzNDMxOTYsImV4cCI6NDg1NzEwMzE5Nn0.KxfO8preWRqP1BvMTkW_FvPzH6cuQSTwzxz8DvBhZjc")
+
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return OwnedNFT{}, err
+	}
+	defer res.Body.Close()
+
+	var result OwnedNFTResponse
+	dec := json.NewDecoder(res.Body)
+	if err := dec.Decode(&result); err != nil {
+		return OwnedNFT{}, err
+	}
+
+	ownedNFT := OwnedNFT{
+		status: result.Status,
+		NFTs:   make([]NFT, len(result.Result)),
+	}
+
+	for i, nft := range result.Result {
+		ownedNFT.NFTs[i] = NFT{
+			token_id:      nft.TokenId,
+			token_address: nft.TokenAddress,
+			name:          nft.Name,
+			symbol:        nft.Symbol,
+			token_uri:     nft.TokenURI,
+		}
+	}
+
+	return ownedNFT, nil
 }
 
 func (s *TicketService) txOpts(ctx context.Context) (*bind.TransactOpts, error) {
