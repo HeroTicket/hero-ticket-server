@@ -3,6 +3,7 @@ package rest
 import (
 	"fmt"
 	"io"
+	"math/big"
 	"net/http"
 	"strings"
 
@@ -380,7 +381,7 @@ func (c *UserCtrl) register(w http.ResponseWriter, r *http.Request) {
 	// TODO: uri should be dynamic
 	uri := "https://ipfs.io/ipfs/QmfFbvLH37DebBqmVBm7V8ecfzgjFPnPeHRYiYk1PNoW84/2level.png"
 
-	if tba == nil {
+	if tba == nil || tba.Big().Cmp(big.NewInt(0)) == 0 {
 		// 5-1. if tba does not exist, create tba
 		tbaCreated, err := c.ticket.CreateTBA(r.Context(), accountAddress, uri)
 		if err != nil {
