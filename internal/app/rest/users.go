@@ -216,14 +216,18 @@ func (c *UserCtrl) loginCallback(w http.ResponseWriter, r *http.Request) {
 	_ = WriteJSON(w, http.StatusOK, response)
 }
 
+type RefreshTokenRequest struct {
+	RefreshToken string `json:"refreshToken"`
+}
+
 // Refresh Token Pair godoc
 //
 //	@Tags			users
 //	@Summary		refreshes token pair
 //	@Description	refreshes token pair
-//	@Accept 		plain
+//	@Accept 		json
 //	@Produce		json
-//	@Param			refreshToken		body		string	true	"refresh token"
+//	@Param			body		body		RefreshTokenRequest	true	"refresh token request"
 //	@Success		200			{object}	CommonResponse{data=jwt.TokenPair}
 //	@Failure		400			{object}	CommonResponse
 //	@Failure		500			{object}	CommonResponse
@@ -232,16 +236,19 @@ func (c *UserCtrl) refresh(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, 1024*1024) // 1MB
 
 	// 1. read token from request body
-	tokenBytes, err := io.ReadAll(r.Body)
+	var req RefreshTokenRequest
+
+	err := ReadJSON(w, r, &req)
 	if err != nil {
 		logger.Error("failed to read token", "error", err)
 		ErrorJSON(w, "failed to read token", http.StatusInternalServerError)
 		return
 	}
+
 	defer r.Body.Close()
 
 	// 2. validate token
-	jwtUser, err := c.jwt.VerifyToken(string(tokenBytes), jwt.TokenRoleRefresh)
+	jwtUser, err := c.jwt.VerifyToken(req.RefreshToken, jwt.TokenRoleRefresh)
 	if err != nil {
 		ErrorJSON(w, "invalid token", http.StatusBadRequest)
 		return
