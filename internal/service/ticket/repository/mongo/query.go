@@ -85,6 +85,9 @@ func (q *MongoQuery) FindTicketCollections(ctx context.Context, filter ticket.Ti
 	var query bson.M
 
 	// TODO: add filter
+	if filter.IssuerAddress != "" {
+		query = bson.M{"issuerAddress": filter.IssuerAddress}
+	}
 
 	cur, err := coll.Find(ctx, query)
 	if err != nil {

@@ -100,5 +100,29 @@ type IssueTicketParams struct {
 
 type TicketCollectionFilter struct {
 	// TODO: add filter options
-	Issuer string
+	IssuerAddress string
+}
+
+type OwnedNFT struct {
+	Status string `json:"status"`
+	NFTs   []NFT  `json:"nfts"`
+}
+
+type NFT struct {
+	TokenId      string `json:"token_id"`
+	TokenAddress string `json:"token_address"`
+	Name         string `json:"name"`
+	Symbol       string `json:"symbol"`
+	TokenUri     string `json:"token_uri"`
+}
+
+type OwnedNFTResponse struct {
+	Status string `json:"status"`
+	Result []struct {
+		TokenId      string `json:"token_id"`
+		TokenAddress string `json:"token_address"`
+		Name         string `json:"name"`
+		Symbol       string `json:"symbol"`
+		TokenURI     string `json:"token_uri"`
+	} `json:"result"`
 }

@@ -2,6 +2,7 @@ package rest
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/heroticket/internal/logger"
@@ -35,7 +36,7 @@ func (c *ProfileCtrl) Pattern() string {
 func (c *ProfileCtrl) Handler() http.Handler {
 	r := chi.NewRouter()
 
-	r.Get("/{name}", c.profile)
+	r.Get("/{accountAddress}", c.profile)
 
 	return r
 }
@@ -47,17 +48,17 @@ func (c *ProfileCtrl) Handler() http.Handler {
 //	@Description	returns user profile
 //	@Accept			json
 //	@Produce		json
-//	@Param 			name	path	string	true	"user name"
-//	@Success		200			{object}	CommonResponse
+//	@Param 			accountAddress	path	string	true	"account address"
+//	@Success		200			{object}	CommonResponse{data=ProfileResponse}
 //	@Failure		400			{object}	CommonResponse
 //	@Failure		500			{object}	CommonResponse
-//	@Router			/v1/profile/{name} [get]
+//	@Router			/v1/profile/{accountAddress} [get]
 func (c *ProfileCtrl) profile(w http.ResponseWriter, r *http.Request) {
 	// 1. check params
-	name := chi.URLParam(r, "name")
+	accountAddress := strings.ToLower(chi.URLParam(r, "accountAddress"))
 
 	// 2. get user
-	u, err := c.user.FindUserByName(r.Context(), name)
+	u, err := c.user.FindUserByAccountAddress(r.Context(), accountAddress)
 	if err != nil {
 		logger.Error("failed to find user", "error", err)
 		if err == user.ErrUserNotFound {
@@ -78,8 +79,13 @@ func (c *ProfileCtrl) profile(w http.ResponseWriter, r *http.Request) {
 	}
 	//  4. get issued ticket by user
 	ticketCollections, err := c.ticket.FindTicketCollections(r.Context(), ticket.TicketCollectionFilter{
-		Issuer: u.AccountAddress,
+		IssuerAddress: u.AccountAddress,
 	})
+	if err != nil {
+		logger.Error("failed to get ticket collections", "error", err)
+		ErrorJSON(w, "failed to get ticket collections", http.StatusInternalServerError)
+		return
+	}
 
 	// 5. return user profile
 	resp := CommonResponse{
