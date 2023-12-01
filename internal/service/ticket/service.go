@@ -44,16 +44,16 @@ type TicketService struct {
 }
 
 type OwnedNFT struct {
-	status string `json:"status"`
+	Status string `json:"status"`
 	NFTs   []NFT  `json:"nfts`
 }
 
 type NFT struct {
-	token_id      string `json:"token_id"`
-	token_address string `json:"token_address"`
-	name          string `json:"name"`
-	symbol        string `json:"symbol"`
-	token_uri     string `json:"token_uri"`
+	tokenId      string `json:"token_id"`
+	tokenAddress string `json:"token_address"`
+	name         string `json:"name"`
+	symbol       string `json:"symbol"`
+	tokenUri     string `json:"token_uri"`
 }
 
 type OwnedNFTResponse struct {
@@ -258,7 +258,7 @@ func (s *TicketService) GetOwnedNFT(ctx context.Context, owner common.Address) (
 	req.Header.Add("X-API-Key", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJub25jZSI6IjEzNGNhN2Y2LTNkODMtNGIxZC1iOGIwLWE0NmVhMTllNmM4NiIsIm9yZ0lkIjoiMzY2NDMzIiwidXNlcklkIjoiMzc2NTk0IiwidHlwZUlkIjoiYTRmNGMzNTQtM2Y3Zi00YmU5LWI4ZjItZDkzOTM1MmJjZmVkIiwidHlwZSI6IlBST0pFQ1QiLCJpYXQiOjE3MDEzNDMxOTYsImV4cCI6NDg1NzEwMzE5Nn0.KxfO8preWRqP1BvMTkW_FvPzH6cuQSTwzxz8DvBhZjc")
 
 	res, err := http.DefaultClient.Do(req)
-	if err != nil {
+	if err != nil || res.StatusCode != 200 {
 		return OwnedNFT{}, err
 	}
 	defer res.Body.Close()
@@ -270,17 +270,17 @@ func (s *TicketService) GetOwnedNFT(ctx context.Context, owner common.Address) (
 	}
 
 	ownedNFT := OwnedNFT{
-		status: result.Status,
+		Status: result.Status,
 		NFTs:   make([]NFT, len(result.Result)),
 	}
 
 	for i, nft := range result.Result {
 		ownedNFT.NFTs[i] = NFT{
-			token_id:      nft.TokenId,
-			token_address: nft.TokenAddress,
-			name:          nft.Name,
-			symbol:        nft.Symbol,
-			token_uri:     nft.TokenURI,
+			tokenId:      nft.TokenId,
+			tokenAddress: nft.TokenAddress,
+			name:         nft.Name,
+			symbol:       nft.Symbol,
+			tokenUri:     nft.TokenURI,
 		}
 	}
 
