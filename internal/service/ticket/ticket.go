@@ -100,4 +100,5 @@ type IssueTicketParams struct {
 
 type TicketCollectionFilter struct {
 	// TODO: add filter options
+	Issuer string
 }

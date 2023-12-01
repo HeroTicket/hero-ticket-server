@@ -7,11 +7,18 @@ import (
 	"github.com/heroticket/internal/logger"
 	"github.com/heroticket/internal/service/ticket"
 	"github.com/heroticket/internal/service/user"
+	"github.com/heroticket/internal/web3"
 )
 
 type ProfileCtrl struct {
 	ticket ticket.Service
 	user   user.Service
+}
+
+type ProfileResponse struct {
+	UserInfo      user.User                  `json:"userInfo"`
+	OwnedTickets  []ticket.NFT               `json:"ownedTickets"`
+	IssuedTickets []*ticket.TicketCollection `json:"issuedTickets"`
 }
 
 func NewProfileCtrl(ticket ticket.Service, user user.Service) *ProfileCtrl {
@@ -62,13 +69,23 @@ func (c *ProfileCtrl) profile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// TODO: get user profile
-	// 3. get purchased tickets and issued tickets from db
+	// 3. get purchased tickets and issued tickets
+	tickets, err := c.ticket.GetOwnedNFT(r.Context(), web3.HexToAddress(u.AccountAddress))
+	if err != nil {
+		logger.Error("failed to get owned nft", "error", err)
+		ErrorJSON(w, "failed to get owned nft", http.StatusInternalServerError)
+		return
+	}
+	//  4. get issued ticket by user
+	ticketCollections, err := c.ticket.FindTicketCollections(r.Context(), ticket.TicketCollectionFilter{
+		Issuer: u.AccountAddress,
+	})
 
-	// 4. return user profile
+	// 5. return user profile
 	resp := CommonResponse{
 		Status:  http.StatusOK,
 		Message: "Successfully get user profile",
-		Data:    u,
+		Data:    ProfileResponse{UserInfo: *u, OwnedTickets: tickets.NFTs, IssuedTickets: ticketCollections},
 	}
 
 	_ = WriteJSON(w, http.StatusOK, resp)
