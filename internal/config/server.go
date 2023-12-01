@@ -39,6 +39,7 @@ type TicketServiceConfig struct {
 	DbName          string `mapstructure:"dbName"`
 	ContractAddress string `mapstructure:"contractAddress"`
 	PrivateKey      string `mapstructure:"privateKey"`
+	MoralisApiKey   string `mapstructure:"moralisApiKey"`
 }
 
 type UserServiceConfig struct {

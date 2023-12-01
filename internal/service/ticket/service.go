@@ -41,6 +41,8 @@ type TicketService struct {
 	hero   *heroticket.Heroticket
 	pvk    *ecdsa.PrivateKey
 	repo   Repository
+
+	moralisApiKey string
 }
 
 type OwnedNFT struct {
@@ -67,12 +69,13 @@ type OwnedNFTResponse struct {
 	} `json:"result"`
 }
 
-func New(client *ethclient.Client, hero *heroticket.Heroticket, pvk *ecdsa.PrivateKey, repo Repository) Service {
+func New(client *ethclient.Client, hero *heroticket.Heroticket, pvk *ecdsa.PrivateKey, repo Repository, moralisApiKey string) Service {
 	return &TicketService{
-		client: client,
-		hero:   hero,
-		pvk:    pvk,
-		repo:   repo,
+		client:        client,
+		hero:          hero,
+		pvk:           pvk,
+		repo:          repo,
+		moralisApiKey: moralisApiKey,
 	}
 }
 

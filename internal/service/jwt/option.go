@@ -5,7 +5,7 @@ import "time"
 var (
 	defaultIssuer             = "heroticket"
 	defaultAudience           = "localhost"
-	defaultAccessTokenExpiry  = time.Minute * 15
+	defaultAccessTokenExpiry  = time.Hour * 1
 	defaultRefreshTokenExpiry = time.Hour * 24
 )
 
