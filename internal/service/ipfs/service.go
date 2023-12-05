@@ -54,12 +54,14 @@ func (svc *IpfsService) PinFile(ctx context.Context, file io.Reader, filename st
 		return nil, err
 	}
 
-	defer m.Close()
+	m.Close()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, PinFileToIPFSUrl, body)
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Println("Content-Type:", m.FormDataContentType())
 
 	req.Header.Set("Content-Type", m.FormDataContentType())
 	req.Header.Set("pinata_api_key", svc.apiKey)

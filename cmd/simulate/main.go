@@ -2,13 +2,11 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"net/http"
+	"os"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/heroticket/internal/config"
-	"github.com/heroticket/internal/web3"
-	"github.com/heroticket/pkg/contracts/heroticket"
+	"github.com/heroticket/internal/service/ipfs"
 )
 
 func main() {
@@ -17,81 +15,117 @@ func main() {
 		panic(err)
 	}
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	svc := ipfs.New(ipfs.IpfsServiceConfig{
+		ApiKey: cfg.Ipfs.ApiKey,
+		Secret: cfg.Ipfs.Secret,
+		Client: http.DefaultClient,
+	})
 
-	ethclient, err := web3.NewClient(ctx, cfg.RpcUrl)
+	f, err := os.Open("test.txt")
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	resp, err := svc.PinFile(context.Background(), f, "엄준식")
 	if err != nil {
 		panic(err)
 	}
 
-	hero, err := heroticket.NewHeroticket(web3.HexToAddress(cfg.Ticket.ContractAddress), ethclient)
-	if err != nil {
-		panic(err)
-	}
-
-	// pvk, err := web3.ParsePrivateKey(cfg.Ticket.PrivateKey)
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	address := common.HexToAddress("0x3557db220dbfdbbb8cf5489495bf02aac9a889ed")
-
-	tba, err := hero.TbaAddress(&bind.CallOpts{}, address)
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Println(tba.Hex())
-	// nonce, err := ethclient.PendingNonceAt(ctx, address)
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// gasPrice, err := ethclient.SuggestGasPrice(ctx)
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// chainID, err := ethclient.ChainID(ctx)
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// auth, err := bind.NewKeyedTransactorWithChainID(pvk, chainID)
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// auth.GasPrice = gasPrice
-	// auth.Nonce = big.NewInt(int64(nonce))
-	// auth.GasLimit = 3000000
-
-	// // 1 day = 86400
-
-	// tx, err := hero.IssueTicket(auth, "Test Ticket", "TT", "https://ipfs.io/ipfs/QmfFbvLH37DebBqmVBm7V8ecfzgjFPnPeHRYiYk1PNoW84/2level.png",
-	// 	address, big.NewInt(100), big.NewInt(1000000000), big.NewInt(100), big.NewInt(86401))
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// receipt, err := bind.WaitMined(ctx, ethclient, tx)
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// var ticketIssued *heroticket.HeroticketTicketIssued
-
-	// for _, log := range receipt.Logs {
-	// 	ticketIssued, err = hero.ParseTicketIssued(*log)
-	// 	if err == nil {
-	// 		break
-	// 	}
-	// }
-
-	// if ticketIssued == nil {
-	// 	panic("TicketIssued not found")
-	// }
-
-	// fmt.Println(ticketIssued.TicketAddress.Hex())
+	println(resp.IpfsHash)
 }
+
+/*
+func main() {
+	f, err := os.Open("test.txt")
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	r, w := io.Pipe()
+
+	fmt.Println("Pipe Created")
+
+	m := multipart.NewWriter(w)
+
+	go func() {
+		defer w.Close()
+		defer m.Close()
+
+		part, err := m.CreateFormFile("file", f.Name())
+		if err != nil {
+			panic(err)
+		}
+
+		if _, err := io.Copy(part, f); err != nil {
+			panic(err)
+		}
+	}()
+
+	fmt.Println("Create Request")
+
+	req, err := http.NewRequestWithContext(context.Background(), http.MethodPost, "https://api.pinata.cloud/pinning/pinFileToIPFS", r)
+	if err != nil {
+		panic(err)
+	}
+
+	req.Header.Set("Content-Type", m.FormDataContentType())
+
+	fmt.Println("Content-Type:", m.FormDataContentType())
+
+	req.Header.Add("authorization", "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySW5mb3JtYXRpb24iOnsiaWQiOiIwY2Y0MTZlMi1kZWJiLTQ3MjgtYmUwOC0zMWEwMWNhNTAwOTIiLCJlbWFpbCI6ImNyZXdlMTc0NkBoYW55YW5nLmFjLmtyIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsInBpbl9wb2xpY3kiOnsicmVnaW9ucyI6W3siaWQiOiJGUkExIiwiZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjF9LHsiaWQiOiJOWUMxIiwiZGVzaXJlZFJlcGxpY2F0aW9uQ291bnQiOjF9XSwidmVyc2lvbiI6MX0sIm1mYV9lbmFibGVkIjpmYWxzZSwic3RhdHVzIjoiQUNUSVZFIn0sImF1dGhlbnRpY2F0aW9uVHlwZSI6InNjb3BlZEtleSIsInNjb3BlZEtleUtleSI6IjAxN2U0ZTg2ODY1YmRhMDNkMDFiIiwic2NvcGVkS2V5U2VjcmV0IjoiNDM3N2RmMWU0MWFlZDBiNGM1OWFhMDQxZWVjODEwNDExNGRlMzllMmRjNzRmMTA1YjkxZWY3MzQ4OGEzMDM4OSIsImlhdCI6MTcwMTI0NzUzOH0.1hopoeAPpdDUCeFp-TbkWAbnhgADVYZ6KVw9RG7tQHQ")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+
+	fmt.Println("Status Code:", resp.StatusCode)
+
+	if resp.StatusCode != http.StatusOK {
+		b, err := io.ReadAll(resp.Body)
+		if err != nil {
+			panic(err)
+		}
+
+		fmt.Println("Error:", string(b))
+		return
+	}
+
+	var data ipfs.PinFileResponse
+
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		panic(err)
+	}
+
+	fmt.Println(data)
+}
+*/
+/*
+func main() {
+	cfg, err := config.NewServerConfig("./configs/server/config.json")
+	if err != nil {
+		panic(err)
+	}
+
+	f, err := os.Open("test.txt")
+	if err != nil {
+		panic(err)
+	}
+	defer f.Close()
+
+	pnt := pinata.Pinata{
+		Apikey: cfg.Ipfs.ApiKey,
+		Secret: cfg.Ipfs.Secret,
+	}
+
+	hash, err := pnt.PinWithReader(f)
+	if err != nil {
+		panic(err)
+	}
+
+	println(hash)
+}
+*/
