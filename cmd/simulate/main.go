@@ -2,11 +2,12 @@ package main
 
 import (
 	"context"
-	"net/http"
-	"os"
+	"fmt"
 
 	"github.com/heroticket/internal/config"
-	"github.com/heroticket/internal/service/ipfs"
+	"github.com/heroticket/internal/db/mongo"
+	"github.com/heroticket/internal/service/ticket"
+	tmongo "github.com/heroticket/internal/service/ticket/repository/mongo"
 )
 
 func main() {
@@ -15,24 +16,39 @@ func main() {
 		panic(err)
 	}
 
-	svc := ipfs.New(ipfs.IpfsServiceConfig{
-		ApiKey: cfg.Ipfs.ApiKey,
-		Secret: cfg.Ipfs.Secret,
-		Client: http.DefaultClient,
+	client, err := mongo.New(context.Background(), cfg.MongoUrl)
+	if err != nil {
+		panic(err)
+	}
+
+	db, err := tmongo.New(context.Background(), client, "herotickettest")
+	if err != nil {
+		panic(err)
+	}
+
+	res, err := db.CreateTicketCollection(context.Background(), ticket.CreateTicketCollectionParams{
+		ContractAddress: "0x1234567890",
+		IssuerAddress:   "0x1234567890",
+		Name:            "Test",
+		Symbol:          "TST",
+		Description:     "Test",
+		Organizer:       "Test",
+		Location:        "Test",
+		Date:            "Test",
+		BannerUrl:       "Test",
+		TicketUrl:       "Test",
+		EthPrice:        "Test",
+		TokenPrice:      "Test",
+		TotalSupply:     "Test",
+		Remaining:       "Test",
+		SaleStartAt:     0,
+		SaleEndAt:       0,
 	})
-
-	f, err := os.Open("test.txt")
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
-
-	resp, err := svc.PinFile(context.Background(), f, "엄준식")
 	if err != nil {
 		panic(err)
 	}
 
-	println(resp.IpfsHash)
+	fmt.Println(res)
 }
 
 /*
