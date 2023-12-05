@@ -6,6 +6,7 @@ require (
 	github.com/ethereum/go-ethereum v1.11.5
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/go-chi/cors v1.2.1
+	github.com/go-chi/httprate v0.7.4
 	github.com/go-redis/cache/v9 v9.0.0
 	github.com/golang-jwt/jwt/v5 v5.1.0
 	github.com/google/uuid v1.4.0

@@ -7,6 +7,7 @@ resource "aws_alb" "hero_ticket_alb" {
   ]
   subnets                          = aws_subnet.hero_ticket_public_subnets[*].id
   enable_cross_zone_load_balancing = true
+  idle_timeout                     = 300
 
   tags = merge(
     var.common_tags,
