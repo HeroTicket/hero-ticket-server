@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"math/big"
@@ -251,7 +250,7 @@ func (c *TicketCtrl) whitelistQR(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 6. check if ticket is on sale
-	if onchainTicket.Remaining.Cmp(big.NewInt(0)) == 0 || onchainTicket.SaleEndAt.Int64() >= time.Now().Unix() {
+	if onchainTicket.Remaining.Cmp(big.NewInt(0)) == 0 || onchainTicket.SaleEndAt.Int64() < time.Now().Unix() {
 		ErrorJSON(w, "ticket is not on sale", http.StatusBadRequest)
 		return
 	}
@@ -421,7 +420,7 @@ func (c *TicketCtrl) tokenPurchaseQR(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 6. check if ticket is on sale
-	if onchainTicket.Remaining.Cmp(big.NewInt(0)) == 0 || onchainTicket.SaleEndAt.Int64() >= time.Now().Unix() {
+	if onchainTicket.Remaining.Cmp(big.NewInt(0)) == 0 || onchainTicket.SaleEndAt.Int64() < time.Now().Unix() {
 		ErrorJSON(w, "ticket is not on sale", http.StatusBadRequest)
 		return
 	}
@@ -738,8 +737,6 @@ func (c *TicketCtrl) tokenPurchaseCallback(w http.ResponseWriter, r *http.Reques
 			Data:   "Successfully purchased ticket",
 		},
 	})
-
-	go c.updateTbaTokenBalance(u.ID, u.TbaAddress)
 
 	// 12. return success response
 	response := CommonResponse{
@@ -1138,8 +1135,6 @@ func (c *TicketCtrl) createTicket(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	go c.updateTbaTokenBalance(u.ID, u.TbaAddress)
-
 	// 6. return success response
 	resp := CommonResponse{
 		Status:  http.StatusCreated,
@@ -1148,26 +1143,4 @@ func (c *TicketCtrl) createTicket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_ = WriteJSON(w, http.StatusCreated, resp)
-}
-
-func (c *TicketCtrl) updateTbaTokenBalance(id, tbaAddress string) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	// 1. get tba token balance
-	balance, err := c.ticket.TokenBalanceOf(ctx, web3.HexToAddress(tbaAddress))
-	if err != nil {
-		logger.Error("failed to get tba token balance", "error", err)
-		return
-	}
-
-	// 3. update tba token balance
-	err = c.user.UpdateUser(ctx, user.UpdateUserParams{
-		ID:              id,
-		TBATokenBalance: balance.String(),
-	})
-	if err != nil {
-		logger.Error("failed to update tba token balance", "error", err)
-		return
-	}
 }
