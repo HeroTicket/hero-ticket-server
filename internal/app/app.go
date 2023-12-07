@@ -15,14 +15,16 @@ type Config struct {
 	Addr         string
 	ReadTimeout  time.Duration
 	WriteTimeout time.Duration
+	IdleTimeout  time.Duration
 }
 
 func DefaultConfig() *Config {
 	return &Config{
 		Version:      "v1",
 		Addr:         ":8080",
-		ReadTimeout:  5 * time.Second,
-		WriteTimeout: 5 * time.Second,
+		ReadTimeout:  10 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  3 * time.Minute,
 	}
 }
 
@@ -37,6 +39,7 @@ func New(cfg *Config, ctrls ...Controller) *App {
 			Handler:      newRouter(cfg.Version, ctrls...),
 			ReadTimeout:  cfg.ReadTimeout,
 			WriteTimeout: cfg.WriteTimeout,
+			IdleTimeout:  cfg.IdleTimeout,
 		},
 	}
 }
