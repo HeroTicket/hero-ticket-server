@@ -156,6 +156,8 @@ definitions:
     type: object
   ticket.NFT:
     properties:
+      metadata:
+        type: string
       name:
         type: string
       symbol:

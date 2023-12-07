@@ -3,6 +3,7 @@ package mongo
 import (
 	"context"
 	"math"
+	"strconv"
 
 	"github.com/heroticket/internal/service/notice"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -25,12 +26,12 @@ func NewQuery(client *mongo.Client, dbname string) notice.Query {
 func (q *mongoQuery) GetNotice(ctx context.Context, id string) (*notice.Notice, error) {
 	coll := q.collection()
 
-	objectID, err := primitive.ObjectIDFromHex(id)
+	idInt, err := strconv.ParseInt(id, 10, 64)
 	if err != nil {
 		return nil, err
 	}
 
-	filter := primitive.M{"_id": objectID}
+	filter := primitive.M{"_id": idInt}
 
 	var n notice.Notice
 

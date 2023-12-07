@@ -1637,6 +1637,9 @@ const docTemplate = `{
         "ticket.NFT": {
             "type": "object",
             "properties": {
+                "metadata": {
+                    "type": "string"
+                },
                 "name": {
                     "type": "string"
                 },
