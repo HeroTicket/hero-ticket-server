@@ -70,7 +70,7 @@ func (s *TicketService) IsIssuedTicket(ctx context.Context, contractAddress comm
 }
 
 func (s *TicketService) HasTicket(ctx context.Context, contractAddress, owner common.Address) (bool, error) {
-	return s.hero.HasTicket(&bind.CallOpts{Context: ctx}, contractAddress, owner)
+	return s.hero.HasTicket(&bind.CallOpts{Context: ctx}, owner, contractAddress)
 }
 
 func (s *TicketService) IsWhitelisted(ctx context.Context, contractAddress, to common.Address) (bool, error) {
