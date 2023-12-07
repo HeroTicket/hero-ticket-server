@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/heroticket/internal/config"
+	"github.com/heroticket/internal/service/ticket"
 	"github.com/heroticket/internal/web3"
 	"github.com/heroticket/pkg/contracts/heroticket"
 )
@@ -26,13 +26,19 @@ func main() {
 		panic(err)
 	}
 
-	contractAddress := web3.HexToAddress("0x24f457ac6c4cc4f0ac456c9696d68b809361405b")
-	tbaAddress := web3.HexToAddress("0xc50b7cb1651af7d13a89494d58fcacc595a8e905")
-
-	ok, err := hero.HasTicket(&bind.CallOpts{}, tbaAddress, contractAddress)
+	pvk, err := web3.ParsePrivateKey(cfg.Ticket.PrivateKey)
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println(ok)
+	service := ticket.New(ethclient, hero, pvk, nil, cfg.Ticket.MoralisApiKey)
+
+	nfts, err := service.GetOwnedNFT(context.Background(), web3.HexToAddress("0x15a88243b4c61ef0071e3527b88873caf4a334dd"))
+	if err != nil {
+		panic(err)
+	}
+
+	for _, nft := range nfts.NFTs {
+		fmt.Println(nft.MetaData)
+	}
 }

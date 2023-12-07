@@ -29,7 +29,6 @@ type Service interface {
 	IssueTicket(ctx context.Context, params IssueTicketParams) (*heroticket.HeroticketTicketIssued, error)
 	BuyTicketByToken(ctx context.Context, contractAddress, buyerAddress common.Address) (*heroticket.HeroticketTicketSold, error)
 
-	// TODO: repo에 저장하는 메서드 추가
 	CreateTicketCollection(ctx context.Context, params CreateTicketCollectionParams) (*TicketCollection, error)
 	GetOwnedNFT(ctx context.Context, owner common.Address) (OwnedNFT, error)
 	FindTicketCollectionByContractAddress(ctx context.Context, contractAddress string) (*TicketCollection, error)
@@ -231,7 +230,7 @@ func (s *TicketService) GetOwnedNFT(ctx context.Context, owner common.Address) (
 
 	url := fmt.Sprintf("https://deep-index.moralis.io/api/v2.2/%s/nft?chain=mumbai&format=decimal&media_items=false", tbaAddress.String())
 
-	req, _ := http.NewRequest("GET", url, nil)
+	req, _ := http.NewRequestWithContext(ctx, "GET", url, nil)
 
 	req.Header.Add("Accept", "application/json")
 	req.Header.Add("X-API-Key", s.moralisApiKey)
@@ -246,28 +245,13 @@ func (s *TicketService) GetOwnedNFT(ctx context.Context, owner common.Address) (
 	}
 	defer res.Body.Close()
 
-	var result OwnedNFTResponse
+	var result OwnedNFT
 	dec := json.NewDecoder(res.Body)
 	if err := dec.Decode(&result); err != nil {
 		return OwnedNFT{}, err
 	}
 
-	ownedNFT := OwnedNFT{
-		Status: result.Status,
-		NFTs:   make([]NFT, len(result.Result)),
-	}
-
-	for i, nft := range result.Result {
-		ownedNFT.NFTs[i] = NFT{
-			TokenId:      nft.TokenId,
-			TokenAddress: nft.TokenAddress,
-			Name:         nft.Name,
-			Symbol:       nft.Symbol,
-			TokenUri:     nft.TokenURI,
-		}
-	}
-
-	return ownedNFT, nil
+	return result, nil
 }
 
 func (s *TicketService) txOpts(ctx context.Context) (*bind.TransactOpts, error) {

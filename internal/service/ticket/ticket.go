@@ -104,8 +104,12 @@ type TicketCollectionFilter struct {
 }
 
 type OwnedNFT struct {
-	Status string `json:"status"`
-	NFTs   []NFT  `json:"nfts"`
+	Status   string `json:"status"`
+	Total    int    `json:"total"`
+	Page     int    `json:"page"`
+	PageSize int    `json:"page_size"`
+	Cursor   string `json:"cursor,omitempty"`
+	NFTs     []NFT  `json:"result"`
 }
 
 type NFT struct {
@@ -114,15 +118,16 @@ type NFT struct {
 	Name         string `json:"name"`
 	Symbol       string `json:"symbol"`
 	TokenUri     string `json:"token_uri"`
+	MetaData     string `json:"metadata"`
 }
 
-type OwnedNFTResponse struct {
-	Status string `json:"status"`
-	Result []struct {
-		TokenId      string `json:"token_id"`
-		TokenAddress string `json:"token_address"`
-		Name         string `json:"name"`
-		Symbol       string `json:"symbol"`
-		TokenURI     string `json:"token_uri"`
-	} `json:"result"`
-}
+// type OwnedNFTResponse struct {
+// 	Status string `json:"status"`
+// 	Result []struct {
+// 		TokenId      string `json:"token_id"`
+// 		TokenAddress string `json:"token_address"`
+// 		Name         string `json:"name"`
+// 		Symbol       string `json:"symbol"`
+// 		TokenURI     string `json:"token_uri"`
+// 	} `json:"result"`
+// }
