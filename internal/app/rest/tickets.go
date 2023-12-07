@@ -278,10 +278,8 @@ func (c *TicketCtrl) whitelistQR(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 9. check if user is already on whitelist
-	accountAddress := web3.HexToAddress(u.AccountAddress)
-
-	ok, err = c.ticket.IsWhitelisted(r.Context(), contractAddress, accountAddress)
+	// 9. check if tba address is already on whitelist
+	ok, err = c.ticket.IsWhitelisted(r.Context(), contractAddress, tbaAddress)
 	if err != nil {
 		logger.Error("failed to check if user is already on whitelist", "error", err)
 		ErrorJSON(w, "failed to check if user is already on whitelist", http.StatusInternalServerError)
