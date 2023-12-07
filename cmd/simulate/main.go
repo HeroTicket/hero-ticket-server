@@ -6,8 +6,8 @@ import (
 
 	"github.com/heroticket/internal/config"
 	"github.com/heroticket/internal/db/mongo"
-	"github.com/heroticket/internal/service/notice"
-	nmongo "github.com/heroticket/internal/service/notice/repository/mongo"
+	"github.com/heroticket/internal/service/ticket"
+	nmongo "github.com/heroticket/internal/service/ticket/repository/mongo"
 )
 
 func main() {
@@ -21,15 +21,17 @@ func main() {
 		panic(err)
 	}
 
-	repo := nmongo.New(client, cfg.Notice.DbName)
-
-	res, err := repo.CreateNotice(context.Background(), &notice.Notice{
-		Title:   "Welcome to Hero Ticket",
-		Content: "Welcome to Hero Ticket, we are happy to have you here.",
-	})
+	repo, err := nmongo.New(context.Background(), client, cfg.Ticket.DbName)
 	if err != nil {
 		panic(err)
 	}
 
-	fmt.Println(res)
+	res, err := repo.FindTicketCollections(context.Background(), ticket.TicketCollectionFilter{})
+	if err != nil {
+		panic(err)
+	}
+
+	for _, r := range res {
+		fmt.Println(r)
+	}
 }

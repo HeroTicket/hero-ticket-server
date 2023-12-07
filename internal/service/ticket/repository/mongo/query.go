@@ -6,6 +6,7 @@ import (
 	"github.com/heroticket/internal/service/ticket"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type MongoQuery struct {
@@ -89,7 +90,12 @@ func (q *MongoQuery) FindTicketCollections(ctx context.Context, filter ticket.Ti
 		query = bson.M{"issuerAddress": filter.IssuerAddress}
 	}
 
-	cur, err := coll.Find(ctx, query)
+	// decreasing order
+	opts := &options.FindOptions{
+		Sort: bson.M{"createdAt": -1},
+	}
+
+	cur, err := coll.Find(ctx, query, opts)
 	if err != nil {
 		return nil, err
 	}

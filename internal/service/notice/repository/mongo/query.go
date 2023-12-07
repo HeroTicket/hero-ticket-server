@@ -83,8 +83,6 @@ func (q *mongoQuery) GetNotices(ctx context.Context, page, limit int64) (*notice
 			return nil, err
 		}
 
-		n.Content = ""
-
 		notices = append(notices, &n)
 	}
 
