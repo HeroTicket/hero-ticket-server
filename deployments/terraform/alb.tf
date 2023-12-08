@@ -33,6 +33,11 @@ resource "aws_alb_target_group" "hero_ticket_issuer_node_target_group" {
     matcher             = "200-399"
   }
 
+  stickiness {
+    enabled = true
+    type    = "lb_cookie"
+  }
+
   tags = merge(
     var.common_tags,
     {
@@ -55,6 +60,11 @@ resource "aws_alb_target_group" "hero_ticket_server_target_group" {
     healthy_threshold   = 5
     unhealthy_threshold = 10
     matcher             = "200-399"
+  }
+
+  stickiness {
+    enabled = true
+    type    = "lb_cookie"
   }
 
   tags = merge(
