@@ -51,6 +51,7 @@ func (c *ClaimCtrl) Handler() http.Handler {
 // @Produce			json
 // @Param			contractAddress	path	string	true	"contract address"
 // @Success			201	{object}	CommonResponse{data=did.CreateClaimResponse}
+// @Success			202	{object}	CommonResponse
 // @Failure			400	{object}	CommonResponse
 // @Failure			401	{object}	CommonResponse
 // @Failure			404	{object}	CommonResponse
@@ -86,11 +87,11 @@ func (c *ClaimCtrl) requestClaim(w http.ResponseWriter, r *http.Request) {
 		}
 	} else {
 		resp := CommonResponse{
-			Status: http.StatusContinue,
+			Status: http.StatusAccepted,
 			Data:   "claim already exists",
 		}
 
-		_ = WriteJSON(w, http.StatusContinue, resp)
+		_ = WriteJSON(w, http.StatusAccepted, resp)
 		return
 	}
 

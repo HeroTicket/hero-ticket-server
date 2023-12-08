@@ -198,6 +198,12 @@ const docTemplate = `{
                             ]
                         }
                     },
+                    "202": {
+                        "description": "Accepted",
+                        "schema": {
+                            "$ref": "#/definitions/rest.CommonResponse"
+                        }
+                    },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
