@@ -105,8 +105,8 @@ func (c *ClaimCtrl) requestClaim(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if ok {
-		ErrorJSON(w, "user already has ticket", http.StatusBadRequest)
+	if !ok {
+		ErrorJSON(w, "user does not have ticket", http.StatusBadRequest)
 		return
 	}
 

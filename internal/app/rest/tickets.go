@@ -861,7 +861,7 @@ func (c *TicketCtrl) verifyQR(w http.ResponseWriter, r *http.Request) {
 		Reason:      "Verify ticket ownership",
 		Message:     fmt.Sprintf("Scan the QR code to verify ticket ownership for %s", rawContractAddress),
 		Sender:      u.ID,
-		CallbackUrl: fmt.Sprintf("%s/v1/tickets/verify-callback?sessionId=%s", c.serverUrl, sessionId),
+		CallbackUrl: fmt.Sprintf("%s/v1/tickets/verify-callback?sessionId=%s&contractAddress=%s", c.serverUrl, sessionId, rawContractAddress),
 		Scope: []protocol.ZeroKnowledgeProofRequest{
 			mtpProofRequest,
 		},
@@ -900,6 +900,7 @@ func (c *TicketCtrl) verifyQR(w http.ResponseWriter, r *http.Request) {
 // @Accept			json
 // @Produce		json
 // @Param			sessionId		query	string	true	"session id"
+// @Param			contractAddress	query	string	true	"contract address"
 // @Param			token			body	string	true	"token"
 // @Success		200			{object}	CommonResponse
 // @Failure		400			{object}	CommonResponse
@@ -916,7 +917,10 @@ func (c *TicketCtrl) verifyCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 2. get token from body
+	// 2. get contract address from query
+	rawContractAddress := strings.ToLower(r.URL.Query().Get("contractAddress"))
+
+	// 3. get token from body
 	tokenBytes, err := io.ReadAll(r.Body)
 	if err != nil {
 		logger.Error("failed to read token from body", "error", err)
@@ -933,7 +937,7 @@ func (c *TicketCtrl) verifyCallback(w http.ResponseWriter, r *http.Request) {
 		},
 	})
 
-	// 3. verify token
+	// 4. verify token
 	resp, err := c.auth.AuthorizationCallback(r.Context(), sessionId, string(tokenBytes))
 	if err != nil {
 		logger.Error("failed to handle verify callback", "error", err)
@@ -941,8 +945,32 @@ func (c *TicketCtrl) verifyCallback(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// 4. get user id from verification response
+	// 5. get user id from verification response
 	userID := resp.From
+
+	// 6. get user from db
+	u, err := c.user.FindUserByID(r.Context(), userID)
+	if err != nil {
+		logger.Error("failed to find user by id", "error", err)
+		ErrorJSON(w, "failed to find user by id", http.StatusInternalServerError)
+		return
+	}
+
+	// 7. check if user has ticket
+	tbaAddress := web3.HexToAddress(u.TbaAddress)
+	contractAddress := web3.HexToAddress(rawContractAddress)
+
+	ok, err := c.ticket.HasTicket(r.Context(), contractAddress, tbaAddress)
+	if err != nil {
+		logger.Error("failed to check if user has ticket", "error", err)
+		ErrorJSON(w, "failed to check if user has ticket", http.StatusInternalServerError)
+		return
+	}
+
+	if !ok {
+		ErrorJSON(w, "user does not have ticket", http.StatusBadRequest)
+		return
+	}
 
 	go ws.Send(ws.Message{
 		ID:   id,
