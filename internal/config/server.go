@@ -15,6 +15,7 @@ type DidServiceConfig struct {
 	Username  string `mapstructure:"username"`
 	Password  string `mapstructure:"password"`
 	RedisUrl  string `mapstructure:"redisUrl"`
+	DbName    string `mapstructure:"dbName"`
 }
 
 type IpfsServiceConfig struct {

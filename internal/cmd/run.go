@@ -18,6 +18,7 @@ import (
 	"github.com/heroticket/internal/logger"
 	"github.com/heroticket/internal/service/auth"
 	"github.com/heroticket/internal/service/did"
+	drepo "github.com/heroticket/internal/service/did/repository/mongo"
 	"github.com/heroticket/internal/service/ipfs"
 	"github.com/heroticket/internal/service/jwt"
 	"github.com/heroticket/internal/service/notice"
@@ -83,12 +84,16 @@ func Run() {
 		ReqCache:        authCache,
 	})
 
+	didRepo, err := drepo.New(ctx, mongoClient, cfg.Did.DbName)
+	handleErr(err)
+
 	dids := did.New(did.DidServiceConfig{
 		RPCUrl:    cfg.RpcUrl,
 		IssuerUrl: cfg.Did.IssuerUrl,
 		Username:  cfg.Did.Username,
 		Password:  cfg.Did.Password,
 		QrCache:   didCache,
+		Repo:      didRepo,
 	})
 
 	ipfss := ipfs.New(ipfs.IpfsServiceConfig{
