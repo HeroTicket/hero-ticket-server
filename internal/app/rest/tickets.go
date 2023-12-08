@@ -19,6 +19,8 @@ import (
 	"github.com/heroticket/internal/service/ticket"
 	"github.com/heroticket/internal/service/user"
 	"github.com/heroticket/internal/web3"
+	"github.com/iden3/go-circuits/v2"
+	"github.com/iden3/iden3comm/v2/protocol"
 )
 
 type TicketCtrl struct {
@@ -769,7 +771,7 @@ func (c *TicketCtrl) verifyQR(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 2. get contract address from path
-	rawContractAddress := chi.URLParam(r, "contractAddress")
+	rawContractAddress := strings.ToLower(chi.URLParam(r, "contractAddress"))
 
 	// 3. get session id from query
 	sessionId := r.URL.Query().Get("sessionId")
@@ -829,9 +831,42 @@ func (c *TicketCtrl) verifyQR(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// 8. get admin id
+	admin, err := c.user.FindAdmin(r.Context())
+	if err != nil {
+		logger.Error("failed to find admin", "error", err)
+		ErrorJSON(w, "something went wrong", http.StatusInternalServerError)
+		return
+	}
+
 	// 8. create qr code
-	// TODO: add params
-	qrCode, err := c.auth.AuthorizationRequest(r.Context(), auth.AuthorizationRequestParams{})
+	var mtpProofRequest protocol.ZeroKnowledgeProofRequest
+
+	// random number
+	mtpProofRequest.ID = id.UUID().ID()
+	mtpProofRequest.CircuitID = string(circuits.AtomicQuerySigV2CircuitID)
+	mtpProofRequest.Query = map[string]interface{}{
+		"allowedIssuers": []string{admin.ID},
+		"credentialSubject": map[string]interface{}{
+			"ticket_address": map[string]interface{}{
+				"$eq": rawContractAddress,
+			},
+		},
+		"context": "ipfs://QmfNkUAwq73r1HmMmzYDZ9REBqLrqdXmQm8xBdq7QbQvHz",
+		"type":    "Ownership",
+	}
+
+	qrCode, err := c.auth.AuthorizationRequest(r.Context(), auth.AuthorizationRequestParams{
+		ID:          sessionId,
+		Reason:      "Verify ticket ownership",
+		Message:     fmt.Sprintf("Scan the QR code to verify ticket ownership for %s", rawContractAddress),
+		Sender:      u.ID,
+		CallbackUrl: fmt.Sprintf("%s/v1/tickets/verify-callback?sessionId=%s", c.serverUrl, sessionId),
+		Scope: []protocol.ZeroKnowledgeProofRequest{
+			mtpProofRequest,
+		},
+		Timeout: 1 * time.Hour,
+	})
 	if err != nil {
 		logger.Error("failed to create authorization request", "error", err)
 		ErrorJSON(w, "failed to create authorization request", http.StatusInternalServerError)

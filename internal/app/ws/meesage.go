@@ -24,6 +24,11 @@ func (id ID) Valid() bool {
 	return hub.hasClient(id)
 }
 
+func (id ID) UUID() uuid.UUID {
+	u, _ := uuid.Parse(string(id))
+	return u
+}
+
 type Message struct {
 	Type  MessageType `json:"type"`
 	ID    ID          `json:"id,omitempty"`

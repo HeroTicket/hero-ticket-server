@@ -123,9 +123,7 @@ func Run() {
 	_ = mongo.NewTx(mongoClient)
 
 	// find admin user
-	var admin *user.User
-
-	admin, err = users.FindAdmin(ctx)
+	_, err = users.FindAdmin(ctx)
 	if err != nil {
 		if err == user.ErrUserNotFound {
 			resp, err := dids.CreateIdentity(ctx, did.CreateIdentityRequest{
@@ -140,7 +138,7 @@ func Run() {
 
 			adminAddress := crypto.PubkeyToAddress(pvk.PublicKey)
 
-			admin, err = users.CreateUser(ctx, user.CreateUserParams{
+			_, err = users.CreateUser(ctx, user.CreateUserParams{
 				ID:             resp.Identifier,
 				AccountAddress: strings.ToLower(adminAddress.Hex()),
 				Name:           "admin",
@@ -151,7 +149,7 @@ func Run() {
 		}
 	}
 
-	claimCtrl := rest.NewClaimCtrl(dids, jwts, users, admin.ID)
+	claimCtrl := rest.NewClaimCtrl(dids, jwts, tickets, users)
 	noticeCtrl := rest.NewNoticeCtrl(notices, users)
 	profileCtrl := rest.NewProfileCtrl(tickets, users)
 	ticketCtrl := rest.NewTicketCtrl(auths, ipfss, jwts, tickets, users, cfg.ServerUrl)
