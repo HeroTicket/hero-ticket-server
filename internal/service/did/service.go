@@ -98,7 +98,7 @@ func (s *DidService) CreateIdentity(ctx context.Context, identity CreateIdentity
 }
 
 func (s *DidService) CreateClaim(ctx context.Context, identifier string, claim CreateClaimRequest) (*CreateClaimResponse, error) {
-	url := fmt.Sprintf("%s/v1/%s/claims", identifier, s.issuerUrl)
+	url := fmt.Sprintf("%s/v1/%s/claims", s.issuerUrl, identifier)
 
 	body, err := json.Marshal(claim)
 	if err != nil {
