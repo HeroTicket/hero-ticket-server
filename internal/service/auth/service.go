@@ -15,7 +15,7 @@ import (
 
 type Service interface {
 	AuthorizationRequest(ctx context.Context, params AuthorizationRequestParams) (protocol.AuthorizationRequestMessage, error)
-	AuthorizationCallback(ctx context.Context, id, token string) (*protocol.AuthorizationResponseMessage, error)
+	AuthorizationCallback(ctx context.Context, id, token string, deleteOnSuccess bool) (*protocol.AuthorizationResponseMessage, error)
 }
 
 type AuthServiceConfig struct {
@@ -76,7 +76,7 @@ func (s *AuthService) AuthorizationRequest(ctx context.Context, params Authoriza
 	return req, nil
 }
 
-func (s *AuthService) AuthorizationCallback(ctx context.Context, id, token string) (*protocol.AuthorizationResponseMessage, error) {
+func (s *AuthService) AuthorizationCallback(ctx context.Context, id, token string, deleteOnSuccess bool) (*protocol.AuthorizationResponseMessage, error) {
 	var request protocol.AuthorizationRequestMessage
 
 	err := s.reqCache.Get(ctx, id, &request)
@@ -116,9 +116,11 @@ func (s *AuthService) AuthorizationCallback(ctx context.Context, id, token strin
 		return nil, err
 	}
 
-	go func() {
-		_ = s.reqCache.Delete(ctx, id)
-	}()
+	if deleteOnSuccess {
+		go func() {
+			_ = s.reqCache.Delete(ctx, id)
+		}()
+	}
 
 	return response, nil
 }

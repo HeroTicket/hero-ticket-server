@@ -593,7 +593,7 @@ func (c *TicketCtrl) whitelistCallback(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 8. verify token
-	resp, err := c.auth.AuthorizationCallback(r.Context(), sessionId, string(tokenBytes))
+	resp, err := c.auth.AuthorizationCallback(r.Context(), sessionId, string(tokenBytes), true)
 	if err != nil {
 		logger.Error("failed to handle whitelist callback", "error", err)
 		ErrorJSON(w, "failed to handle whitelist callback", http.StatusInternalServerError)
@@ -734,7 +734,7 @@ func (c *TicketCtrl) tokenPurchaseCallback(w http.ResponseWriter, r *http.Reques
 	}
 
 	// 8. verify token
-	resp, err := c.auth.AuthorizationCallback(r.Context(), sessionId, string(tokenBytes))
+	resp, err := c.auth.AuthorizationCallback(r.Context(), sessionId, string(tokenBytes), true)
 	if err != nil {
 		logger.Error("failed to handle token purchase callback", "error", err)
 		ErrorJSON(w, "failed to handle token purchase callback", http.StatusInternalServerError)
@@ -980,7 +980,7 @@ func (c *TicketCtrl) verifyCallback(w http.ResponseWriter, r *http.Request) {
 	})
 
 	// 4. verify token
-	resp, err := c.auth.AuthorizationCallback(r.Context(), sessionId, string(tokenBytes))
+	resp, err := c.auth.AuthorizationCallback(r.Context(), sessionId, string(tokenBytes), false)
 	if err != nil {
 		logger.Error("failed to handle verify callback", "error", err)
 		ErrorJSON(w, "failed to handle verify callback", http.StatusInternalServerError)
