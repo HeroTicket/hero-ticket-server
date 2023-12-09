@@ -9,15 +9,24 @@ resource "aws_s3_bucket" "hero_ticket_client_bucket" {
   )
 }
 
-resource "aws_s3_bucket_website_configuration" "hero_ticket_client_bucket_website_configuration" {
+resource "aws_s3_bucket_policy" "allow_cloudfront_access_to_s3_bucket" {
   bucket = aws_s3_bucket.hero_ticket_client_bucket.id
+  policy = data.aws_iam_policy_document.allow_cloudfront_access_to_s3_bucket.json
+}
 
-  index_document {
-    suffix = "index.html"
-  }
+data "aws_iam_policy_document" "allow_cloudfront_access_to_s3_bucket" {
+  statement {
+    sid     = "Allow CloudFront access to S3 bucket"
+    effect  = "Allow"
+    actions = ["s3:GetObject"]
+    resources = [
+      "${aws_s3_bucket.hero_ticket_client_bucket.arn}/*",
+    ]
 
-  error_document {
-    key = "index.html"
+    principals {
+      type        = "AWS"
+      identifiers = [aws_cloudfront_origin_access_identity.s3_bucket_origin_access_identity.iam_arn]
+    }
   }
 }
 
@@ -32,29 +41,32 @@ resource "aws_s3_bucket_ownership_controls" "hero_ticket_client_bucket_ownership
 resource "aws_s3_bucket_public_access_block" "hero_ticket_client_bucket_public_access_block" {
   bucket = aws_s3_bucket.hero_ticket_client_bucket.id
 
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
 }
 
-resource "aws_s3_bucket_policy" "allow_cloudfront_access_to_s3_bucket" {
+resource "aws_s3_bucket_acl" "hero_ticket_client_bucket_acl" {
   bucket = aws_s3_bucket.hero_ticket_client_bucket.id
-  policy = data.aws_iam_policy_document.allow_cloudfront_access_to_s3_bucket.json
+
+  depends_on = [
+    aws_s3_bucket_ownership_controls.hero_ticket_client_bucket_ownership_controls,
+    aws_s3_bucket_public_access_block.hero_ticket_client_bucket_public_access_block,
+  ]
+
+  acl = "public-read"
 }
 
-data "aws_iam_policy_document" "allow_cloudfront_access_to_s3_bucket" {
-  statement {
-    actions = ["s3:GetObject"]
-    resources = [
-      aws_s3_bucket.hero_ticket_client_bucket.arn,
-      "${aws_s3_bucket.hero_ticket_client_bucket.arn}/*",
-    ]
+resource "aws_s3_bucket_website_configuration" "hero_ticket_client_bucket_website_configuration" {
+  bucket = aws_s3_bucket.hero_ticket_client_bucket.id
 
-    principals {
-      type        = "AWS"
-      identifiers = [aws_cloudfront_origin_access_identity.s3_bucket_origin_access_identity.iam_arn]
-    }
+  index_document {
+    suffix = "index.html"
+  }
+
+  error_document {
+    key = "index.html"
   }
 }
 
@@ -73,11 +85,8 @@ resource "aws_cloudfront_distribution" "hero_ticket_client_distribution" {
     domain_name = aws_s3_bucket.hero_ticket_client_bucket.bucket_regional_domain_name
     origin_id   = aws_s3_bucket.hero_ticket_client_bucket.id
 
-    custom_origin_config {
-      http_port              = "80"
-      https_port             = "443"
-      origin_protocol_policy = "http-only"
-      origin_ssl_protocols   = ["TLSv1", "TLSv1.1", "TLSv1.2"]
+    s3_origin_config {
+      origin_access_identity = aws_cloudfront_origin_access_identity.s3_bucket_origin_access_identity.cloudfront_access_identity_path
     }
   }
 
@@ -119,3 +128,4 @@ resource "aws_cloudfront_distribution" "hero_ticket_client_distribution" {
     }
   )
 }
+
