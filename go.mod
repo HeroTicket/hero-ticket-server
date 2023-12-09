@@ -12,7 +12,7 @@ require (
 	github.com/google/uuid v1.4.0
 	github.com/gorilla/websocket v1.5.1
 	github.com/iden3/go-circuits/v2 v2.0.0
-	github.com/iden3/go-iden3-auth/v2 v2.0.0-beta.2
+	github.com/iden3/go-iden3-auth/v2 v2.0.0
 	github.com/iden3/iden3comm/v2 v2.0.0
 	github.com/redis/go-redis/v9 v9.3.0
 	github.com/spf13/viper v1.17.0
