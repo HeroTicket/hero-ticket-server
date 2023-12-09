@@ -29,3 +29,7 @@ output "hero_ticket_issuer_node_public_ips" {
 output "hero_ticket_server_public_ips" {
   value = data.aws_instances.hero_ticket_server_instances.public_ips
 }
+
+output "cloudfront_distribution_domain_name" {
+  value = aws_cloudfront_distribution.hero_ticket_client_distribution.domain_name
+}

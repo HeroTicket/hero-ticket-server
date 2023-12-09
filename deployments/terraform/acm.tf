@@ -27,3 +27,22 @@ resource "aws_acm_certificate_validation" "hero_ticket_cert_validation" {
   certificate_arn         = aws_acm_certificate.hero_ticket_cert.arn
   validation_record_fqdns = [aws_route53_record.hero_ticket_cert_validation_record.fqdn]
 }
+
+resource "aws_acm_certificate" "hero_ticket_cert2" {
+  domain_name               = aws_route53_zone.hero_ticket_zone.name
+  subject_alternative_names = ["*.${aws_route53_zone.hero_ticket_zone.name}"]
+  validation_method         = "DNS"
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  provider = aws.us-east-1
+
+  tags = merge(
+    var.common_tags,
+    {
+      "Name" = "Hero Ticket Certificate"
+    }
+  )
+}
