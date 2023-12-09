@@ -96,6 +96,7 @@ func (c *UserCtrl) loginQR(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("failed to find admin", "error", err)
 		ErrorJSON(w, "something went wrong", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "login-qr", "something went wrong")
 		return
 	}
 
@@ -112,6 +113,7 @@ func (c *UserCtrl) loginQR(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("failed to create login request", "error", err)
 		ErrorJSON(w, "failed to create login request", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "login-qr", "failed to create login request")
 		return
 	}
 
@@ -182,6 +184,7 @@ func (c *UserCtrl) loginCallback(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("failed to handle login callback", "error", err)
 		ErrorJSON(w, "failed to handle login callback", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "login-callback", "failed to handle login callback")
 		return
 	}
 
@@ -194,6 +197,7 @@ func (c *UserCtrl) loginCallback(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("failed to generate jwt token", "error", err)
 		ErrorJSON(w, "failed to generate jwt token", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "login-callback", "failed to generate jwt token")
 		return
 	}
 

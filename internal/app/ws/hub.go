@@ -96,6 +96,18 @@ func Unregister(id ID) {
 	hub.unregister <- id
 }
 
+func ErrorEvent(id ID, eventName, msg string) {
+	hub.send <- Message{
+		Type: EventMessage,
+		ID:   id,
+		Event: Event{
+			Name:   eventName,
+			Status: Error,
+			Data:   msg,
+		},
+	}
+}
+
 // Serve godoc
 //
 // @Summary Serve websocket

@@ -235,11 +235,13 @@ func (c *TicketCtrl) whitelistQR(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("failed to check if ticket collection exists", "error", err)
 		ErrorJSON(w, "failed to check if ticket collection exists", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "whitelist-qr", "failed to check if ticket collection exists")
 		return
 	}
 
 	if !ok {
 		ErrorJSON(w, "ticket collection does not exist", http.StatusBadRequest)
+		go ws.ErrorEvent(id, "whitelist-qr", "ticket collection does not exist")
 		return
 	}
 
@@ -248,12 +250,14 @@ func (c *TicketCtrl) whitelistQR(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("failed to get onchain ticket collection", "error", err)
 		ErrorJSON(w, "failed to get onchain ticket collection", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "whitelist-qr", "failed to get onchain ticket collection")
 		return
 	}
 
 	// 6. check if ticket is on sale
 	if onchainTicket.Remaining.Cmp(big.NewInt(0)) == 0 || onchainTicket.SaleEndAt.Int64() < time.Now().Unix() {
 		ErrorJSON(w, "ticket is not on sale", http.StatusBadRequest)
+		go ws.ErrorEvent(id, "whitelist-qr", "ticket is not on sale")
 		return
 	}
 
@@ -262,6 +266,7 @@ func (c *TicketCtrl) whitelistQR(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("failed to find user by id", "error", err)
 		ErrorJSON(w, "failed to find user by id", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "whitelist-qr", "failed to find user by id")
 		return
 	}
 
@@ -272,11 +277,13 @@ func (c *TicketCtrl) whitelistQR(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("failed to check if user has ticket", "error", err)
 		ErrorJSON(w, "failed to check if user has ticket", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "whitelist-qr", "failed to check if user has ticket")
 		return
 	}
 
 	if ok {
 		ErrorJSON(w, "user already has ticket", http.StatusBadRequest)
+		go ws.ErrorEvent(id, "whitelist-qr", "user already has ticket")
 		return
 	}
 
@@ -285,6 +292,7 @@ func (c *TicketCtrl) whitelistQR(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("failed to check if user is already on whitelist", "error", err)
 		ErrorJSON(w, "failed to check if user is already on whitelist", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "whitelist-qr", "failed to check if user is already on whitelist")
 		return
 	}
 
@@ -313,6 +321,7 @@ func (c *TicketCtrl) whitelistQR(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("failed to find admin", "error", err)
 		ErrorJSON(w, "something went wrong", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "whitelist-qr", "failed to find admin")
 		return
 	}
 
@@ -329,6 +338,7 @@ func (c *TicketCtrl) whitelistQR(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("failed to create authorization request", "error", err)
 		ErrorJSON(w, "failed to create authorization request", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "whitelist-qr", "failed to create authorization request")
 		return
 	}
 
@@ -403,11 +413,13 @@ func (c *TicketCtrl) tokenPurchaseQR(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("failed to check if ticket collection exists", "error", err)
 		ErrorJSON(w, "failed to check if ticket collection exists", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "token-purchase-qr", "failed to check if ticket collection exists")
 		return
 	}
 
 	if !ok {
 		ErrorJSON(w, "ticket collection does not exist", http.StatusBadRequest)
+		go ws.ErrorEvent(id, "token-purchase-qr", "ticket collection does not exist")
 		return
 	}
 
@@ -416,12 +428,14 @@ func (c *TicketCtrl) tokenPurchaseQR(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("failed to get onchain ticket collection", "error", err)
 		ErrorJSON(w, "failed to get onchain ticket collection", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "token-purchase-qr", "failed to get onchain ticket collection")
 		return
 	}
 
 	// 6. check if ticket is on sale
 	if onchainTicket.Remaining.Cmp(big.NewInt(0)) == 0 || onchainTicket.SaleEndAt.Int64() < time.Now().Unix() {
 		ErrorJSON(w, "ticket is not on sale", http.StatusBadRequest)
+		go ws.ErrorEvent(id, "token-purchase-qr", "ticket is not on sale")
 		return
 	}
 
@@ -430,6 +444,7 @@ func (c *TicketCtrl) tokenPurchaseQR(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("failed to find user by id", "error", err)
 		ErrorJSON(w, "failed to find user by id", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "token-purchase-qr", "failed to find user by id")
 		return
 	}
 
@@ -440,11 +455,13 @@ func (c *TicketCtrl) tokenPurchaseQR(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("failed to check if user has ticket", "error", err)
 		ErrorJSON(w, "failed to check if user has ticket", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "token-purchase-qr", "failed to check if user has ticket")
 		return
 	}
 
 	if ok {
 		ErrorJSON(w, "user already has ticket", http.StatusBadRequest)
+		go ws.ErrorEvent(id, "token-purchase-qr", "user already has ticket")
 		return
 	}
 
@@ -452,6 +469,7 @@ func (c *TicketCtrl) tokenPurchaseQR(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("failed to find admin", "error", err)
 		ErrorJSON(w, "something went wrong", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "token-purchase-qr", "failed to find admin")
 		return
 	}
 
@@ -468,6 +486,7 @@ func (c *TicketCtrl) tokenPurchaseQR(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("failed to create authorization request", "error", err)
 		ErrorJSON(w, "failed to create authorization request", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "token-purchase-qr", "failed to create authorization request")
 		return
 	}
 
@@ -535,6 +554,7 @@ func (c *TicketCtrl) whitelistCallback(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("failed to find user by account address", "error", err)
 		ErrorJSON(w, "failed to find user by account address", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "whitelist-callback", "failed to find user by account address")
 		return
 	}
 
@@ -545,11 +565,13 @@ func (c *TicketCtrl) whitelistCallback(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("failed to check if ticket collection exists", "error", err)
 		ErrorJSON(w, "failed to check if ticket collection exists", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "whitelist-callback", "failed to check if ticket collection exists")
 		return
 	}
 
 	if !ok {
 		ErrorJSON(w, "ticket collection does not exist", http.StatusBadRequest)
+		go ws.ErrorEvent(id, "whitelist-callback", "ticket collection does not exist")
 		return
 	}
 
@@ -560,11 +582,13 @@ func (c *TicketCtrl) whitelistCallback(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("failed to check if user has ticket", "error", err)
 		ErrorJSON(w, "failed to check if user has ticket", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "whitelist-callback", "failed to check if user has ticket")
 		return
 	}
 
 	if ok {
 		ErrorJSON(w, "user already has ticket", http.StatusBadRequest)
+		go ws.ErrorEvent(id, "whitelist-callback", "user already has ticket")
 		return
 	}
 
@@ -573,6 +597,7 @@ func (c *TicketCtrl) whitelistCallback(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("failed to handle whitelist callback", "error", err)
 		ErrorJSON(w, "failed to handle whitelist callback", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "whitelist-callback", "failed to handle whitelist callback")
 		return
 	}
 
@@ -582,6 +607,7 @@ func (c *TicketCtrl) whitelistCallback(w http.ResponseWriter, r *http.Request) {
 	// 10. check if user id matches user id from db
 	if userID != user.ID {
 		ErrorJSON(w, "user id does not match", http.StatusBadRequest)
+		go ws.ErrorEvent(id, "whitelist-callback", "user id does not match")
 		return
 	}
 
@@ -592,6 +618,7 @@ func (c *TicketCtrl) whitelistCallback(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("failed to update whitelist", "error", err)
 		ErrorJSON(w, "failed to update whitelist", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "whitelist-callback", "failed to update whitelist")
 		return
 	}
 
@@ -668,6 +695,7 @@ func (c *TicketCtrl) tokenPurchaseCallback(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		logger.Error("failed to find user by account address", "error", err)
 		ErrorJSON(w, "failed to find user by account address", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "token-purchase-callback", "failed to find user by account address")
 		return
 	}
 
@@ -678,11 +706,13 @@ func (c *TicketCtrl) tokenPurchaseCallback(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		logger.Error("failed to check if ticket collection exists", "error", err)
 		ErrorJSON(w, "failed to check if ticket collection exists", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "token-purchase-callback", "failed to check if ticket collection exists")
 		return
 	}
 
 	if !ok {
 		ErrorJSON(w, "ticket collection does not exist", http.StatusBadRequest)
+		go ws.ErrorEvent(id, "token-purchase-callback", "ticket collection does not exist")
 		return
 	}
 
@@ -693,11 +723,13 @@ func (c *TicketCtrl) tokenPurchaseCallback(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		logger.Error("failed to check if user has ticket", "error", err)
 		ErrorJSON(w, "failed to check if user has ticket", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "token-purchase-callback", "failed to check if user has ticket")
 		return
 	}
 
 	if ok {
 		ErrorJSON(w, "user already has ticket", http.StatusBadRequest)
+		go ws.ErrorEvent(id, "token-purchase-callback", "user already has ticket")
 		return
 	}
 
@@ -706,6 +738,7 @@ func (c *TicketCtrl) tokenPurchaseCallback(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		logger.Error("failed to handle token purchase callback", "error", err)
 		ErrorJSON(w, "failed to handle token purchase callback", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "token-purchase-callback", "failed to handle token purchase callback")
 		return
 	}
 
@@ -715,6 +748,7 @@ func (c *TicketCtrl) tokenPurchaseCallback(w http.ResponseWriter, r *http.Reques
 	// 10. check if user id matches user id from db
 	if userID != u.ID {
 		ErrorJSON(w, "user id does not match", http.StatusBadRequest)
+		go ws.ErrorEvent(id, "token-purchase-callback", "user id does not match")
 		return
 	}
 
@@ -725,6 +759,7 @@ func (c *TicketCtrl) tokenPurchaseCallback(w http.ResponseWriter, r *http.Reques
 	if err != nil {
 		logger.Error("failed to buy ticket by token", "error", err)
 		ErrorJSON(w, "failed to buy ticket by token", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "token-purchase-callback", "failed to buy ticket by token")
 		return
 	}
 
@@ -799,11 +834,13 @@ func (c *TicketCtrl) verifyQR(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("failed to check if ticket collection exists", "error", err)
 		ErrorJSON(w, "failed to check if ticket collection exists", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "verify-qr", "failed to check if ticket collection exists")
 		return
 	}
 
 	if !ok {
 		ErrorJSON(w, "ticket collection does not exist", http.StatusBadRequest)
+		go ws.ErrorEvent(id, "verify-qr", "ticket collection does not exist")
 		return
 	}
 
@@ -812,6 +849,7 @@ func (c *TicketCtrl) verifyQR(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("failed to get onchain ticket collection", "error", err)
 		ErrorJSON(w, "failed to get onchain ticket collection", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "verify-qr", "failed to get onchain ticket collection")
 		return
 	}
 
@@ -820,6 +858,7 @@ func (c *TicketCtrl) verifyQR(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("failed to find user by id", "error", err)
 		ErrorJSON(w, "failed to find user by id", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "verify-qr", "failed to find user by id")
 		return
 	}
 
@@ -828,6 +867,7 @@ func (c *TicketCtrl) verifyQR(w http.ResponseWriter, r *http.Request) {
 
 	if onchainTicket.Issuer.Big().Cmp(accountAddress.Big()) != 0 {
 		ErrorJSON(w, "user is not owner of ticket collection", http.StatusBadRequest)
+		go ws.ErrorEvent(id, "verify-qr", "user is not owner of ticket collection")
 		return
 	}
 
@@ -836,6 +876,7 @@ func (c *TicketCtrl) verifyQR(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("failed to find admin", "error", err)
 		ErrorJSON(w, "something went wrong", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "verify-qr", "failed to find admin")
 		return
 	}
 
@@ -870,6 +911,7 @@ func (c *TicketCtrl) verifyQR(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("failed to create authorization request", "error", err)
 		ErrorJSON(w, "failed to create authorization request", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "verify-qr", "failed to create authorization request")
 		return
 	}
 
@@ -942,6 +984,7 @@ func (c *TicketCtrl) verifyCallback(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("failed to handle verify callback", "error", err)
 		ErrorJSON(w, "failed to handle verify callback", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "verify-callback", "failed to handle verify callback")
 		return
 	}
 
@@ -953,6 +996,7 @@ func (c *TicketCtrl) verifyCallback(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("failed to find user by id", "error", err)
 		ErrorJSON(w, "failed to find user by id", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "verify-callback", "failed to find user by id")
 		return
 	}
 
@@ -964,11 +1008,13 @@ func (c *TicketCtrl) verifyCallback(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		logger.Error("failed to check if user has ticket", "error", err)
 		ErrorJSON(w, "failed to check if user has ticket", http.StatusInternalServerError)
+		go ws.ErrorEvent(id, "verify-callback", "failed to check if user has ticket")
 		return
 	}
 
 	if !ok {
 		ErrorJSON(w, "user does not have ticket", http.StatusBadRequest)
+		go ws.ErrorEvent(id, "verify-callback", "user does not have ticket")
 		return
 	}
 

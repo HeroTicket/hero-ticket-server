@@ -11,6 +11,7 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.1.0
 	github.com/google/uuid v1.4.0
 	github.com/gorilla/websocket v1.5.1
+	github.com/iden3/go-circuits/v2 v2.0.0
 	github.com/iden3/go-iden3-auth/v2 v2.0.0-beta.2
 	github.com/iden3/iden3comm/v2 v2.0.0
 	github.com/redis/go-redis/v9 v9.3.0
@@ -44,7 +45,6 @@ require (
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/holiman/uint256 v1.2.2-0.20230321075855-87b91420868c // indirect
 	github.com/iden3/contracts-abi/state/go/abi v1.0.0-beta.3 // indirect
-	github.com/iden3/go-circuits/v2 v2.0.0 // indirect
 	github.com/iden3/go-iden3-core/v2 v2.0.0 // indirect
 	github.com/iden3/go-iden3-crypto v0.0.15 // indirect
 	github.com/iden3/go-jwz/v2 v2.0.0 // indirect

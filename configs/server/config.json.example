@@ -1,0 +1,45 @@
+{
+    "auth": {
+        "ipfsUrl": "https://ipfs.io",
+        "contractAddress": "134B1BE34911E39A8397ec6289782989729807a4",
+        "resolverPrefix": "polygon:mumbai",
+        "keyDir": "./pkg/keys",
+        "redisUrl": "auth-redis:6379"
+    },
+    "did": {
+        "issuerUrl": "",
+        "username": "",
+        "password": "",
+        "redisUrl": "did-redis:6380",
+        "dbName": ""
+    },
+    "ipfs": {
+        "apiKey": "",
+        "secret": ""
+    },
+    "jwt": {
+        "issuer": "",
+        "audience": "",
+        "accessTokenKey": "",
+        "refreshTokenKey": "",
+        "accessTokenExpiry": 0,
+        "refreshTokenExpiry": 0
+    },
+    "notice": {
+        "dbName": "",
+        "collection": "notice"
+    },
+    "ticket": {
+        "dbName": "",
+        "contractAddress": "",
+        "privateKey": "",
+        "moralisApiKey": ""
+    },
+    "user": {
+        "dbName": "",
+        "collection": "users"
+    },
+    "mongoUrl": "mongodb://root:example@localhost:27017/",
+    "rpcUrl": "",
+    "serverUrl": ""
+}
